@@ -98,6 +98,20 @@ CREATE TABLE borrow_transaction (
     borrow_status VARCHAR(30) NOT NULL DEFAULT 'Borrowed'
 );
 
+-- AUDIT TRAIL TABLE
+CREATE TABLE audit_trail (
+    audit_id INT AUTO_INCREMENT PRIMARY KEY,
+    personnel_id INT,
+    username VARCHAR(50),
+    personnel_role VARCHAR(20),
+    action_type VARCHAR(50) NOT NULL,
+    module_name VARCHAR(100) NOT NULL,
+    action_details TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- DEFAULT LIBRARY PERSONNEL ACCOUNTS
 -- Password for all default users: devaura
 INSERT INTO library_personnel (

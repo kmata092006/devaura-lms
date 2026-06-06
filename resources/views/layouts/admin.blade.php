@@ -3,49 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin Dashboard') | Library Management System</title>
+    <title>@yield('title', 'UBNHS Library Management System')</title>
+
     <link rel="stylesheet" href="{{ asset('css/lms.css') }}">
 </head>
-<body class="admin-body">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <h2>LMS</h2>
-            <p>Admin Panel</p>
-        </div>
+<body class="ubnhs-admin-body">
+    <div class="admin-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-text-logo">
+                    UBNHS
+                </div>
 
-        <nav class="sidebar-nav">
-            <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
-            <a href="{{ route('admin.attendance.index') }}" class="{{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">Attendance Logs</a>
-            <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">Library Members</a>
-            <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">Book Management</a>
-            <a href="{{ route('admin.borrow.index') }}" class="{{ request()->routeIs('admin.borrow.*') ? 'active' : '' }}">Borrow Book</a>
-            <a href="{{ route('admin.return.index') }}" class="{{ request()->routeIs('admin.return.*') ? 'active' : '' }}">Return Book</a>
-            <a href="{{ route('admin.book-list.index') }}" class="{{ request()->routeIs('admin.book-list.*') ? 'active' : '' }}">Book List / Search</a>
-            <a href="#">Reports</a>
-        </nav>
-
-        <form method="POST" action="{{ route('logout') }}" class="logout-form">
-            @csrf
-            <button type="submit">Logout</button>
-        </form>
-    </aside>
-
-    <main class="admin-main">
-        <header class="admin-header">
-            <div>
-                <h1>@yield('page-title', 'Admin Dashboard')</h1>
-                <p>Library Management System</p>
+                <div>
+                    <h1>UBNHS Library</h1>
+                    <p>Management System</p>
+                </div>
             </div>
 
-            <div class="admin-user">
-                <span>{{ session('full_name') }}</span>
-                <small>{{ ucfirst(session('personnel_role')) }}</small>
-            </div>
-        </header>
+            <nav class="sidebar-nav">
+                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <span class="nav-icon">⌂</span>
+                    Dashboard
+                </a>
 
-        <section class="admin-content">
-            @yield('content')
-        </section>
-    </main>
+                <a href="{{ route('admin.attendance.index') }}" class="{{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">
+                    <span class="nav-icon">◷</span>
+                    Attendance Logs
+                </a>
+
+                <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
+                    <span class="nav-icon">▦</span>
+                    Departments
+                </a>
+
+                <a href="{{ route('admin.personnel.index') }}" class="{{ request()->routeIs('admin.personnel.*') ? 'active' : '' }}">
+                    <span class="nav-icon">☷</span>
+                    Library Personnel
+                </a>
+
+                <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">
+                    <span class="nav-icon">◉</span>
+                    Library Members
+                </a>
+
+                <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">
+                    <span class="nav-icon">▣</span>
+                    Book Management
+                </a>
+
+                <a href="{{ route('admin.borrow.index') }}" class="{{ request()->routeIs('admin.borrow.*') ? 'active' : '' }}">
+                    <span class="nav-icon">⇢</span>
+                    Borrow Book
+                </a>
+
+                <a href="{{ route('admin.return.index') }}" class="{{ request()->routeIs('admin.return.*') ? 'active' : '' }}">
+                    <span class="nav-icon">⇠</span>
+                    Return Book
+                </a>
+
+                <a href="{{ route('admin.book-list.index') }}" class="{{ request()->routeIs('admin.book-list.*') ? 'active' : '' }}">
+                    <span class="nav-icon">⌕</span>
+                    Book List / Search
+                </a>
+
+                <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                    <span class="nav-icon">▤</span>
+                    Reports
+                </a>
+
+                <a href="{{ route('admin.audit-trail.index') }}" class="{{ request()->routeIs('admin.audit-trail.*') ? 'active' : '' }}">
+                    <span class="nav-icon">◎</span>
+                    Audit Trail
+                </a>
+            </nav>
+
+            <form method="POST" action="{{ route('logout') }}" class="logout-form">
+                @csrf
+                <button type="submit">Logout</button>
+            </form>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-header">
+                <div>
+                    <p class="header-eyebrow">Upper Bicutan National High School</p>
+                    <h2>@yield('page-title', 'Dashboard')</h2>
+                    <p>UBNHS Library Management System</p>
+                </div>
+
+                <div class="admin-user-card">
+                    <div class="admin-user-avatar">
+                        {{ strtoupper(substr(session('first_name', 'S'), 0, 1)) }}{{ strtoupper(substr(session('last_name', 'A'), 0, 1)) }}
+                    </div>
+
+                    <div>
+                        <strong>{{ session('first_name', 'System') }} {{ session('last_name', 'Admin') }}</strong>
+                        <span>{{ ucwords(session('personnel_role', 'Admin')) }}</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="admin-content">
+                @yield('content')
+            </section>
+        </main>
+    </div>
 </body>
 </html>

@@ -3,22 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Library Management System</title>
+    <title>Login | UBNHS Library Management System</title>
+
     <link rel="stylesheet" href="{{ asset('css/lms.css') }}">
 </head>
 <body class="login-body">
-    <main class="login-wrapper">
-        <section class="login-card">
-            <div class="login-header">
-                <h1>Library Management System</h1>
-                <p>Sign in using your assigned library personnel account.</p>
+    <main class="login-page">
+        <section class="login-brand-panel">
+            <div class="login-school-mark text-only">
+                UBNHS
             </div>
 
-            @if (session('success'))
-                <div class="alert success">
-                    {{ session('success') }}
+            <div>
+                <p class="login-eyebrow">Upper Bicutan National High School</p>
+                <h1>UBNHS Library Management System</h1>
+                <p>
+                    A secure library administration portal for attendance monitoring,
+                    book records, borrowing, returns, reports, and audit tracking.
+                </p>
+            </div>
+        </section>
+
+        <section class="login-card">
+            <div class="login-card-header">
+                <div class="login-card-text-logo">
+                    UBNHS
                 </div>
-            @endif
+
+                <div>
+                    <h2>Sign in</h2>
+                    <p>Use your assigned library personnel account.</p>
+                </div>
+            </div>
 
             @if ($errors->any())
                 <div class="alert error">
@@ -28,7 +44,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login.process') }}" class="login-form">
+            <form method="POST" action="{{ route('login.submit') }}" class="login-form">
                 @csrf
 
                 <div class="form-group">
@@ -49,6 +65,7 @@
                         id="username"
                         value="{{ old('username') }}"
                         placeholder="Enter username"
+                        autocomplete="username"
                         required
                     >
                 </div>
@@ -60,17 +77,21 @@
                         name="password"
                         id="password"
                         placeholder="Enter password"
+                        autocomplete="current-password"
                         required
                     >
                 </div>
 
-                <button type="submit" class="primary-button">Login</button>
+                <button type="submit" class="login-button">
+                    Login
+                </button>
             </form>
 
-            <div class="demo-credentials">
-                <p><strong>Admin:</strong> admin / devaura</p>
-                <p><strong>Staff:</strong> staff / devaura</p>
-                <p><strong>Student Staff:</strong> student staff / devaura</p>
+            <div class="login-help-box">
+                <p><strong>Default Accounts</strong></p>
+                <p>Admin: admin / devaura</p>
+                <p>Staff: staff / devaura</p>
+                <p>Student Staff: student staff / devaura</p>
             </div>
         </section>
     </main>

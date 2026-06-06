@@ -1,26 +1,90 @@
 @extends('layouts.admin')
 
-@section('title', 'Admin Dashboard')
+@section('title', 'Admin Dashboard | UBNHS Library Management System')
 @section('page-title', 'Admin Dashboard')
 
 @section('content')
-    <div class="dashboard-intro">
-        <h2>Welcome, {{ session('full_name') }}.</h2>
-        <p>Select a module below to manage the Library Management System.</p>
+    <div class="dashboard-welcome-card">
+        <div>
+            <span class="dashboard-eyebrow">Library Administration Portal</span>
+            <h2>Welcome, {{ session('first_name', 'System') }} {{ session('last_name', 'Admin') }}.</h2>
+            <p>Select a module below to manage daily library operations.</p>
+        </div>
+
+        <div class="dashboard-text-logo">
+            UBNHS
+        </div>
     </div>
 
-    <div class="dashboard-grid">
-        @foreach ($cards as $card)
-            <a href="{{ $card['url'] }}" class="dashboard-card dashboard-card-link">
-                <div>
-                    <h3>{{ $card['title'] }}</h3>
-                    <p>{{ $card['description'] }}</p>
-                </div>
+    <div class="dashboard-module-grid">
+        <a href="{{ route('admin.attendance.index') }}" class="dashboard-module-card">
+            <span class="module-icon">◷</span>
+            <h3>Attendance Logs</h3>
+            <p>Monitor time-in and time-out records for personnel, members, and visitors.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
 
-                <span class="status-pill {{ $card['status'] === 'Available' ? 'status-pill-ready' : '' }}">
-                    {{ $card['status'] }}
-                </span>
-            </a>
-        @endforeach
+        <a href="{{ route('admin.departments.index') }}" class="dashboard-module-card">
+            <span class="module-icon">▦</span>
+            <h3>Departments</h3>
+            <p>Manage department records assigned to library personnel.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.personnel.index') }}" class="dashboard-module-card">
+            <span class="module-icon">☷</span>
+            <h3>Library Personnel</h3>
+            <p>Manage admin, staff, student staff, departments, and work shifts.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.members.index') }}" class="dashboard-module-card">
+            <span class="module-icon">◉</span>
+            <h3>Library Members</h3>
+            <p>Manage student and faculty member records with reference numbers.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.books.index') }}" class="dashboard-module-card">
+            <span class="module-icon">▣</span>
+            <h3>Book Management</h3>
+            <p>Add, edit, delete, and manage books, authors, publishers, and genres.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.borrow.index') }}" class="dashboard-module-card">
+            <span class="module-icon">⇢</span>
+            <h3>Borrow Book</h3>
+            <p>Process book borrowing transactions for registered library members.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.return.index') }}" class="dashboard-module-card">
+            <span class="module-icon">⇠</span>
+            <h3>Return Book</h3>
+            <p>Process returned, overdue, lost, and damaged book transactions.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.book-list.index') }}" class="dashboard-module-card">
+            <span class="module-icon">⌕</span>
+            <h3>Book List / Search</h3>
+            <p>View and search all books by title, ISBN, author, publisher, genre, and status.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.reports.index') }}" class="dashboard-module-card">
+            <span class="module-icon">▤</span>
+            <h3>Reports</h3>
+            <p>Generate attendance, book status, personnel, member, visitor, and book reports.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
+
+        <a href="{{ route('admin.audit-trail.index') }}" class="dashboard-module-card">
+            <span class="module-icon">◎</span>
+            <h3>Audit Trail</h3>
+            <p>Track login activity, record changes, transactions, and system actions.</p>
+            <span class="dashboard-status available">Available</span>
+        </a>
     </div>
 @endsection

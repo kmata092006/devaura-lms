@@ -278,10 +278,10 @@
     <main class="kiosk-page">
         <header class="topbar">
             <div class="brand">
-                <div class="brand-logo">LMS</div>
+                <div class="brand-logo">UBNHS</div>
 
                 <div class="brand-text">
-                    <strong>Library Attendance Kiosk</strong>
+                    <strong>Library Management System</strong>
                 </div>
             </div>
 

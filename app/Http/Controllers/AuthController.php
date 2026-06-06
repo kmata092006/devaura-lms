@@ -2,24 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\AuthService;
+use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    private AuthService $authService;
-
-    public function __construct(AuthService $authService)
-    {
-        $this->authService = $authService;
-    }
-
-    public function showLogin()
+    public function showLoginForm()
     {
         if (session()->has('personnel_id')) {
-            if (session('personnel_role') === 'admin') {
-                return redirect()->route('admin.dashboard');
-            }
+            return redirect()->route('admin.dashboard');
         }
 
         return view('auth.login');
@@ -33,39 +26,61 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $personnel = $this->authService->attemptLogin(
-            $validated['role'],
-            $validated['username'],
-            $validated['password']
-        );
+        $personnel = DB::table('library_personnel')
+            ->where('username', $validated['username'])
+            ->where('personnel_role', $validated['role'])
+            ->first();
 
-        if (!$personnel) {
+        if (!$personnel || !Hash::check($validated['password'], $personnel->password_hash)) {
+            app(AuditTrailService::class)->record(
+                'LOGIN FAILED',
+                'Authentication',
+                'Failed login attempt for username: ' . $validated['username'] . ', role: ' . $validated['role'],
+                $request,
+                [
+                    'username' => $validated['username'],
+                    'personnel_role' => $validated['role'],
+                ]
+            );
+
             return back()
                 ->withErrors([
-                    'login' => 'Invalid role, username, or password.',
+                    'login' => 'Invalid username, password, or role.',
                 ])
-                ->withInput();
+                ->withInput($request->except('password'));
         }
 
-        $this->authService->storeLoginSession($personnel);
+        session([
+            'personnel_id' => $personnel->personnel_id,
+            'username' => $personnel->username,
+            'personnel_role' => $personnel->personnel_role,
+            'first_name' => $personnel->first_name,
+            'last_name' => $personnel->last_name,
+        ]);
 
-        if ($personnel->personnel_role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
+        app(AuditTrailService::class)->record(
+            'LOGIN',
+            'Authentication',
+            'User logged in successfully.',
+            $request
+        );
 
-        $this->authService->logout();
-
-        return back()
-            ->withErrors([
-                'login' => 'Login verified, but only the Admin dashboard is implemented for now.',
-            ])
-            ->withInput();
+        return redirect()->route('admin.dashboard');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        $this->authService->logout();
+        app(AuditTrailService::class)->record(
+            'LOGOUT',
+            'Authentication',
+            'User logged out successfully.',
+            $request
+        );
 
-        return redirect()->route('login')->with('success', 'You have logged out successfully.');
+        $request->session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
     }
 }
