@@ -50,7 +50,7 @@ class LibraryMemberController extends Controller
 
     public function update(Request $request, int $memberId)
     {
-        $validated = $this->validateMember($request);
+        $validated = $this->validateMember($request, $memberId);
 
         $this->libraryMemberService->updateMember($memberId, $validated);
 
@@ -68,13 +68,19 @@ class LibraryMemberController extends Controller
             ->with('success', 'Library member deleted successfully.');
     }
 
-    private function validateMember(Request $request): array
+    private function validateMember(Request $request, ?int $memberId = null): array
     {
-        return $request->validate([
-            'member_role' => ['required', 'in:student,faculty'],
-            'last_name' => ['required', 'string', 'max:50'],
-            'first_name' => ['required', 'string', 'max:50'],
-            'middle_initial' => ['nullable', 'string', 'max:3'],
-        ]);
+    return $request->validate([
+        'member_role' => ['required', 'in:student,faculty'],
+        'reference_number' => [
+            'required',
+            'string',
+            'max:50',
+            'unique:library_member,reference_number,' . $memberId . ',member_id',
+        ],
+        'last_name' => ['required', 'string', 'max:50'],
+        'first_name' => ['required', 'string', 'max:50'],
+        'middle_initial' => ['nullable', 'string', 'max:3'],
+    ]);
     }
 }

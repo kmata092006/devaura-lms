@@ -17,7 +17,7 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
-        $data = $this->attendanceService->getAttendancePageData(
+        $data = $this->attendanceService->getAdminPageData(
             $request->query('search'),
             $request->query('role'),
             $request->query('date')
@@ -26,30 +26,53 @@ class AttendanceController extends Controller
         return view('admin.attendance.index', $data);
     }
 
-    public function timeInPersonnel(Request $request)
+    public function kiosk()
     {
-        $validated = $request->validate([
-            'personnel_id' => ['required', 'integer', 'exists:library_personnel,personnel_id'],
-        ]);
-
-        $this->attendanceService->timeInPersonnel($validated['personnel_id']);
-
-        return redirect()
-            ->route('admin.attendance.index')
-            ->with('success', 'Personnel time-in recorded successfully.');
+        return view('attendance.kiosk');
     }
 
-    public function timeInMember(Request $request)
+    public function timeInCurrentPersonnel()
     {
-        $validated = $request->validate([
-            'member_id' => ['required', 'integer', 'exists:library_member,member_id'],
-        ]);
-
-        $this->attendanceService->timeInMember($validated['member_id']);
+        $this->attendanceService->timeInCurrentPersonnel();
 
         return redirect()
             ->route('admin.attendance.index')
-            ->with('success', 'Library member time-in recorded successfully.');
+            ->with('success', 'Your personnel time-in has been recorded.');
+    }
+
+    public function timeOutCurrentPersonnel()
+    {
+        $this->attendanceService->timeOutCurrentPersonnel();
+
+        return redirect()
+            ->route('admin.attendance.index')
+            ->with('success', 'Your personnel time-out has been recorded.');
+    }
+
+    public function timeInMemberByReference(Request $request)
+    {
+        $validated = $request->validate([
+            'member_reference' => ['required', 'string', 'max:50'],
+        ]);
+
+        $this->attendanceService->timeInMemberByReference($validated['member_reference']);
+
+        return redirect()
+            ->route('attendance.kiosk')
+            ->with('success', 'Time-in recorded successfully.');
+    }
+
+    public function timeOutMemberByReference(Request $request)
+    {
+        $validated = $request->validate([
+            'member_reference' => ['required', 'string', 'max:50'],
+        ]);
+
+        $this->attendanceService->timeOutMemberByReference($validated['member_reference']);
+
+        return redirect()
+            ->route('attendance.kiosk')
+            ->with('success', 'Time-out recorded successfully.');
     }
 
     public function timeInVisitor(Request $request)
@@ -63,20 +86,22 @@ class AttendanceController extends Controller
         $this->attendanceService->timeInVisitor($validated);
 
         return redirect()
-            ->route('admin.attendance.index')
+            ->route('attendance.kiosk')
             ->with('success', 'Visitor time-in recorded successfully.');
     }
 
-    public function timeOut(Request $request)
+    public function timeOutVisitor(Request $request)
     {
         $validated = $request->validate([
-            'log_id' => ['required', 'integer', 'exists:attendance_log,log_id'],
+            'last_name' => ['required', 'string', 'max:50'],
+            'first_name' => ['required', 'string', 'max:50'],
+            'middle_initial' => ['nullable', 'string', 'max:3'],
         ]);
 
-        $this->attendanceService->timeOutLog($validated['log_id']);
+        $this->attendanceService->timeOutVisitor($validated);
 
         return redirect()
-            ->route('admin.attendance.index')
-            ->with('success', 'Time-out recorded successfully.');
+            ->route('attendance.kiosk')
+            ->with('success', 'Visitor time-out recorded successfully.');
     }
 }

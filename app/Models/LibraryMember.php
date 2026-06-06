@@ -14,6 +14,7 @@ class LibraryMember extends Model
 
     protected $fillable = [
         'member_role',
+        'reference_number',
         'last_name',
         'first_name',
         'm.i.',

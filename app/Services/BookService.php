@@ -127,6 +127,14 @@ class BookService
 
     public function deleteBook(int $bookId): void
     {
+        $hasBorrowTransactions = DB::table('borrow_transaction')
+            ->where('book_id', $bookId)
+            ->exists();
+
+        if ($hasBorrowTransactions) {
+            abort(422, 'This book cannot be deleted because it already has borrow transaction records.');
+        }
+
         DB::table('book')
             ->where('book_id', $bookId)
             ->delete();

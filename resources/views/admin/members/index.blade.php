@@ -42,6 +42,7 @@
             <thead>
                 <tr>
                     <th>Member ID</th>
+                    <th>Reference Number</th>
                     <th>Role</th>
                     <th>Last Name</th>
                     <th>First Name</th>
@@ -54,6 +55,7 @@
                 @forelse ($members as $member)
                     <tr>
                         <td>{{ $member->member_id }}</td>
+                        <td>{{ $member->reference_number }}</td>
                         <td>
                             <span class="role-pill">{{ ucfirst($member->member_role) }}</span>
                         </td>
@@ -83,7 +85,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="empty-table">No library members found.</td>
+                        <td colspan="8" class="empty-table">No library members found.</td>
                     </tr>
                 @endforelse
             </tbody>

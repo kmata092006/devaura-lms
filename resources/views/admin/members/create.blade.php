@@ -30,6 +30,19 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="reference_number">Student / Faculty Reference Number</label>
+                <input
+                    type="text"
+                    name="reference_number"
+                    id="reference_number"
+                    value="{{ old('reference_number') }}"
+                    maxlength="50"
+                    placeholder="Example: LRN, Student ID, Faculty ID"
+                    required
+                >
+            </div>
+
             <div class="form-grid">
                 <div class="form-group">
                     <label for="last_name">Last Name</label>

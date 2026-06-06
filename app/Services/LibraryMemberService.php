@@ -13,6 +13,7 @@ class LibraryMemberService
             ->select(
                 'member_id',
                 'member_role',
+                'reference_number',
                 'last_name',
                 'first_name',
                 DB::raw('`m.i.` as middle_initial')
@@ -22,6 +23,7 @@ class LibraryMemberService
             $query->where(function ($q) use ($search) {
                 $q->where('member_id', 'like', "%{$search}%")
                     ->orWhere('member_role', 'like', "%{$search}%")
+                    ->orWhere('reference_number', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('first_name', 'like', "%{$search}%")
                     ->orWhereRaw('`m.i.` LIKE ?', ["%{$search}%"]);
@@ -45,6 +47,7 @@ class LibraryMemberService
             ->select(
                 'member_id',
                 'member_role',
+                'reference_number',
                 'last_name',
                 'first_name',
                 DB::raw('`m.i.` as middle_initial')
@@ -62,9 +65,10 @@ class LibraryMemberService
     public function createMember(array $data): void
     {
         DB::insert(
-            'INSERT INTO library_member (member_role, last_name, first_name, `m.i.`) VALUES (?, ?, ?, ?)',
+            'INSERT INTO library_member (member_role, reference_number, last_name, first_name, `m.i.`) VALUES (?, ?, ?, ?, ?)',
             [
                 $data['member_role'],
+                $data['reference_number'],
                 $data['last_name'],
                 $data['first_name'],
                 $data['middle_initial'] ?? null,
@@ -75,11 +79,12 @@ class LibraryMemberService
     public function updateMember(int $memberId, array $data): void
     {
         DB::update(
-            'UPDATE library_member 
-             SET member_role = ?, last_name = ?, first_name = ?, `m.i.` = ?
+            'UPDATE library_member
+             SET member_role = ?, reference_number = ?, last_name = ?, first_name = ?, `m.i.` = ?
              WHERE member_id = ?',
             [
                 $data['member_role'],
+                $data['reference_number'],
                 $data['last_name'],
                 $data['first_name'],
                 $data['middle_initial'] ?? null,
@@ -90,6 +95,18 @@ class LibraryMemberService
 
     public function deleteMember(int $memberId): void
     {
+        $hasBorrowTransactions = DB::table('borrow_transaction')
+            ->where('member_id', $memberId)
+            ->exists();
+
+        $hasAttendanceLogs = DB::table('attendance_log')
+            ->where('member_id', $memberId)
+            ->exists();
+
+        if ($hasBorrowTransactions || $hasAttendanceLogs) {
+            abort(422, 'This library member cannot be deleted because they already have transaction or attendance records.');
+        }
+
         DB::table('library_member')
             ->where('member_id', $memberId)
             ->delete();

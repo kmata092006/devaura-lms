@@ -14,6 +14,12 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/attendance', [AttendanceController::class, 'kiosk'])->name('attendance.kiosk');
+Route::post('/attendance/member/time-in', [AttendanceController::class, 'timeInMemberByReference'])->name('attendance.member.time-in');
+Route::post('/attendance/member/time-out', [AttendanceController::class, 'timeOutMemberByReference'])->name('attendance.member.time-out');
+Route::post('/attendance/visitor/time-in', [AttendanceController::class, 'timeInVisitor'])->name('attendance.visitor.time-in');
+Route::post('/attendance/visitor/time-out', [AttendanceController::class, 'timeOutVisitor'])->name('attendance.visitor.time-out');
+
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.process');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -25,10 +31,8 @@ Route::middleware('admin.only')
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-        Route::post('/attendance/personnel/time-in', [AttendanceController::class, 'timeInPersonnel'])->name('attendance.personnel.time-in');
-        Route::post('/attendance/member/time-in', [AttendanceController::class, 'timeInMember'])->name('attendance.member.time-in');
-        Route::post('/attendance/visitor/time-in', [AttendanceController::class, 'timeInVisitor'])->name('attendance.visitor.time-in');
-        Route::post('/attendance/time-out', [AttendanceController::class, 'timeOut'])->name('attendance.time-out');
+        Route::post('/attendance/personnel/time-in', [AttendanceController::class, 'timeInCurrentPersonnel'])->name('attendance.personnel.time-in');
+        Route::post('/attendance/personnel/time-out', [AttendanceController::class, 'timeOutCurrentPersonnel'])->name('attendance.personnel.time-out');
 
         Route::get('/members', [LibraryMemberController::class, 'index'])->name('members.index');
         Route::get('/members/create', [LibraryMemberController::class, 'create'])->name('members.create');
