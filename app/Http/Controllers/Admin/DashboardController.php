@@ -12,37 +12,44 @@ class DashboardController extends Controller
             [
                 'title' => 'Attendance Logs',
                 'description' => 'Log time-in and time-out for library personnel, members, and visitors.',
-                'status' => 'Coming soon',
+                'status' => 'Available',
+                'url' => route('admin.attendance.index'),
             ],
             [
                 'title' => 'Library Members',
                 'description' => 'Manage student and faculty library member records.',
-                'status' => 'Coming soon',
+                'status' => 'Available',
+                'url' => route('admin.members.index'),
             ],
             [
                 'title' => 'Book Management',
                 'description' => 'Add, edit, delete, and manage books, authors, publishers, and genres.',
-                'status' => 'Coming soon',
+                'status' => 'Available',
+                'url' => route('admin.books.index'),
             ],
             [
                 'title' => 'Borrow Book',
                 'description' => 'Process book borrowing transactions for library members.',
-                'status' => 'Coming soon',
+                'status' => 'Available',
+                'url' => route('admin.borrow.index'),
             ],
             [
                 'title' => 'Return Book',
                 'description' => 'Process returned, overdue, lost, or damaged books.',
-                'status' => 'Coming soon',
+                'status' => 'Available',
+                'url' => route('admin.return.index'),
             ],
             [
                 'title' => 'Book List / Search',
                 'description' => 'View and search all books by title, ISBN, author, publisher, genre, and status.',
-                'status' => 'Coming soon',
+                'status' => 'Available',
+                'url' => route('admin.book-list.index'),
             ],
             [
                 'title' => 'Reports',
                 'description' => 'Generate attendance, book status, personnel, member, visitor, and book reports.',
-                'status' => 'Coming soon',
+                'status' => 'Next module',
+                'url' => '#',
             ],
         ];
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\BookListController;
 use App\Http\Controllers\Admin\BorrowController;
@@ -22,6 +23,12 @@ Route::middleware('admin.only')
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+        Route::post('/attendance/personnel/time-in', [AttendanceController::class, 'timeInPersonnel'])->name('attendance.personnel.time-in');
+        Route::post('/attendance/member/time-in', [AttendanceController::class, 'timeInMember'])->name('attendance.member.time-in');
+        Route::post('/attendance/visitor/time-in', [AttendanceController::class, 'timeInVisitor'])->name('attendance.visitor.time-in');
+        Route::post('/attendance/time-out', [AttendanceController::class, 'timeOut'])->name('attendance.time-out');
 
         Route::get('/members', [LibraryMemberController::class, 'index'])->name('members.index');
         Route::get('/members/create', [LibraryMemberController::class, 'create'])->name('members.create');

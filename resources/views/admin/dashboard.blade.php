@@ -11,14 +11,16 @@
 
     <div class="dashboard-grid">
         @foreach ($cards as $card)
-            <article class="dashboard-card">
+            <a href="{{ $card['url'] }}" class="dashboard-card dashboard-card-link">
                 <div>
                     <h3>{{ $card['title'] }}</h3>
                     <p>{{ $card['description'] }}</p>
                 </div>
 
-                <span class="status-pill">{{ $card['status'] }}</span>
-            </article>
+                <span class="status-pill {{ $card['status'] === 'Available' ? 'status-pill-ready' : '' }}">
+                    {{ $card['status'] }}
+                </span>
+            </a>
         @endforeach
     </div>
 @endsection
