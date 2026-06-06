@@ -19,7 +19,7 @@
             <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">Library Members</a>
             <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">Book Management</a>
             <a href="{{ route('admin.borrow.index') }}" class="{{ request()->routeIs('admin.borrow.*') ? 'active' : '' }}">Borrow Book</a>
-            <a href="#">Return Book</a>
+            <a href="{{ route('admin.return.index') }}" class="{{ request()->routeIs('admin.return.*') ? 'active' : '' }}">Return Book</a>
             <a href="{{ route('admin.book-list.index') }}" class="{{ request()->routeIs('admin.book-list.*') ? 'active' : '' }}">Book List / Search</a>
             <a href="#">Reports</a>
         </nav>

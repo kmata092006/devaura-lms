@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BookListController;
 use App\Http\Controllers\Admin\BorrowController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LibraryMemberController;
+use App\Http\Controllers\Admin\ReturnController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,4 +41,9 @@ Route::middleware('admin.only')
 
         Route::get('/borrow', [BorrowController::class, 'index'])->name('borrow.index');
         Route::post('/borrow', [BorrowController::class, 'store'])->name('borrow.store');
+
+        Route::get('/return', [ReturnController::class, 'index'])->name('return.index');
+        Route::post('/return/{transactionId}/normal', [ReturnController::class, 'returnNormal'])->name('return.normal');
+        Route::post('/return/{transactionId}/lost', [ReturnController::class, 'markLost'])->name('return.lost');
+        Route::post('/return/{transactionId}/damaged', [ReturnController::class, 'markDamaged'])->name('return.damaged');
     });
