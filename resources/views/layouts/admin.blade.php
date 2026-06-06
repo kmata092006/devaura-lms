@@ -17,7 +17,7 @@
             <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
             <a href="#">Attendance Logs</a>
             <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">Library Members</a>
-            <a href="#">Book Management</a>
+            <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">Book Management</a>
             <a href="#">Borrow Book</a>
             <a href="#">Return Book</a>
             <a href="#">Book List / Search</a>
