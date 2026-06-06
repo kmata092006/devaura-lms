@@ -14,9 +14,9 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="{{ route('admin.dashboard') }}" class="active">Dashboard</a>
+            <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
             <a href="#">Attendance Logs</a>
-            <a href="#">Library Members</a>
+            <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">Library Members</a>
             <a href="#">Book Management</a>
             <a href="#">Borrow Book</a>
             <a href="#">Return Book</a>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LibraryMemberController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,4 +18,11 @@ Route::middleware('admin.only')
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/members', [LibraryMemberController::class, 'index'])->name('members.index');
+        Route::get('/members/create', [LibraryMemberController::class, 'create'])->name('members.create');
+        Route::post('/members', [LibraryMemberController::class, 'store'])->name('members.store');
+        Route::get('/members/{memberId}/edit', [LibraryMemberController::class, 'edit'])->name('members.edit');
+        Route::put('/members/{memberId}', [LibraryMemberController::class, 'update'])->name('members.update');
+        Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])->name('members.destroy');
     });

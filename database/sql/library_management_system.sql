@@ -14,7 +14,7 @@ CREATE TABLE library_visitor (
     visitor_id INT AUTO_INCREMENT PRIMARY KEY, 
     last_name VARCHAR(50) NOT NULL, 
     first_name VARCHAR(50) NOT NULL,
-    `m.i.` VARCHAR(2)
+    `m.i.` VARCHAR(3)
 );
 
 -- LIBRARY MEMBER TABLE
@@ -23,7 +23,7 @@ CREATE TABLE library_member (
     member_role VARCHAR(20),
     last_name VARCHAR(50) NOT NULL, 
     first_name VARCHAR(50) NOT NULL,
-    `m.i.` VARCHAR(2)
+    `m.i.` VARCHAR(3)
 );
 
 -- BOOK GENRE TABLE
@@ -37,7 +37,7 @@ CREATE TABLE book_author (
     author_id INT AUTO_INCREMENT PRIMARY KEY,
     last_name VARCHAR(50) NOT NULL, 
     first_name VARCHAR(50) NOT NULL,
-    `m.i.` VARCHAR(2)
+    `m.i.` VARCHAR(3)
 );
 
 -- BOOK PUBLISHER TABLE
@@ -45,7 +45,7 @@ CREATE TABLE book_publisher (
     publisher_id INT AUTO_INCREMENT PRIMARY KEY,
     last_name VARCHAR(50) NOT NULL,
     first_name VARCHAR(50) NOT NULL, 
-    `m.i.` VARCHAR(2),
+    `m.i.` VARCHAR(3),
     date_published DATE
 );
 
@@ -58,7 +58,7 @@ CREATE TABLE library_personnel (
     department_id INT, 
     last_name VARCHAR(50) NOT NULL,
     first_name VARCHAR(50) NOT NULL, 
-    `m.i.` VARCHAR(2),
+    `m.i.` VARCHAR(3),
     shift_day ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'),
     shift_period ENUM('Morning', 'Afternoon'),
 
