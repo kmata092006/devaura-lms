@@ -83,12 +83,12 @@ class BookController extends Controller
             'book_title' => ['required', 'string', 'max:255'],
             'book_status' => ['required', 'in:Available,Borrowed,Reserved,Lost,Damaged,Under Repair'],
 
-            'author_last_name' => ['required', 'string', 'max:50'],
-            'author_first_name' => ['required', 'string', 'max:50'],
+            'author_last_name' => ['nullable', 'string', 'max:50'],
+            'author_first_name' => ['nullable', 'string', 'max:50'],
             'author_middle_initial' => ['nullable', 'string', 'max:3'],
 
-            'publisher_last_name' => ['required', 'string', 'max:50'],
-            'publisher_first_name' => ['required', 'string', 'max:50'],
+            'publisher_last_name' => ['nullable', 'string', 'max:50'],
+            'publisher_first_name' => ['nullable', 'string', 'max:50'],
             'publisher_middle_initial' => ['nullable', 'string', 'max:3'],
             'date_published' => ['nullable', 'date'],
 

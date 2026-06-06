@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\BookListController;
+use App\Http\Controllers\Admin\BorrowController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LibraryMemberController;
 use App\Http\Controllers\AuthController;
@@ -36,4 +37,7 @@ Route::middleware('admin.only')
         Route::delete('/books/{bookId}', [BookController::class, 'destroy'])->name('books.destroy');
 
         Route::get('/book-list', [BookListController::class, 'index'])->name('book-list.index');
+
+        Route::get('/borrow', [BorrowController::class, 'index'])->name('borrow.index');
+        Route::post('/borrow', [BorrowController::class, 'store'])->name('borrow.store');
     });

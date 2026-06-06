@@ -86,7 +86,6 @@
                             id="author_last_name"
                             value="{{ old('author_last_name') }}"
                             maxlength="50"
-                            required
                         >
                     </div>
 
@@ -98,7 +97,6 @@
                             id="author_first_name"
                             value="{{ old('author_first_name') }}"
                             maxlength="50"
-                            required
                         >
                     </div>
 
@@ -128,7 +126,6 @@
                             id="publisher_last_name"
                             value="{{ old('publisher_last_name') }}"
                             maxlength="50"
-                            required
                         >
                     </div>
 
@@ -140,7 +137,6 @@
                             id="publisher_first_name"
                             value="{{ old('publisher_first_name') }}"
                             maxlength="50"
-                            required
                         >
                     </div>
 
