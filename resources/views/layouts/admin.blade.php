@@ -20,7 +20,7 @@
             <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">Book Management</a>
             <a href="#">Borrow Book</a>
             <a href="#">Return Book</a>
-            <a href="#">Book List / Search</a>
+            <a href="{{ route('admin.book-list.index') }}" class="{{ request()->routeIs('admin.book-list.*') ? 'active' : '' }}">Book List / Search</a>
             <a href="#">Reports</a>
         </nav>
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BookController;
+use App\Http\Controllers\Admin\BookListController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LibraryMemberController;
 use App\Http\Controllers\AuthController;
@@ -33,4 +34,6 @@ Route::middleware('admin.only')
         Route::get('/books/{bookId}/edit', [BookController::class, 'edit'])->name('books.edit');
         Route::put('/books/{bookId}', [BookController::class, 'update'])->name('books.update');
         Route::delete('/books/{bookId}', [BookController::class, 'destroy'])->name('books.destroy');
+
+        Route::get('/book-list', [BookListController::class, 'index'])->name('book-list.index');
     });
