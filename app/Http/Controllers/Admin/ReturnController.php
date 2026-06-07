@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\ReturnService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReturnController extends Controller
 {
@@ -49,5 +50,107 @@ class ReturnController extends Controller
         return redirect()
             ->route('admin.return.index')
             ->with('success', 'Book marked as Damaged. The transaction has been closed.');
+    }
+
+    public function returnBook($transactionId)
+    {
+        $transaction = DB::table('borrow_transaction')
+            ->where('transaction_id', $transactionId)
+            ->first();
+
+        if (!$transaction) {
+            return redirect()
+                ->route('admin.return.index')
+                ->withErrors(['return' => 'Borrow transaction not found.']);
+        }
+
+        if ($transaction->borrow_status === 'Returned') {
+            return redirect()
+                ->route('admin.return.index')
+                ->withErrors(['return' => 'This book has already been returned.']);
+        }
+
+        DB::transaction(function () use ($transaction) {
+            DB::table('borrow_transaction')
+                ->where('transaction_id', $transaction->transaction_id)
+                ->update([
+                    'return_date' => now()->toDateString(),
+                    'borrow_status' => 'Returned',
+                ]);
+
+            DB::table('book')
+                ->where('book_id', $transaction->book_id)
+                ->update([
+                    'book_status' => 'Available',
+                ]);
+        });
+
+        return redirect()
+            ->route('admin.return.index')
+            ->with('success', 'Book returned successfully.');
+    }
+
+    public function markAsLost($transactionId)
+    {
+        $transaction = DB::table('borrow_transaction')
+            ->where('transaction_id', $transactionId)
+            ->first();
+
+        if (!$transaction) {
+            return redirect()
+                ->route('admin.return.index')
+                ->withErrors(['return' => 'Borrow transaction not found.']);
+        }
+
+        DB::transaction(function () use ($transaction) {
+            DB::table('borrow_transaction')
+                ->where('transaction_id', $transaction->transaction_id)
+                ->update([
+                    'return_date' => now()->toDateString(),
+                    'borrow_status' => 'Lost',
+                ]);
+
+            DB::table('book')
+                ->where('book_id', $transaction->book_id)
+                ->update([
+                    'book_status' => 'Lost',
+                ]);
+        });
+
+        return redirect()
+            ->route('admin.return.index')
+            ->with('success', 'Book marked as lost successfully.');
+    }
+
+    public function markAsDamaged($transactionId)
+    {
+        $transaction = DB::table('borrow_transaction')
+            ->where('transaction_id', $transactionId)
+            ->first();
+
+        if (!$transaction) {
+            return redirect()
+                ->route('admin.return.index')
+                ->withErrors(['return' => 'Borrow transaction not found.']);
+        }
+
+        DB::transaction(function () use ($transaction) {
+            DB::table('borrow_transaction')
+                ->where('transaction_id', $transaction->transaction_id)
+                ->update([
+                    'return_date' => now()->toDateString(),
+                    'borrow_status' => 'Returned',
+                ]);
+
+            DB::table('book')
+                ->where('book_id', $transaction->book_id)
+                ->update([
+                    'book_status' => 'Damaged',
+                ]);
+        });
+
+        return redirect()
+            ->route('admin.return.index')
+            ->with('success', 'Book marked as damaged successfully.');
     }
 }

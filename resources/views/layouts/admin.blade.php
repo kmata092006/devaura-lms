@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'UBNHS Library Management System')</title>
 
-    <link rel="stylesheet" href="{{ asset('css/lms.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/lms.css') }}?v={{ filemtime(public_path('css/lms.css')) }}">
 </head>
 <body class="ubnhs-admin-body">
     <div class="admin-shell">

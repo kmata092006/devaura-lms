@@ -52,115 +52,115 @@ Route::prefix('admin')
     ->middleware([AdminOnly::class, AuditTrailLogger::class])
     ->group(function () {
 
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+Route::get('/dashboard', function () {
+    return view('admin.dashboard');
+})->name('dashboard');
 
-        Route::get('/attendance', [AttendanceController::class, 'index'])
-            ->name('attendance.index');
+Route::get('/attendance', [AttendanceController::class, 'index'])
+    ->name('attendance.index');
 
-        Route::post('/attendance/personnel/time-in', [AttendanceController::class, 'timeInPersonnel'])
-            ->name('attendance.personnel.time-in');
+Route::post('/attendance/personnel/time-in', [AttendanceController::class, 'timeInPersonnel'])
+    ->name('attendance.personnel.time-in');
 
-        Route::post('/attendance/personnel/time-out', [AttendanceController::class, 'timeOutPersonnel'])
-            ->name('attendance.personnel.time-out');
+ Route::post('/attendance/personnel/time-out', [AttendanceController::class, 'timeOutPersonnel'])
+->name('attendance.personnel.time-out');
 
-        Route::get('/departments', [DepartmentController::class, 'index'])
-            ->name('departments.index');
+Route::get('/departments', [DepartmentController::class, 'index'])
+    ->name('departments.index');
 
-        Route::get('/departments/create', [DepartmentController::class, 'create'])
-            ->name('departments.create');
+Route::get('/departments/create', [DepartmentController::class, 'create'])
+    ->name('departments.create');
 
-        Route::post('/departments', [DepartmentController::class, 'store'])
-            ->name('departments.store');
+Route::post('/departments', [DepartmentController::class, 'store'])
+    ->name('departments.store');
 
-        Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
-            ->name('departments.edit');
+Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
+    ->name('departments.edit');
 
-        Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
-            ->name('departments.update');
+Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
+    ->name('departments.update');
 
-        Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
-            ->name('departments.destroy');
+Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
+    ->name('departments.destroy');
 
-        Route::get('/personnel', [LibraryPersonnelController::class, 'index'])
-            ->name('personnel.index');
+Route::get('/personnel', [LibraryPersonnelController::class, 'index'])
+    ->name('personnel.index');
 
-        Route::get('/personnel/create', [LibraryPersonnelController::class, 'create'])
-            ->name('personnel.create');
+Route::get('/personnel/create', [LibraryPersonnelController::class, 'create'])
+    ->name('personnel.create');
 
-        Route::post('/personnel', [LibraryPersonnelController::class, 'store'])
-            ->name('personnel.store');
+Route::post('/personnel', [LibraryPersonnelController::class, 'store'])
+    ->name('personnel.store');
 
-        Route::get('/personnel/{personnelId}/edit', [LibraryPersonnelController::class, 'edit'])
-            ->name('personnel.edit');
+Route::get('/personnel/{personnelId}/edit', [LibraryPersonnelController::class, 'edit'])
+    ->name('personnel.edit');
 
-        Route::put('/personnel/{personnelId}', [LibraryPersonnelController::class, 'update'])
-            ->name('personnel.update');
+Route::put('/personnel/{personnelId}', [LibraryPersonnelController::class, 'update'])
+    ->name('personnel.update');
 
-        Route::delete('/personnel/{personnelId}', [LibraryPersonnelController::class, 'destroy'])
-            ->name('personnel.destroy');
+Route::delete('/personnel/{personnelId}', [LibraryPersonnelController::class, 'destroy'])
+    ->name('personnel.destroy');
 
-        Route::get('/members', [LibraryMemberController::class, 'index'])
-            ->name('members.index');
+Route::get('/members', [LibraryMemberController::class, 'index'])
+    ->name('members.index');
 
-        Route::get('/members/create', [LibraryMemberController::class, 'create'])
-            ->name('members.create');
+Route::get('/members/create', [LibraryMemberController::class, 'create'])
+    ->name('members.create');
 
-        Route::post('/members', [LibraryMemberController::class, 'store'])
-            ->name('members.store');
+Route::post('/members', [LibraryMemberController::class, 'store'])
+    ->name('members.store');
 
-        Route::get('/members/{memberId}/edit', [LibraryMemberController::class, 'edit'])
-            ->name('members.edit');
+Route::get('/members/{memberId}/edit', [LibraryMemberController::class, 'edit'])
+    ->name('members.edit');
 
-        Route::put('/members/{memberId}', [LibraryMemberController::class, 'update'])
-            ->name('members.update');
+Route::put('/members/{memberId}', [LibraryMemberController::class, 'update'])
+    ->name('members.update');
 
-        Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])
-            ->name('members.destroy');
+Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])
+    ->name('members.destroy');
 
-        Route::get('/books', [BookController::class, 'index'])
-            ->name('books.index');
+Route::get('/books', [BookController::class, 'index'])
+    ->name('books.index');
 
-        Route::get('/books/create', [BookController::class, 'create'])
-            ->name('books.create');
+Route::get('/books/create', [BookController::class, 'create'])
+    ->name('books.create');
 
-        Route::post('/books', [BookController::class, 'store'])
-            ->name('books.store');
+Route::post('/books', [BookController::class, 'store'])
+    ->name('books.store');
 
-        Route::get('/books/{bookId}/edit', [BookController::class, 'edit'])
-            ->name('books.edit');
+Route::get('/books/{bookId}/edit', [BookController::class, 'edit'])
+    ->name('books.edit');
 
-        Route::put('/books/{bookId}', [BookController::class, 'update'])
-            ->name('books.update');
+Route::put('/books/{bookId}', [BookController::class, 'update'])
+    ->name('books.update');
 
-        Route::delete('/books/{bookId}', [BookController::class, 'destroy'])
-            ->name('books.destroy');
+Route::delete('/books/{bookId}', [BookController::class, 'destroy'])
+    ->name('books.destroy');
 
-        Route::get('/book-list', [BookListController::class, 'index'])
-            ->name('book-list.index');
+Route::get('/book-list', [BookListController::class, 'index'])
+    ->name('book-list.index');
 
-        Route::get('/borrow', [BorrowController::class, 'index'])
-            ->name('borrow.index');
+Route::get('/borrow', [BorrowController::class, 'index'])
+    ->name('borrow.index');
 
-        Route::post('/borrow', [BorrowController::class, 'store'])
-            ->name('borrow.store');
+Route::post('/borrow', [BorrowController::class, 'store'])
+    ->name('borrow.store');
 
-        Route::get('/return', [ReturnController::class, 'index'])
-            ->name('return.index');
+Route::get('/return', [ReturnController::class, 'index'])
+    ->name('return.index');
 
-        Route::post('/return/{transactionId}/return', [ReturnController::class, 'returnBook'])
-            ->name('return.return-book');
+Route::post('/return/{transactionId}/return', [ReturnController::class, 'returnBook'])
+    ->name('return.return-book');
 
-        Route::post('/return/{transactionId}/lost', [ReturnController::class, 'markAsLost'])
-            ->name('return.mark-lost');
+Route::post('/return/{transactionId}/lost', [ReturnController::class, 'markAsLost'])
+    ->name('return.mark-lost');
 
-        Route::post('/return/{transactionId}/damaged', [ReturnController::class, 'markAsDamaged'])
-            ->name('return.mark-damaged');
+Route::post('/return/{transactionId}/damaged', [ReturnController::class, 'markAsDamaged'])
+    ->name('return.mark-damaged');
 
-        Route::get('/reports', [ReportController::class, 'index'])
-            ->name('reports.index');
+Route::get('/reports', [ReportController::class, 'index'])
+    ->name('reports.index');
 
-        Route::get('/audit-trail', [AuditTrailController::class, 'index'])
-            ->name('audit-trail.index');
-    });
+Route::get('/audit-trail', [AuditTrailController::class, 'index'])
+    ->name('audit-trail.index');
+});

@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Add Library Personnel')
+@section('title', 'Add Library Personnel | UBNHS Library Management System')
 @section('page-title', 'Add Library Personnel')
 
 @section('content')
@@ -23,8 +23,64 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.personnel.store') }}" class="personnel-form-card">
+    <form method="POST" action="{{ route('admin.personnel.store') }}" class="personnel-form-card improved-personnel-form">
         @csrf
+
+        <div class="personnel-section-title">
+            <span>01</span>
+            <div>
+                <h3>Personal Information</h3>
+                <p>Use the format: Last Name, First Name, M.I.</p>
+            </div>
+        </div>
+
+        <div class="personnel-form-grid name-first-grid">
+            <div class="personnel-form-group">
+                <label for="last_name">Last Name</label>
+                <input
+                    type="text"
+                    name="last_name"
+                    id="last_name"
+                    value="{{ old('last_name') }}"
+                    maxlength="50"
+                    placeholder="Enter Last Name"
+                    required
+                >
+            </div>
+
+            <div class="personnel-form-group">
+                <label for="first_name">First Name</label>
+                <input
+                    type="text"
+                    name="first_name"
+                    id="first_name"
+                    value="{{ old('first_name') }}"
+                    maxlength="50"
+                    placeholder="Enter First Name"
+                    required
+                >
+            </div>
+
+            <div class="personnel-form-group mi-field">
+                <label for="middle_initial">M.I.</label>
+                <input
+                    type="text"
+                    name="middle_initial"
+                    id="middle_initial"
+                    value="{{ old('middle_initial') }}"
+                    maxlength="3"
+                    placeholder="M.I."
+                >
+            </div>
+        </div>
+
+        <div class="personnel-section-title">
+            <span>02</span>
+            <div>
+                <h3>Library Assignment</h3>
+                <p>Assign role, department, and shift schedule.</p>
+            </div>
+        </div>
 
         <div class="personnel-form-grid">
             <div class="personnel-form-group">
@@ -74,68 +130,57 @@
                     @endforeach
                 </select>
             </div>
+        </div>
 
-            <div class="personnel-form-group">
-                <label for="first_name">First Name</label>
-                <input
-                    type="text"
-                    name="first_name"
-                    id="first_name"
-                    value="{{ old('first_name') }}"
-                    maxlength="50"
-                    placeholder="Enter First Name"
-                    required
-                >
+        <div class="personnel-account-box">
+            <div class="personnel-section-title account-section-title">
+                <span>03</span>
+                <div>
+                    <h3>Account Credentials</h3>
+                    <p>Username and password are required for system access.</p>
+                </div>
             </div>
 
-            <div class="personnel-form-group">
-                <label for="middle_initial">M.I.</label>
-                <input
-                    type="text"
-                    name="middle_initial"
-                    id="middle_initial"
-                    value="{{ old('middle_initial') }}"
-                    maxlength="3"
-                    placeholder="M.I."
-                >
-            </div>
+            <div class="personnel-form-grid">
+                <div class="personnel-form-group credential-field">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        name="username"
+                        id="username"
+                        value="{{ old('username') }}"
+                        maxlength="50"
+                        placeholder="Enter Username"
+                        required
+                    >
+                    <small>Minimum 4 characters. Letters, numbers, dash, and underscore only.</small>
+                </div>
 
-            <div class="personnel-form-group">
-                <label for="last_name">Last Name</label>
-                <input
-                    type="text"
-                    name="last_name"
-                    id="last_name"
-                    value="{{ old('last_name') }}"
-                    maxlength="50"
-                    placeholder="Enter Last Name"
-                    required
-                >
-            </div>
+                <div class="personnel-form-group credential-field">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        minlength="8"
+                        placeholder="Enter Password"
+                        required
+                    >
+                    <small>Minimum 8 characters.</small>
+                </div>
 
-            <div class="personnel-form-group">
-                <label for="username">Username</label>
-                <input
-                    type="text"
-                    name="username"
-                    id="username"
-                    value="{{ old('username') }}"
-                    maxlength="50"
-                    placeholder="Enter Username"
-                    required
-                >
-            </div>
-
-            <div class="personnel-form-group">
-                <label for="password">Password</label>
-                <input
-                    type="password"
-                    name="password"
-                    id="password"
-                    minlength="6"
-                    placeholder="Enter Password"
-                    required
-                >
+                <div class="personnel-form-group credential-field">
+                    <label for="password_confirmation">Confirm Password</label>
+                    <input
+                        type="password"
+                        name="password_confirmation"
+                        id="password_confirmation"
+                        minlength="8"
+                        placeholder="Re-enter Password"
+                        required
+                    >
+                    <small>Must match the password.</small>
+                </div>
             </div>
         </div>
 

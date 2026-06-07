@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\AttendanceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
@@ -103,5 +104,76 @@ class AttendanceController extends Controller
         return redirect()
             ->route('attendance.kiosk')
             ->with('success', 'Visitor time-out recorded successfully.');
+    }
+
+    public function timeInPersonnel(Request $request)
+    {
+        $personnelId = session('personnel_id');
+        $personnelRole = session('personnel_role');
+
+        if (!$personnelId) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['attendance' => 'Please log in first.']);
+        }
+
+        $activeLog = DB::table('attendance_log')
+            ->where('personnel_id', $personnelId)
+            ->whereNull('time_out')
+            ->orderByDesc('log_id')
+            ->first();
+
+        if ($activeLog) {
+            return redirect()
+                ->route('admin.attendance.index')
+                ->withErrors(['attendance' => 'You already have an active time-in record. Please time out first.']);
+        }
+
+        DB::table('attendance_log')->insert([
+            'role' => $personnelRole ?? 'admin',
+            'personnel_id' => $personnelId,
+            'member_id' => null,
+            'visitor_id' => null,
+            'log_date' => now()->toDateString(),
+            'time_in' => now()->format('H:i:s'),
+            'time_out' => null,
+        ]);
+
+        return redirect()
+            ->route('admin.attendance.index')
+            ->with('success', 'Personnel time-in recorded successfully.');
+    }
+
+    public function timeOutPersonnel(Request $request)
+    {
+        $personnelId = session('personnel_id');
+
+        if (!$personnelId) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['attendance' => 'Please log in first.']);
+        }
+
+        $activeLog = DB::table('attendance_log')
+            ->where('personnel_id', $personnelId)
+            ->whereNull('time_out')
+            ->orderByDesc('log_id')
+            ->first();
+
+        if (!$activeLog) {
+            return redirect()
+                ->route('admin.attendance.index')
+                ->withErrors(['attendance' => 'No active personnel time-in record found.']);
+        }
+
+        DB::table('attendance_log')
+            ->where('log_id', $activeLog->log_id)
+            ->update([
+                'time_out' => now()->format('H:i:s'),
+            ]);
+
+        return redirect()
+            ->route('admin.attendance.index')
+            ->with('success', 'Personnel time-out recorded successfully.');
     }
 }

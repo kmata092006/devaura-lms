@@ -111,7 +111,7 @@
                             <div class="return-action-group">
                                 <form
                                     method="POST"
-                                    action="{{ route('admin.return.normal', $transaction->transaction_id) }}"
+                                    action="{{ route('admin.return.return-book', $transaction->transaction_id) }}"
                                     onsubmit="return confirm('Confirm normal return for this book?');"
                                 >
                                     @csrf
@@ -120,7 +120,7 @@
 
                                 <form
                                     method="POST"
-                                    action="{{ route('admin.return.lost', $transaction->transaction_id) }}"
+                                    action="{{ route('admin.return.mark-lost', $transaction->transaction_id) }}"
                                     onsubmit="return confirm('Mark this book as lost? This will close the transaction.');"
                                 >
                                     @csrf
@@ -129,7 +129,7 @@
 
                                 <form
                                     method="POST"
-                                    action="{{ route('admin.return.damaged', $transaction->transaction_id) }}"
+                                    action="{{ route('admin.return.mark-damaged', $transaction->transaction_id) }}"
                                     onsubmit="return confirm('Mark this book as damaged? This will close the transaction.');"
                                 >
                                     @csrf
