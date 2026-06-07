@@ -9,6 +9,9 @@ use Illuminate\Validation\ValidationException;
 
 class LibraryPersonnelService
 {
+    /**
+     * Returns paginated personnel records with search and filter support.
+     */
     public function getPersonnel(?string $search = null, ?string $role = null, ?string $departmentId = null): LengthAwarePaginator
     {
         $nameExpression = $this->fullNameSql('library_personnel');
@@ -54,6 +57,9 @@ class LibraryPersonnelService
             ->withQueryString();
     }
 
+    /**
+     * Loads one personnel record for editing or detail display.
+     */
     public function findPersonnel(int $personnelId): object
     {
         $personnel = DB::table('library_personnel')
@@ -78,6 +84,9 @@ class LibraryPersonnelService
         return $personnel;
     }
 
+    /**
+     * Creates a personnel account with a hashed password.
+     */
     public function createPersonnel(array $data): void
     {
         DB::table('library_personnel')->insert([
@@ -93,6 +102,9 @@ class LibraryPersonnelService
         ]);
     }
 
+    /**
+     * Updates personnel details and changes the password only when supplied.
+     */
     public function updatePersonnel(int $personnelId, array $data): void
     {
         $updateData = [
@@ -115,6 +127,9 @@ class LibraryPersonnelService
             ->update($updateData);
     }
 
+    /**
+     * Deletes personnel only when it is safe for account and attendance rules.
+     */
     public function deletePersonnel(int $personnelId): void
     {
         if ((int) session('personnel_id') === $personnelId) {
@@ -138,6 +153,9 @@ class LibraryPersonnelService
             ->delete();
     }
 
+    /**
+     * Provides allowed personnel roles for validation and filters.
+     */
     public function roleOptions(): array
     {
         return [
@@ -147,6 +165,9 @@ class LibraryPersonnelService
         ];
     }
 
+    /**
+     * Provides allowed shift days for personnel schedules.
+     */
     public function shiftDayOptions(): array
     {
         return [
@@ -158,6 +179,9 @@ class LibraryPersonnelService
         ];
     }
 
+    /**
+     * Provides allowed shift periods for personnel schedules.
+     */
     public function shiftPeriodOptions(): array
     {
         return [
@@ -166,6 +190,9 @@ class LibraryPersonnelService
         ];
     }
 
+    /**
+     * Builds the SQL expression used to display personnel full names.
+     */
     private function fullNameSql(string $alias): string
     {
         return "

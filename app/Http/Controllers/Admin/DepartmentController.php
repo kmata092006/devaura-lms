@@ -10,11 +10,17 @@ class DepartmentController extends Controller
 {
     private DepartmentService $departmentService;
 
+    /**
+     * Injects the department service used by this controller.
+     */
     public function __construct(DepartmentService $departmentService)
     {
         $this->departmentService = $departmentService;
     }
 
+    /**
+     * Shows the paginated department list.
+     */
     public function index(Request $request)
     {
         $departments = $this->departmentService->getDepartments($request->query('search'));
@@ -22,11 +28,17 @@ class DepartmentController extends Controller
         return view('admin.departments.index', compact('departments'));
     }
 
+    /**
+     * Shows the form for creating a department.
+     */
     public function create()
     {
         return view('admin.departments.create');
     }
 
+    /**
+     * Validates and stores a new department.
+     */
     public function store(Request $request)
     {
         $validated = $this->validateDepartment($request);
@@ -38,6 +50,9 @@ class DepartmentController extends Controller
             ->with('success', 'Department created successfully.');
     }
 
+    /**
+     * Shows the edit form for one department.
+     */
     public function edit(int $departmentId)
     {
         $department = $this->departmentService->findDepartment($departmentId);
@@ -45,6 +60,9 @@ class DepartmentController extends Controller
         return view('admin.departments.edit', compact('department'));
     }
 
+    /**
+     * Validates and updates an existing department.
+     */
     public function update(Request $request, int $departmentId)
     {
         $validated = $this->validateDepartment($request, $departmentId);
@@ -56,6 +74,9 @@ class DepartmentController extends Controller
             ->with('success', 'Department updated successfully.');
     }
 
+    /**
+     * Deletes a department after service-level usage checks.
+     */
     public function destroy(int $departmentId)
     {
         $this->departmentService->deleteDepartment($departmentId);
@@ -65,6 +86,9 @@ class DepartmentController extends Controller
             ->with('success', 'Department deleted successfully.');
     }
 
+    /**
+     * Validates department form input and unique names.
+     */
     private function validateDepartment(Request $request, ?int $departmentId = null): array
     {
         return $request->validate([

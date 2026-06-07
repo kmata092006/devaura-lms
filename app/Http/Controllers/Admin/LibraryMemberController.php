@@ -10,11 +10,17 @@ class LibraryMemberController extends Controller
 {
     private LibraryMemberService $libraryMemberService;
 
+    /**
+     * Injects the library member service used by this controller.
+     */
     public function __construct(LibraryMemberService $libraryMemberService)
     {
         $this->libraryMemberService = $libraryMemberService;
     }
 
+    /**
+     * Shows the paginated member list with optional filters.
+     */
     public function index(Request $request)
     {
         $members = $this->libraryMemberService->getMembers(
@@ -25,11 +31,17 @@ class LibraryMemberController extends Controller
         return view('admin.members.index', compact('members'));
     }
 
+    /**
+     * Shows the form for adding a member.
+     */
     public function create()
     {
         return view('admin.members.create');
     }
 
+    /**
+     * Validates and stores a new library member.
+     */
     public function store(Request $request)
     {
         $validated = $this->validateMember($request);
@@ -41,6 +53,9 @@ class LibraryMemberController extends Controller
             ->with('success', 'Library member added successfully.');
     }
 
+    /**
+     * Shows the edit form for one library member.
+     */
     public function edit(int $memberId)
     {
         $member = $this->libraryMemberService->findMember($memberId);
@@ -48,6 +63,9 @@ class LibraryMemberController extends Controller
         return view('admin.members.edit', compact('member'));
     }
 
+    /**
+     * Validates and updates an existing library member.
+     */
     public function update(Request $request, int $memberId)
     {
         $validated = $this->validateMember($request, $memberId);
@@ -59,6 +77,9 @@ class LibraryMemberController extends Controller
             ->with('success', 'Library member updated successfully.');
     }
 
+    /**
+     * Deletes a member after service-level dependency checks.
+     */
     public function destroy(int $memberId)
     {
         $this->libraryMemberService->deleteMember($memberId);
@@ -68,6 +89,9 @@ class LibraryMemberController extends Controller
             ->with('success', 'Library member deleted successfully.');
     }
 
+    /**
+     * Validates member identity, role, and reference number input.
+     */
     private function validateMember(Request $request, ?int $memberId = null): array
     {
     return $request->validate([

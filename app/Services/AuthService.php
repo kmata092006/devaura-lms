@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthService
 {
+    /**
+     * Validates a personnel login against role, username, and password.
+     */
     public function attemptLogin(string $role, string $username, string $password): ?LibraryPersonnel
     {
         $personnel = LibraryPersonnel::where('username', $username)
@@ -24,6 +27,9 @@ class AuthService
         return $personnel;
     }
 
+    /**
+     * Stores the authenticated personnel identity in the session.
+     */
     public function storeLoginSession(LibraryPersonnel $personnel): void
     {
         session([
@@ -34,6 +40,9 @@ class AuthService
         ]);
     }
 
+    /**
+     * Clears all session data for logout.
+     */
     public function logout(): void
     {
         session()->flush();

@@ -28,6 +28,9 @@ class LibraryPersonnel extends Model
         'password_hash',
     ];
 
+    /**
+     * Formats the personnel's full name with an optional middle initial.
+     */
     public function getFullNameAttribute(): string
     {
         $middleInitial = $this->{'m.i.'} ? ' ' . $this->{'m.i.'} . '.' : '';

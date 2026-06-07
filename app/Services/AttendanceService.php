@@ -9,6 +9,9 @@ use Illuminate\Validation\ValidationException;
 
 class AttendanceService
 {
+    /**
+     * Collects attendance data needed by the admin attendance page.
+     */
     public function getAdminPageData(?string $search = null, ?string $role = null, ?string $date = null): array
     {
         $personnelId = session('personnel_id');
@@ -21,6 +24,9 @@ class AttendanceService
         ];
     }
 
+    /**
+     * Records the logged-in personnel's time-in after checking for duplicates.
+     */
     public function timeInCurrentPersonnel(): void
     {
         $personnelId = session('personnel_id');
@@ -56,6 +62,9 @@ class AttendanceService
         });
     }
 
+    /**
+     * Closes the logged-in personnel's active attendance record.
+     */
     public function timeOutCurrentPersonnel(): void
     {
         $personnelId = session('personnel_id');
@@ -87,6 +96,9 @@ class AttendanceService
         });
     }
 
+    /**
+     * Records a member time-in using their library reference number.
+     */
     public function timeInMemberByReference(string $referenceNumber): void
     {
         DB::transaction(function () use ($referenceNumber) {
@@ -114,6 +126,9 @@ class AttendanceService
         });
     }
 
+    /**
+     * Closes a member's active attendance record by reference number.
+     */
     public function timeOutMemberByReference(string $referenceNumber): void
     {
         DB::transaction(function () use ($referenceNumber) {
@@ -147,6 +162,9 @@ class AttendanceService
         });
     }
 
+    /**
+     * Creates a visitor record and starts its attendance log.
+     */
     public function timeInVisitor(array $data): void
     {
         DB::transaction(function () use ($data) {
@@ -173,6 +191,9 @@ class AttendanceService
         });
     }
 
+    /**
+     * Finds a matching active visitor log and records its time-out.
+     */
     public function timeOutVisitor(array $data): void
     {
         DB::transaction(function () use ($data) {
@@ -216,6 +237,9 @@ class AttendanceService
         });
     }
 
+    /**
+     * Prevents the same person from having more than one active log.
+     */
     private function preventDuplicateActiveLog(string $column, int $id): void
     {
         $activeLog = DB::table('attendance_log')
@@ -230,6 +254,9 @@ class AttendanceService
         }
     }
 
+    /**
+     * Gets the current personnel's unfinished attendance log, if one exists.
+     */
     private function getCurrentPersonnelActiveLog(?int $personnelId): ?object
     {
         if (!$personnelId) {
@@ -242,6 +269,9 @@ class AttendanceService
             ->first();
     }
 
+    /**
+     * Lists everyone currently inside the library.
+     */
     private function getActiveLogs(): Collection
     {
         return DB::table('attendance_log')
@@ -274,6 +304,9 @@ class AttendanceService
             ->get();
     }
 
+    /**
+     * Builds the paginated attendance history with optional filters.
+     */
     private function getLogs(?string $search = null, ?string $role = null, ?string $date = null): LengthAwarePaginator
     {
         $query = DB::table('attendance_log')
@@ -336,6 +369,9 @@ class AttendanceService
             ->withQueryString();
     }
 
+    /**
+     * Provides the role values used by attendance filters and forms.
+     */
     private function attendanceRoles(): array
     {
         return [

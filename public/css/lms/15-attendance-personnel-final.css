@@ -1,0 +1,319 @@
+.attendance-admin-grid {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+    gap: 22px;
+    margin-bottom: 22px;
+}
+
+.attendance-admin-card {
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.attendance-admin-card h3 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 26px;
+    font-weight: 950;
+    letter-spacing: -0.5px;
+}
+
+.attendance-admin-card p {
+    margin: 0 0 18px;
+    color: #64748b;
+    font-size: 16px;
+    line-height: 1.55;
+}
+
+.attendance-status-box {
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    font-weight: 850;
+}
+
+.attendance-status-box.active {
+    background: #fef3c7;
+    border-color: #fcd34d;
+    color: #92400e;
+}
+
+.attendance-warning-button {
+    min-height: 46px;
+    border: none;
+    border-radius: 14px;
+    padding: 0 20px;
+    background: #f59e0b;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(245, 158, 11, 0.20);
+}
+
+.attendance-warning-button:hover {
+    background: #d97706;
+}
+
+.privacy-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #475569;
+    line-height: 1.75;
+    font-size: 15px;
+}
+
+.attendance-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    gap: 22px;
+    margin-bottom: 26px;
+}
+
+.attendance-stat-card {
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.attendance-stat-card strong {
+    display: block;
+    color: #0f172a;
+    font-size: 34px;
+    font-weight: 950;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+}
+
+.attendance-stat-card span {
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.attendance-record-header {
+    margin-top: 0;
+}
+
+.attendance-filter-card {
+    grid-template-columns: minmax(260px, 1.3fr) minmax(160px, 0.8fr) minmax(150px, 0.7fr) minmax(150px, 0.7fr) auto auto;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    border-radius: 999px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 950;
+    white-space: nowrap;
+}
+
+.active-status {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.completed-status {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pagination-wrapper {
+    margin-top: 18px;
+}
+
+@media (max-width: 1200px) {
+    .attendance-filter-card {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .attendance-admin-grid,
+    .attendance-stat-grid,
+    .attendance-filter-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+.personnel-filter-card {
+    grid-template-columns: minmax(280px, 1.4fr) minmax(180px, 0.7fr) minmax(220px, 0.9fr) auto;
+}
+
+.table-action-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.inline-delete-form {
+    display: inline;
+    margin: 0;
+}
+
+.disabled-delete-button {
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+    .personnel-filter-card {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .personnel-filter-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+.personnel-filter-card {
+    grid-template-columns: minmax(280px, 1.4fr) minmax(180px, 0.7fr) minmax(220px, 0.9fr) auto;
+}
+
+.table-action-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.inline-delete-form {
+    display: inline;
+    margin: 0;
+}
+
+.disabled-delete-button {
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+    .personnel-filter-card {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .personnel-filter-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+.personnel-table td {
+    vertical-align: middle !important;
+}
+
+.personnel-table th:last-child,
+.personnel-table td:last-child {
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+
+.table-action-group {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    flex-wrap: nowrap !important;
+}
+
+.table-action-group a,
+.table-action-group button,
+.table-action-group span {
+    text-decoration: none !important;
+}
+
+.edit-button {
+    min-height: 34px !important;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    line-height: 1 !important;
+}
+
+.edit-button:hover {
+    background: #fde68a !important;
+    color: #78350f !important;
+}
+
+.delete-button {
+    min-height: 34px !important;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+}
+
+.delete-button:hover {
+    background: #fecaca !important;
+    color: #7f1d1d !important;
+}
+
+.disabled-delete-button {
+    min-height: 34px !important;
+    padding: 0 16px !important;
+    border-radius: 999px !important;
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: not-allowed !important;
+    line-height: 1 !important;
+}
+
+.inline-delete-form {
+    display: inline-flex !important;
+    margin: 0 !important;
+}

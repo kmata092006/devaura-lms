@@ -15,6 +15,7 @@ use App\Http\Middleware\AdminOnly;
 use App\Http\Middleware\AuditTrailLogger;
 use Illuminate\Support\Facades\Route;
 
+// Sends the root URL to the LMS login page.
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -27,6 +28,9 @@ Route::post('/login', [AuthController::class, 'login'])
 
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
+
+Route::get('/attendance/admin-login', [AuthController::class, 'kioskAdminLogin'])
+    ->name('attendance.admin-login');
 
 Route::get('/attendance', [AttendanceController::class, 'kiosk'])
     ->name('attendance.kiosk');
@@ -47,11 +51,13 @@ Route::post('/attendance/visitor/time-out', [AttendanceController::class, 'timeO
     ->middleware(AuditTrailLogger::class)
     ->name('attendance.visitor.time-out');
 
+// Applies admin access control and audit logging to all admin routes.
 Route::prefix('admin')
     ->name('admin.')
     ->middleware([AdminOnly::class, AuditTrailLogger::class])
     ->group(function () {
 
+// Displays the admin dashboard from inside the protected route group.
 Route::get('/dashboard', function () {
     return view('admin.dashboard');
 })->name('dashboard');
@@ -118,7 +124,10 @@ Route::put('/members/{memberId}', [LibraryMemberController::class, 'update'])
 
 Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])
     ->name('members.destroy');
-
+    
+Route::get('/books/google-books/search', [BookController::class, 'searchGoogleBooks'])
+    ->name('books.google-books.search');
+    
 Route::get('/books', [BookController::class, 'index'])
     ->name('books.index');
 

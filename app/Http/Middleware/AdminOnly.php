@@ -8,6 +8,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminOnly
 {
+    /**
+     * Allows only logged-in admin personnel to access protected routes.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         if (!session()->has('personnel_id')) {

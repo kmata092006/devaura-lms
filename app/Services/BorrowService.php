@@ -9,6 +9,9 @@ use Illuminate\Validation\ValidationException;
 
 class BorrowService
 {
+    /**
+     * Prepares member, book, and transaction data for the borrow page.
+     */
     public function getBorrowPageData(?string $search = null): array
     {
         $this->updateOverdueTransactions();
@@ -21,6 +24,9 @@ class BorrowService
         ];
     }
 
+    /**
+     * Creates an active borrow transaction and marks the book as borrowed.
+     */
     public function borrowBook(array $data): void
     {
         DB::transaction(function () use ($data) {
@@ -67,6 +73,9 @@ class BorrowService
         });
     }
 
+    /**
+     * Lists members that can be selected for a borrowing transaction.
+     */
     private function getMembers(): Collection
     {
         return DB::table('library_member')
@@ -82,6 +91,9 @@ class BorrowService
             ->get();
     }
 
+    /**
+     * Lists books that are currently available to borrow.
+     */
     private function getAvailableBooks(): Collection
     {
         return DB::table('book')
@@ -102,6 +114,9 @@ class BorrowService
             ->get();
     }
 
+    /**
+     * Returns active borrowed or overdue transactions for the borrow table.
+     */
     private function getActiveBorrowTransactions(?string $search = null): LengthAwarePaginator
     {
         $query = DB::table('borrow_transaction')
@@ -149,6 +164,9 @@ class BorrowService
             ->withQueryString();
     }
 
+    /**
+     * Marks borrowed transactions as overdue once their due date has passed.
+     */
     private function updateOverdueTransactions(): void
     {
         DB::table('borrow_transaction')

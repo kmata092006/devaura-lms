@@ -10,11 +10,17 @@ class BookListController extends Controller
 {
     private BookListService $bookListService;
 
+    /**
+     * Injects the book list service used by the catalog page.
+     */
     public function __construct(BookListService $bookListService)
     {
         $this->bookListService = $bookListService;
     }
 
+    /**
+     * Displays the searchable book catalog with its filter options.
+     */
     public function index(Request $request)
     {
         $books = $this->bookListService->getBookList(

@@ -29,6 +29,15 @@ class LibraryPersonnelController extends Controller
         'Afternoon',
     ];
 
+    private array $protectedUsernames = [
+        'admin',
+        'staff',
+        'student staff',
+    ];
+
+    /**
+     * Shows paginated personnel records with search and filters.
+     */
     public function index(Request $request)
     {
         $query = DB::table('library_personnel as personnel')
@@ -55,7 +64,7 @@ class LibraryPersonnelController extends Controller
                     ->orWhere('personnel.personnel_role', 'like', "%{$search}%")
                     ->orWhere('personnel.last_name', 'like', "%{$search}%")
                     ->orWhere('personnel.first_name', 'like', "%{$search}%")
-                    ->orWhere('personnel.`m.i.`', 'like', "%{$search}%")
+                    ->orWhereRaw('personnel.`m.i.` LIKE ?', ["%{$search}%"])
                     ->orWhere('department.department_name', 'like', "%{$search}%");
             });
         }
@@ -73,11 +82,16 @@ class LibraryPersonnelController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $personnel->getCollection()->transform(function ($person) {
-            $middleInitial = $person->middle_initial ? ' ' . $person->middle_initial : '';
+        $protectedUsernames = $this->protectedUsernames;
+
+        $personnel->getCollection()->transform(function ($person) use ($protectedUsernames) {
+            $middleInitial = $person->middle_initial ? ' ' . $person->middle_initial . '.' : '';
 
             $person->full_name = "{$person->last_name}, {$person->first_name}{$middleInitial}";
             $person->department_name = $person->department_name ?? '-';
+            $person->shift_day = $person->shift_day ?? '-';
+            $person->shift_period = $person->shift_period ?? '-';
+            $person->is_protected_account = in_array($person->username, $protectedUsernames, true);
 
             return $person;
         });
@@ -91,6 +105,9 @@ class LibraryPersonnelController extends Controller
         return view('admin.personnel.index', compact('personnel', 'roles', 'departments'));
     }
 
+    /**
+     * Shows the form for creating a personnel account.
+     */
     public function create()
     {
         $roles = $this->roles;
@@ -109,6 +126,9 @@ class LibraryPersonnelController extends Controller
         ));
     }
 
+    /**
+     * Validates and stores a new personnel account.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -143,23 +163,32 @@ class LibraryPersonnelController extends Controller
             'password.confirmed' => 'The password confirmation does not match.',
         ]);
 
-        DB::table('library_personnel')->insert([
-            'personnel_role' => $validated['personnel_role'],
-            'username' => $validated['username'],
-            'password_hash' => Hash::make($validated['password']),
-            'department_id' => $validated['department_id'],
-            'last_name' => $validated['last_name'],
-            'first_name' => $validated['first_name'],
-            'm.i.' => $this->formatMiddleInitial($validated['middle_initial'] ?? null),
-            'shift_day' => $validated['shift_day'],
-            'shift_period' => $validated['shift_period'],
-        ]);
+        DB::insert(
+            'INSERT INTO library_personnel
+                (personnel_role, username, password_hash, department_id, last_name, first_name, `m.i.`, shift_day, shift_period)
+             VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                $validated['personnel_role'],
+                $validated['username'],
+                Hash::make($validated['password']),
+                $validated['department_id'],
+                trim($validated['last_name']),
+                trim($validated['first_name']),
+                $this->formatMiddleInitial($validated['middle_initial'] ?? null),
+                $validated['shift_day'],
+                $validated['shift_period'],
+            ]
+        );
 
         return redirect()
             ->route('admin.personnel.index')
             ->with('success', 'Library personnel account created successfully.');
     }
 
+    /**
+     * Shows the edit form for one personnel account.
+     */
     public function edit($personnelId)
     {
         $personnel = DB::table('library_personnel')
@@ -200,6 +229,9 @@ class LibraryPersonnelController extends Controller
         ));
     }
 
+    /**
+     * Validates and updates an existing personnel account.
+     */
     public function update(Request $request, $personnelId)
     {
         $personnel = DB::table('library_personnel')
@@ -244,38 +276,68 @@ class LibraryPersonnelController extends Controller
             'password.confirmed' => 'The password confirmation does not match.',
         ]);
 
-        $updateData = [
-            'personnel_role' => $validated['personnel_role'],
-            'username' => $validated['username'],
-            'department_id' => $validated['department_id'],
-            'last_name' => $validated['last_name'],
-            'first_name' => $validated['first_name'],
-            'm.i.' => $this->formatMiddleInitial($validated['middle_initial'] ?? null),
-            'shift_day' => $validated['shift_day'],
-            'shift_period' => $validated['shift_period'],
-        ];
-
         if (!empty($validated['password'])) {
-            $updateData['password_hash'] = Hash::make($validated['password']);
+            DB::update(
+                'UPDATE library_personnel
+                 SET personnel_role = ?,
+                     username = ?,
+                     department_id = ?,
+                     last_name = ?,
+                     first_name = ?,
+                     `m.i.` = ?,
+                     shift_day = ?,
+                     shift_period = ?,
+                     password_hash = ?
+                 WHERE personnel_id = ?',
+                [
+                    $validated['personnel_role'],
+                    $validated['username'],
+                    $validated['department_id'],
+                    trim($validated['last_name']),
+                    trim($validated['first_name']),
+                    $this->formatMiddleInitial($validated['middle_initial'] ?? null),
+                    $validated['shift_day'],
+                    $validated['shift_period'],
+                    Hash::make($validated['password']),
+                    $personnelId,
+                ]
+            );
+        } else {
+            DB::update(
+                'UPDATE library_personnel
+                 SET personnel_role = ?,
+                     username = ?,
+                     department_id = ?,
+                     last_name = ?,
+                     first_name = ?,
+                     `m.i.` = ?,
+                     shift_day = ?,
+                     shift_period = ?
+                 WHERE personnel_id = ?',
+                [
+                    $validated['personnel_role'],
+                    $validated['username'],
+                    $validated['department_id'],
+                    trim($validated['last_name']),
+                    trim($validated['first_name']),
+                    $this->formatMiddleInitial($validated['middle_initial'] ?? null),
+                    $validated['shift_day'],
+                    $validated['shift_period'],
+                    $personnelId,
+                ]
+            );
         }
-
-        DB::table('library_personnel')
-            ->where('personnel_id', $personnelId)
-            ->update($updateData);
 
         return redirect()
             ->route('admin.personnel.index')
             ->with('success', 'Library personnel account updated successfully.');
     }
 
+    /**
+     * Deletes a personnel account unless it is protected or currently logged in.
+     */
     public function destroy($personnelId)
     {
-        if ((int) $personnelId === (int) session('personnel_id')) {
-            return redirect()
-                ->route('admin.personnel.index')
-                ->withErrors(['personnel' => 'You cannot delete your own logged-in account.']);
-        }
-
         $personnel = DB::table('library_personnel')
             ->where('personnel_id', $personnelId)
             ->first();
@@ -284,6 +346,18 @@ class LibraryPersonnelController extends Controller
             return redirect()
                 ->route('admin.personnel.index')
                 ->withErrors(['personnel' => 'Library personnel record not found.']);
+        }
+
+        if ((int) $personnelId === (int) session('personnel_id')) {
+            return redirect()
+                ->route('admin.personnel.index')
+                ->withErrors(['personnel' => 'You cannot delete your own logged-in account.']);
+        }
+
+        if (in_array($personnel->username, $this->protectedUsernames, true)) {
+            return redirect()
+                ->route('admin.personnel.index')
+                ->withErrors(['personnel' => 'Default system accounts cannot be deleted.']);
         }
 
         DB::table('library_personnel')
@@ -295,6 +369,9 @@ class LibraryPersonnelController extends Controller
             ->with('success', 'Library personnel account deleted successfully.');
     }
 
+    /**
+     * Normalizes middle initials before saving personnel names.
+     */
     private function formatMiddleInitial(?string $middleInitial): ?string
     {
         if (!$middleInitial) {
@@ -302,6 +379,7 @@ class LibraryPersonnelController extends Controller
         }
 
         $middleInitial = strtoupper(trim($middleInitial));
+        $middleInitial = rtrim($middleInitial, '.');
 
         if ($middleInitial === '') {
             return null;

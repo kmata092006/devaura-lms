@@ -189,6 +189,7 @@
 
         const roleGroups = @json($options['roleGroups']);
 
+        // Converts stored role values into readable dropdown labels.
         function formatRoleLabel(role) {
             return role
                 .split(' ')
@@ -196,6 +197,7 @@
                 .join(' ');
         }
 
+        // Rebuilds role options to match the selected report type.
         function updateRoleOptions(resetRole = false) {
             const selectedReport = reportTypeSelect.value;
             const selectedRole = resetRole ? '' : roleSelect.getAttribute('data-selected-role');
@@ -227,6 +229,7 @@
             }
         }
 
+        // Shows only the filters that apply to the selected report.
         function updateVisibleReportFilters(resetRole = false) {
             const selectedReport = reportTypeSelect.value;
             const allowedFilters = visibleFilters[selectedReport] || ['search'];

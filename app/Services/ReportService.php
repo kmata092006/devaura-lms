@@ -23,6 +23,9 @@ class ReportService
         'Lost',
     ];
 
+    /**
+     * Builds the selected report dataset, metadata, and filter options.
+     */
     public function getReportPageData(array $requestFilters): array
     {
         $reportTypes = $this->reportTypes();
@@ -58,6 +61,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Normalizes request filters and removes invalid role selections.
+     */
     private function normalizeFilters(array $filters, string $selectedReport): array
     {
         $role = trim($filters['role'] ?? '') ?: null;
@@ -78,6 +84,10 @@ class ReportService
             'date_to' => trim($filters['date_to'] ?? '') ?: null,
         ];
     }
+
+    /**
+     * Checks whether a role filter belongs to the selected report type.
+     */
     private function isRoleAllowedForReport(string $selectedReport, ?string $role): bool
     {
         if (!$role) {
@@ -111,6 +121,9 @@ class ReportService
         return in_array($role, $roleGroups[$selectedReport], true);
     }
 
+    /**
+     * Defines the report types shown in the reports module.
+     */
     private function reportTypes(): array
     {
         return [
@@ -126,6 +139,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds dropdown options shared by report filters.
+     */
     private function filterOptions(): array
     {
         return [
@@ -181,6 +197,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the attendance logs report with person names and active status.
+     */
     private function attendanceLogsReport(array $filters): array
     {
         $personnelName = $this->fullNameSql('personnel', '-');
@@ -272,6 +291,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the book status report with latest borrow transaction details.
+     */
     private function bookStatusReport(array $filters): array
     {
         $authorName = $this->fullNameSql('author', '-');
@@ -367,6 +389,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the personnel report grouped by role and name.
+     */
     private function libraryPersonnelReport(array $filters): array
     {
         $personnelName = $this->fullNameSql('personnel', '-');
@@ -419,6 +444,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the library members report with role and reference data.
+     */
     private function libraryMembersReport(array $filters): array
     {
         $memberName = $this->fullNameSql('member', '-');
@@ -463,6 +491,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the visitor report with visit totals and latest visit date.
+     */
     private function libraryVisitorsReport(array $filters): array
     {
         $visitorName = $this->fullNameSql('visitor', '-');
@@ -514,6 +545,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the genre summary report with book counts.
+     */
     private function bookGenreReport(array $filters): array
     {
         $columns = [
@@ -544,6 +578,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the author summary report with book counts.
+     */
     private function bookAuthorReport(array $filters): array
     {
         $authorName = $this->fullNameSql('author', 'Unnamed Author');
@@ -581,6 +618,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the publisher summary report with publication dates and counts.
+     */
     private function bookPublisherReport(array $filters): array
     {
         $publisherName = $this->fullNameSql('publisher', 'Unnamed Publisher');
@@ -623,6 +663,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Builds the detailed book catalog report.
+     */
     private function bookListReport(array $filters): array
     {
         $authorName = $this->fullNameSql('author', '-');
@@ -693,6 +736,9 @@ class ReportService
         ];
     }
 
+    /**
+     * Applies optional start and end date filters to a query.
+     */
     private function applyDateRange($query, string $column, array $filters): void
     {
         if ($filters['date_from']) {
@@ -704,6 +750,9 @@ class ReportService
         }
     }
 
+    /**
+     * Builds a reusable SQL expression for formatted names.
+     */
     private function fullNameSql(string $alias, string $fallback = '-'): string
     {
         $nameExpression = "

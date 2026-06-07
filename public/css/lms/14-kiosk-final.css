@@ -1,0 +1,591 @@
+.kiosk-body,
+body:has(.kiosk-page) {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.22), transparent 30%),
+        linear-gradient(135deg, #071a35 0%, #0b2346 48%, #12376d 100%) !important;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+.kiosk-page {
+    width: min(1120px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 34px 0 56px;
+}
+
+.kiosk-header,
+.kiosk-header-inner {
+    width: 100%;
+}
+
+.kiosk-header-inner {
+    min-height: 74px;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(219, 234, 254, 0.22);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.kiosk-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.kiosk-logo {
+    min-width: 82px;
+    height: 48px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #12376d;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 950;
+    letter-spacing: -0.3px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.kiosk-brand-text h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -0.2px;
+}
+
+.kiosk-brand-text p,
+.kiosk-brand-text span {
+    display: none !important;
+}
+
+.kiosk-admin-link {
+    min-height: 46px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #12376d !important;
+    font-size: 15px;
+    font-weight: 950;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.kiosk-admin-link:hover {
+    background: #dbeafe;
+    color: #0b2346 !important;
+    transform: translateY(-1px);
+}
+
+.kiosk-main,
+.kiosk-content {
+    margin-top: 36px;
+}
+
+.kiosk-date {
+    margin: 0 0 12px;
+    color: #bfdbfe;
+    font-size: clamp(20px, 2.1vw, 30px);
+    font-weight: 850;
+    letter-spacing: 0.01em;
+}
+
+.kiosk-title,
+.kiosk-main h1 {
+    margin: 0 0 26px;
+    color: #ffffff;
+    font-size: clamp(54px, 6vw, 88px);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -2.2px;
+    text-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+.kiosk-panel,
+.kiosk-attendance-card {
+    border-radius: 26px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(219, 234, 254, 0.24);
+    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.20);
+    backdrop-filter: blur(14px);
+}
+
+.kiosk-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.kiosk-tab,
+.kiosk-tab-button {
+    min-height: 52px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(219, 234, 254, 0.18);
+    color: #dbeafe;
+    font-size: 16px;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+.kiosk-tab.active,
+.kiosk-tab-button.active,
+.kiosk-tabs button.active {
+    background: #ffffff;
+    color: #0b2346;
+}
+
+.kiosk-section,
+.kiosk-form-area {
+    border-radius: 22px;
+    padding: 24px;
+    background: rgba(219, 234, 254, 0.14);
+    border: 1px solid rgba(219, 234, 254, 0.16);
+}
+
+.kiosk-section h2,
+.kiosk-form-area h2 {
+    margin: 0 0 18px;
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 950;
+    letter-spacing: -0.4px;
+}
+
+.kiosk-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.kiosk-action-card,
+.kiosk-form-box {
+    border-radius: 20px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(219, 234, 254, 0.22);
+}
+
+.kiosk-action-card h3,
+.kiosk-form-box h3 {
+    margin: 0 0 14px;
+    color: #ffffff;
+    text-align: center;
+    font-size: 19px;
+    font-weight: 950;
+}
+
+.kiosk-action-card label,
+.kiosk-form-box label {
+    display: block;
+    margin-bottom: 8px;
+    color: #eff6ff;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.kiosk-action-card input,
+.kiosk-form-box input {
+    width: 100%;
+    min-height: 54px;
+    border: 2px solid rgba(219, 234, 254, 0.42);
+    border-radius: 14px;
+    padding: 0 16px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.kiosk-action-card input:focus,
+.kiosk-form-box input:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.22);
+}
+
+.kiosk-time-in-button,
+.kiosk-btn-in,
+button[name="action"][value="time_in"],
+.kiosk-action-card .time-in,
+.kiosk-form-box .time-in {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 14px;
+    background: #16a34a;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 12px 26px rgba(22, 163, 74, 0.22);
+}
+
+.kiosk-time-out-button,
+.kiosk-btn-out,
+button[name="action"][value="time_out"],
+.kiosk-action-card .time-out,
+.kiosk-form-box .time-out {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 14px;
+    background: #f59e0b;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 12px 26px rgba(245, 158, 11, 0.24);
+}
+
+.kiosk-time-in-button:hover,
+.kiosk-btn-in:hover,
+button[name="action"][value="time_in"]:hover {
+    background: #15803d;
+}
+
+.kiosk-time-out-button:hover,
+.kiosk-btn-out:hover,
+button[name="action"][value="time_out"]:hover {
+    background: #d97706;
+}
+
+.kiosk-alert,
+.kiosk-message {
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin: 18px 0;
+    font-weight: 800;
+}
+
+.kiosk-alert.success,
+.kiosk-message.success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.kiosk-alert.error,
+.kiosk-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+@media (max-width: 900px) {
+    .kiosk-page {
+        width: min(100% - 24px, 720px);
+        padding-top: 18px;
+    }
+
+    .kiosk-header-inner {
+        border-radius: 24px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .kiosk-admin-link {
+        width: 100%;
+    }
+
+    .kiosk-title,
+    .kiosk-main h1 {
+        font-size: 48px;
+    }
+
+    .kiosk-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.kiosk-page {
+    width: min(1080px, calc(100% - 48px)) !important;
+    margin: 0 auto !important;
+    padding: 32px 0 64px !important;
+}
+
+.ubnhs-kiosk-header {
+    width: 100%;
+    min-height: 76px;
+    padding: 12px 18px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.ubnhs-kiosk-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.ubnhs-kiosk-logo {
+    width: 72px;
+    height: 48px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #12376d, #2563eb);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 950;
+    letter-spacing: -0.3px;
+    flex: 0 0 72px;
+}
+
+.ubnhs-kiosk-brand h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 950;
+    letter-spacing: -0.4px;
+}
+
+.ubnhs-kiosk-brand p {
+    margin: 3px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ubnhs-kiosk-admin-btn {
+    min-height: 46px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #ffffff !important;
+    font-size: 15px;
+    font-weight: 950;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.24);
+}
+
+.ubnhs-kiosk-admin-btn:hover {
+    background: #1d4ed8;
+}
+
+/* Remove old weird header styling */
+.kiosk-header,
+.kiosk-header-inner {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* Main kiosk layout */
+.kiosk-main,
+.kiosk-content {
+    margin-top: 34px !important;
+}
+
+.kiosk-date {
+    color: #bfdbfe !important;
+    font-size: 28px !important;
+    font-weight: 850 !important;
+    margin-bottom: 12px !important;
+}
+
+.kiosk-title,
+.kiosk-main h1 {
+    color: #ffffff !important;
+    font-size: clamp(58px, 6vw, 82px) !important;
+    line-height: 0.95 !important;
+    font-weight: 950 !important;
+    letter-spacing: -2px !important;
+    margin: 0 0 28px !important;
+}
+
+/* Main attendance panel */
+.kiosk-panel,
+.kiosk-attendance-card {
+    border-radius: 24px !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbe3ef !important;
+    box-shadow: 0 22px 55px rgba(15, 23, 42, 0.18) !important;
+}
+
+/* Tabs */
+.kiosk-tabs {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+.kiosk-tabs button,
+.kiosk-tab,
+.kiosk-tab-button {
+    min-height: 52px !important;
+    border: none !important;
+    border-radius: 999px !important;
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    font-size: 16px !important;
+    font-weight: 950 !important;
+    cursor: pointer !important;
+}
+
+.kiosk-tabs button.active,
+.kiosk-tab.active,
+.kiosk-tab-button.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+/* Inner section */
+.kiosk-section,
+.kiosk-form-area {
+    border-radius: 22px !important;
+    padding: 24px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+.kiosk-section h2,
+.kiosk-form-area h2 {
+    color: #0f172a !important;
+    font-size: 28px !important;
+    font-weight: 950 !important;
+    margin: 0 0 18px !important;
+}
+
+/* Time-in / time-out cards */
+.kiosk-form-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+}
+
+.kiosk-action-card,
+.kiosk-form-box {
+    border-radius: 20px !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbe3ef !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+.kiosk-action-card h3,
+.kiosk-form-box h3 {
+    margin: 0 0 14px !important;
+    color: #0f172a !important;
+    text-align: center !important;
+    font-size: 20px !important;
+    font-weight: 950 !important;
+}
+
+.kiosk-action-card label,
+.kiosk-form-box label {
+    color: #0f172a !important;
+    font-size: 14px !important;
+    font-weight: 900 !important;
+}
+
+.kiosk-action-card input,
+.kiosk-form-box input {
+    width: 100% !important;
+    min-height: 54px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 14px !important;
+    padding: 0 16px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 15px !important;
+}
+
+.kiosk-action-card input:focus,
+.kiosk-form-box input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14) !important;
+}
+
+/* Buttons */
+.kiosk-action-card button,
+.kiosk-form-box button {
+    width: 100% !important;
+    min-height: 54px !important;
+    margin-top: 12px !important;
+    border: none !important;
+    border-radius: 14px !important;
+    color: #ffffff !important;
+    font-size: 16px !important;
+    font-weight: 950 !important;
+    cursor: pointer !important;
+}
+
+.kiosk-action-card button[type="submit"],
+.kiosk-form-box button[type="submit"] {
+    background: #2563eb !important;
+}
+
+.kiosk-action-card button[type="submit"]:hover,
+.kiosk-form-box button[type="submit"]:hover {
+    background: #1d4ed8 !important;
+}
+
+/* Preserve color meaning for existing buttons if classes exist */
+.kiosk-time-in-button,
+.kiosk-btn-in,
+.time-in {
+    background: #16a34a !important;
+}
+
+.kiosk-time-out-button,
+.kiosk-btn-out,
+.time-out {
+    background: #f59e0b !important;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .kiosk-page {
+        width: min(100% - 24px, 720px) !important;
+    }
+
+    .ubnhs-kiosk-header {
+        border-radius: 20px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ubnhs-kiosk-admin-btn {
+        width: 100%;
+    }
+
+    .kiosk-form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .kiosk-title,
+    .kiosk-main h1 {
+        font-size: 48px !important;
+    }
+}
+

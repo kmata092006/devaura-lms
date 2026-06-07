@@ -10,11 +10,17 @@ class AuditTrailController extends Controller
 {
     private AuditTrailService $auditTrailService;
 
+    /**
+     * Injects the audit trail service used by the audit page.
+     */
     public function __construct(AuditTrailService $auditTrailService)
     {
         $this->auditTrailService = $auditTrailService;
     }
 
+    /**
+     * Shows filtered audit trail records and filter dropdown options.
+     */
     public function index(Request $request)
     {
         $filters = [

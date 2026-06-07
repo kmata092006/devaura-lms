@@ -9,6 +9,9 @@ use Throwable;
 
 class AuditTrailService
 {
+    /**
+     * Stores an audit trail entry without interrupting the original action.
+     */
     public function record(
         string $actionType,
         string $moduleName,
@@ -38,6 +41,9 @@ class AuditTrailService
         }
     }
 
+    /**
+     * Returns filtered audit trail records for the admin audit page.
+     */
     public function getAuditLogs(array $filters): LengthAwarePaginator
     {
         $query = DB::table('audit_trail')
@@ -95,6 +101,9 @@ class AuditTrailService
             ->withQueryString();
     }
 
+    /**
+     * Builds distinct filter options from existing audit records.
+     */
     public function getFilterOptions(): array
     {
         return [

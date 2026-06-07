@@ -9,6 +9,9 @@ use Illuminate\Support\Str;
 
 class AuditTrailLogger
 {
+    /**
+     * Records successful write actions after the request is handled.
+     */
     public function handle(Request $request, Closure $next): mixed
     {
         $response = $next($request);
@@ -25,6 +28,9 @@ class AuditTrailLogger
         return $response;
     }
 
+    /**
+     * Decides whether the request should be saved in the audit trail.
+     */
     private function shouldRecord(Request $request, mixed $response): bool
     {
         if (!in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
@@ -42,6 +48,9 @@ class AuditTrailLogger
         return true;
     }
 
+    /**
+     * Infers the audit action type from route, path, and HTTP method.
+     */
     private function getActionType(Request $request): string
     {
         $routeName = $request->route()?->getName() ?? '';
@@ -83,6 +92,9 @@ class AuditTrailLogger
         return 'CREATE';
     }
 
+    /**
+     * Maps the request path to the affected LMS module.
+     */
     private function getModuleName(Request $request): string
     {
         $path = $request->path();
@@ -103,6 +115,9 @@ class AuditTrailLogger
         };
     }
 
+    /**
+     * Builds safe audit details while excluding passwords and framework fields.
+     */
     private function getActionDetails(Request $request): string
     {
         $routeName = $request->route()?->getName() ?? 'unknown route';

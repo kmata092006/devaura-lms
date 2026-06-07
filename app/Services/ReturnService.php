@@ -8,6 +8,9 @@ use Illuminate\Validation\ValidationException;
 
 class ReturnService
 {
+    /**
+     * Prepares active borrow transactions for the return page.
+     */
     public function getReturnPageData(?string $search = null): array
     {
         $this->updateOverdueTransactions();
@@ -17,6 +20,9 @@ class ReturnService
         ];
     }
 
+    /**
+     * Closes an active transaction and makes the book available again.
+     */
     public function returnBookNormally(int $transactionId): void
     {
         DB::transaction(function () use ($transactionId) {
@@ -37,6 +43,9 @@ class ReturnService
         });
     }
 
+    /**
+     * Closes an active transaction and marks the book as lost.
+     */
     public function markBookAsLost(int $transactionId): void
     {
         DB::transaction(function () use ($transactionId) {
@@ -57,6 +66,9 @@ class ReturnService
         });
     }
 
+    /**
+     * Closes an active transaction and marks the returned book as damaged.
+     */
     public function markBookAsDamaged(int $transactionId): void
     {
         DB::transaction(function () use ($transactionId) {
@@ -77,6 +89,9 @@ class ReturnService
         });
     }
 
+    /**
+     * Locks an active borrow transaction before return-state updates.
+     */
     private function getLockedActiveTransaction(int $transactionId): object
     {
         $transaction = DB::table('borrow_transaction')
@@ -94,6 +109,9 @@ class ReturnService
         return $transaction;
     }
 
+    /**
+     * Returns active borrow transactions with member, book, and genre details.
+     */
     private function getActiveTransactions(?string $search = null): LengthAwarePaginator
     {
         $query = DB::table('borrow_transaction')
@@ -145,6 +163,9 @@ class ReturnService
             ->withQueryString();
     }
 
+    /**
+     * Marks borrowed transactions as overdue once their due date has passed.
+     */
     private function updateOverdueTransactions(): void
     {
         DB::table('borrow_transaction')

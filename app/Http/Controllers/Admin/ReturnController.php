@@ -11,11 +11,17 @@ class ReturnController extends Controller
 {
     private ReturnService $returnService;
 
+    /**
+     * Injects the return service used by this controller.
+     */
     public function __construct(ReturnService $returnService)
     {
         $this->returnService = $returnService;
     }
 
+    /**
+     * Shows active borrow transactions ready for return processing.
+     */
     public function index(Request $request)
     {
         $data = $this->returnService->getReturnPageData(
@@ -25,6 +31,9 @@ class ReturnController extends Controller
         return view('admin.returning.index', $data);
     }
 
+    /**
+     * Returns a book through the service workflow.
+     */
     public function returnNormal(int $transactionId)
     {
         $this->returnService->returnBookNormally($transactionId);
@@ -34,6 +43,9 @@ class ReturnController extends Controller
             ->with('success', 'Book returned successfully. The book status is now Available.');
     }
 
+    /**
+     * Marks a borrowed book as lost through the service workflow.
+     */
     public function markLost(int $transactionId)
     {
         $this->returnService->markBookAsLost($transactionId);
@@ -43,6 +55,9 @@ class ReturnController extends Controller
             ->with('success', 'Book marked as Lost. The transaction has been closed.');
     }
 
+    /**
+     * Marks a returned book as damaged through the service workflow.
+     */
     public function markDamaged(int $transactionId)
     {
         $this->returnService->markBookAsDamaged($transactionId);
@@ -52,6 +67,9 @@ class ReturnController extends Controller
             ->with('success', 'Book marked as Damaged. The transaction has been closed.');
     }
 
+    /**
+     * Legacy return handler that closes a transaction and frees the book.
+     */
     public function returnBook($transactionId)
     {
         $transaction = DB::table('borrow_transaction')
@@ -90,6 +108,9 @@ class ReturnController extends Controller
             ->with('success', 'Book returned successfully.');
     }
 
+    /**
+     * Legacy handler that closes a transaction as lost.
+     */
     public function markAsLost($transactionId)
     {
         $transaction = DB::table('borrow_transaction')
@@ -122,6 +143,9 @@ class ReturnController extends Controller
             ->with('success', 'Book marked as lost successfully.');
     }
 
+    /**
+     * Legacy handler that closes a transaction and marks the book damaged.
+     */
     public function markAsDamaged($transactionId)
     {
         $transaction = DB::table('borrow_transaction')

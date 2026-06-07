@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {
+    /**
+     * Shows dashboard cards that link to available LMS modules.
+     */
     public function index()
     {
         $cards = [

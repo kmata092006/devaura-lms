@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\DB;
 
 class BookService
 {
+    /**
+     * Returns the searchable, filterable book management list.
+     */
     public function getBooks(?string $search = null, ?string $status = null): LengthAwarePaginator
     {
         $query = DB::table('book')
@@ -54,6 +57,9 @@ class BookService
             ->withQueryString();
     }
 
+    /**
+     * Loads a single book with its author, publisher, and genre details.
+     */
     public function findBook(int $bookId): object
     {
         $book = DB::table('book')
@@ -87,6 +93,9 @@ class BookService
         return $book;
     }
 
+    /**
+     * Creates a book and any missing related author, publisher, or genre.
+     */
     public function createBook(array $data): void
     {
         DB::transaction(function () use ($data) {
@@ -105,6 +114,9 @@ class BookService
         });
     }
 
+    /**
+     * Updates a book while reusing or creating its related records.
+     */
     public function updateBook(int $bookId, array $data): void
     {
         DB::transaction(function () use ($bookId, $data) {
@@ -125,6 +137,9 @@ class BookService
         });
     }
 
+    /**
+     * Deletes a book only when it has no borrowing history.
+     */
     public function deleteBook(int $bookId): void
     {
         $hasBorrowTransactions = DB::table('borrow_transaction')
@@ -140,6 +155,9 @@ class BookService
             ->delete();
     }
 
+    /**
+     * Reuses an existing author row or creates one for the book form data.
+     */
     private function findOrCreateAuthor(array $data): int
     {
         $author = DB::table('book_author')
@@ -164,6 +182,9 @@ class BookService
         return (int) DB::getPdo()->lastInsertId();
     }
 
+    /**
+     * Reuses an existing publisher row or creates one for the book form data.
+     */
     private function findOrCreatePublisher(array $data): int
     {
         $publisher = DB::table('book_publisher')
@@ -196,6 +217,9 @@ class BookService
         return (int) DB::getPdo()->lastInsertId();
     }
 
+    /**
+     * Reuses an existing genre row or creates a new genre by name.
+     */
     private function findOrCreateGenre(string $genreName): int
     {
         $genre = DB::table('book_genre')

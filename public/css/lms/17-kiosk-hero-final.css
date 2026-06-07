@@ -1,0 +1,47 @@
+/* =====================================================
+   FINAL KIOSK HERO DATE / TIME SWAP
+===================================================== */
+
+.kiosk-hero-final {
+    width: min(100%, 1060px) !important;
+    margin: 44px auto 28px !important;
+    padding: 0 !important;
+    text-align: left !important;
+}
+
+.kiosk-hero-label {
+    margin: 0 0 12px !important;
+    color: #bfdbfe !important;
+    font-size: clamp(20px, 2vw, 28px) !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.3px !important;
+    text-shadow: none !important;
+}
+
+.kiosk-hero-datetime {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: clamp(44px, 5.2vw, 76px) !important;
+    font-weight: 950 !important;
+    line-height: 1.05 !important;
+    letter-spacing: -2px !important;
+    text-shadow: 0 8px 24px rgba(0, 0, 0, 0.24) !important;
+    max-width: 1060px !important;
+}
+
+@media (max-width: 900px) {
+    .kiosk-hero-final {
+        width: calc(100% - 32px) !important;
+        margin-top: 32px !important;
+    }
+
+    .kiosk-hero-label {
+        font-size: 18px !important;
+    }
+
+    .kiosk-hero-datetime {
+        font-size: 38px !important;
+        letter-spacing: -1px !important;
+    }
+}

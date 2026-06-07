@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\DB;
 
 class LibraryMemberService
 {
+    /**
+     * Returns paginated library members with optional search and role filters.
+     */
     public function getMembers(?string $search = null, ?string $role = null): LengthAwarePaginator
     {
         $query = DB::table('library_member')
@@ -41,6 +44,9 @@ class LibraryMemberService
             ->withQueryString();
     }
 
+    /**
+     * Loads one library member for editing or detail display.
+     */
     public function findMember(int $memberId): object
     {
         $member = DB::table('library_member')
@@ -62,6 +68,9 @@ class LibraryMemberService
         return $member;
     }
 
+    /**
+     * Creates a student or faculty library member record.
+     */
     public function createMember(array $data): void
     {
         DB::insert(
@@ -76,6 +85,9 @@ class LibraryMemberService
         );
     }
 
+    /**
+     * Updates a member's identity, role, and reference number.
+     */
     public function updateMember(int $memberId, array $data): void
     {
         DB::update(
@@ -93,6 +105,9 @@ class LibraryMemberService
         );
     }
 
+    /**
+     * Deletes a member only when no attendance or borrow records depend on it.
+     */
     public function deleteMember(int $memberId): void
     {
         $hasBorrowTransactions = DB::table('borrow_transaction')

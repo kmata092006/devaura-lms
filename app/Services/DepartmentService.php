@@ -9,6 +9,9 @@ use Illuminate\Validation\ValidationException;
 
 class DepartmentService
 {
+    /**
+     * Returns paginated departments with personnel counts.
+     */
     public function getDepartments(?string $search = null): LengthAwarePaginator
     {
         $query = DB::table('department')
@@ -33,6 +36,9 @@ class DepartmentService
             ->withQueryString();
     }
 
+    /**
+     * Lists departments for personnel form dropdowns.
+     */
     public function getDepartmentOptions(): Collection
     {
         return DB::table('department')
@@ -41,6 +47,9 @@ class DepartmentService
             ->get();
     }
 
+    /**
+     * Loads one department for editing or detail display.
+     */
     public function findDepartment(int $departmentId): object
     {
         $department = DB::table('department')
@@ -54,6 +63,9 @@ class DepartmentService
         return $department;
     }
 
+    /**
+     * Creates a new department record.
+     */
     public function createDepartment(array $data): void
     {
         DB::table('department')->insert([
@@ -61,6 +73,9 @@ class DepartmentService
         ]);
     }
 
+    /**
+     * Updates a department name.
+     */
     public function updateDepartment(int $departmentId, array $data): void
     {
         DB::table('department')
@@ -70,6 +85,9 @@ class DepartmentService
             ]);
     }
 
+    /**
+     * Deletes a department only when no personnel are assigned to it.
+     */
     public function deleteDepartment(int $departmentId): void
     {
         $isUsed = DB::table('library_personnel')

@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 class BookListService
 {
+    /**
+     * Returns the public book list with search and catalog filters.
+     */
     public function getBookList(
         ?string $search = null,
         ?string $status = null,
@@ -76,6 +79,9 @@ class BookListService
             ->withQueryString();
     }
 
+    /**
+     * Provides allowed book statuses for list filters.
+     */
     public function getStatuses(): array
     {
         return [
@@ -88,6 +94,9 @@ class BookListService
         ];
     }
 
+    /**
+     * Provides genres available for book list filtering.
+     */
     public function getGenres(): Collection
     {
         return DB::table('book_genre')
@@ -96,6 +105,9 @@ class BookListService
             ->get();
     }
 
+    /**
+     * Provides authors available for book list filtering.
+     */
     public function getAuthors(): Collection
     {
         return DB::table('book_author')
@@ -110,6 +122,9 @@ class BookListService
             ->get();
     }
 
+    /**
+     * Provides publishers available for book list filtering.
+     */
     public function getPublishers(): Collection
     {
         return DB::table('book_publisher')

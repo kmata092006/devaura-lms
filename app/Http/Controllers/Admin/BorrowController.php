@@ -10,11 +10,17 @@ class BorrowController extends Controller
 {
     private BorrowService $borrowService;
 
+    /**
+     * Injects the borrowing service used by this controller.
+     */
     public function __construct(BorrowService $borrowService)
     {
         $this->borrowService = $borrowService;
     }
 
+    /**
+     * Shows the borrow page with members, available books, and active loans.
+     */
     public function index(Request $request)
     {
         $data = $this->borrowService->getBorrowPageData(
@@ -24,6 +30,9 @@ class BorrowController extends Controller
         return view('admin.borrowing.index', $data);
     }
 
+    /**
+     * Validates and records a new borrowing transaction.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([

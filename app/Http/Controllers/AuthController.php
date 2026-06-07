@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    /**
+     * Shows the login form or redirects an already logged-in user.
+     */
     public function showLoginForm()
     {
         if (session()->has('personnel_id')) {
@@ -18,6 +21,9 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
+    /**
+     * Validates login credentials, starts the session, and records the attempt.
+     */
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -68,6 +74,9 @@ class AuthController extends Controller
         return redirect()->route('admin.dashboard');
     }
 
+    /**
+     * Records logout and clears the current session safely.
+     */
     public function logout(Request $request)
     {
         app(AuditTrailService::class)->record(
@@ -82,5 +91,19 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    /**
+     * Resets any kiosk session before sending an admin to the login page.
+     */
+    public function kioskAdminLogin(Request $request)
+    {
+        $request->session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->with('info', 'Please sign in to access the admin system.');
     }
 }

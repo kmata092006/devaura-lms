@@ -1,0 +1,261 @@
+/* =====================================================
+   GOOGLE BOOKS HELPER - ADD BOOK PAGE
+===================================================== */
+
+.google-books-card,
+.book-form-card {
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
+    margin-bottom: 24px;
+}
+
+.google-books-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.google-books-eyebrow {
+    display: inline-flex;
+    margin-bottom: 8px;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.google-books-header h3,
+.book-section-title h3 {
+    margin: 0 0 6px;
+    color: #0f172a;
+    font-size: 24px;
+    font-weight: 950;
+    letter-spacing: -0.5px;
+}
+
+.google-books-header p,
+.book-section-title p {
+    margin: 0;
+    color: #64748b;
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.google-books-search-row {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) auto;
+    gap: 14px;
+}
+
+.google-books-search-row input {
+    width: 100%;
+    min-height: 50px;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 0 16px;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.google-books-search-row input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+
+.google-books-search-row button,
+.use-google-book-button {
+    min-height: 50px;
+    border: none;
+    border-radius: 14px;
+    background: #2563eb;
+    color: #ffffff;
+    padding: 0 20px;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
+}
+
+.google-books-search-row button:hover,
+.use-google-book-button:hover {
+    background: #1d4ed8;
+}
+
+.google-books-search-row button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.google-books-message {
+    margin-top: 16px;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.google-books-message.info {
+    background: #eff6ff;
+    color: #1e3a8a;
+    border: 1px solid #bfdbfe;
+}
+
+.google-books-message.success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.google-books-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.google-books-results {
+    margin-top: 18px;
+    display: grid;
+    gap: 14px;
+}
+
+.google-book-result-card {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #dbe3ef;
+    border-radius: 18px;
+    background: #f8fbff;
+}
+
+.google-book-cover img,
+.google-book-placeholder {
+    width: 92px;
+    height: 132px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+
+.google-book-placeholder {
+    display: grid;
+    place-items: center;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 850;
+    text-align: center;
+}
+
+.google-book-info h4 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 950;
+}
+
+.google-book-info p {
+    margin: 4px 0;
+    color: #475569;
+    font-size: 14px;
+}
+
+.google-book-info .use-google-book-button {
+    margin-top: 12px;
+}
+
+.book-form-section {
+    margin-bottom: 28px;
+}
+
+.book-section-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.book-section-title span {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 950;
+}
+
+.book-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 18px;
+}
+
+.book-title-field {
+    grid-column: span 2;
+}
+
+.book-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.book-form-group input,
+.book-form-group select {
+    width: 100%;
+    min-height: 50px;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 0 14px;
+    color: #0f172a;
+    background: #ffffff;
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.book-form-group input:focus,
+.book-form-group select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+
+.book-form-group small {
+    display: block;
+    margin-top: 7px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.book-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+    .google-books-search-row,
+    .google-book-result-card,
+    .book-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .book-title-field {
+        grid-column: span 1;
+    }
+}

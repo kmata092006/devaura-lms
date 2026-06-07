@@ -1,16 +1,16 @@
 @extends('layouts.admin')
 
-@section('title', 'Library Personnel')
+@section('title', 'Library Personnel | UBNHS Library Management System')
 @section('page-title', 'Library Personnel')
 
 @section('content')
-    <div class="personnel-header-card">
+    <div class="page-actions">
         <div>
             <h2>Library Personnel Records</h2>
             <p>Manage admin, staff, and student staff accounts, departments, and shifts.</p>
         </div>
 
-        <a href="{{ route('admin.personnel.create') }}" class="personnel-primary-button">
+        <a href="{{ route('admin.personnel.create') }}" class="action-button">
             Add Personnel
         </a>
     </div>
@@ -29,8 +29,8 @@
         </div>
     @endif
 
-    <form method="GET" action="{{ route('admin.personnel.index') }}" class="personnel-filter-card">
-        <div class="personnel-filter-group personnel-search-wide">
+    <form method="GET" action="{{ route('admin.personnel.index') }}" class="filter-card personnel-filter-card">
+        <div class="filter-group">
             <label for="search">Search Personnel</label>
             <input
                 type="text"
@@ -41,10 +41,11 @@
             >
         </div>
 
-        <div class="personnel-filter-group">
+        <div class="filter-group">
             <label for="role">Role</label>
             <select name="role" id="role">
                 <option value="">All Roles</option>
+
                 @foreach ($roles as $role)
                     <option value="{{ $role }}" {{ request('role') === $role ? 'selected' : '' }}>
                         {{ ucwords($role) }}
@@ -53,10 +54,11 @@
             </select>
         </div>
 
-        <div class="personnel-filter-group">
+        <div class="filter-group">
             <label for="department_id">Department</label>
             <select name="department_id" id="department_id">
                 <option value="">All Departments</option>
+
                 @foreach ($departments as $department)
                     <option value="{{ $department->department_id }}" {{ (string) request('department_id') === (string) $department->department_id ? 'selected' : '' }}>
                         {{ $department->department_name }}
@@ -65,19 +67,19 @@
             </select>
         </div>
 
-        <div class="personnel-filter-actions">
-            <button type="submit" class="personnel-search-button">
+        <div class="filter-actions">
+            <button type="submit">
                 Search
             </button>
 
-            <a href="{{ route('admin.personnel.index') }}" class="personnel-secondary-button">
+            <a href="{{ route('admin.personnel.index') }}" class="secondary-button">
                 Reset
             </a>
         </div>
     </form>
 
-    <div class="personnel-table-card">
-        <table class="personnel-table">
+    <div class="table-card">
+        <table class="data-table personnel-table">
             <thead>
                 <tr>
                     <th>Personnel ID</th>
@@ -93,43 +95,75 @@
 
             <tbody>
                 @forelse ($personnel as $person)
+                    @php
+                        $protectedUsernames = ['admin', 'staff', 'student staff'];
+
+                        $currentUsername = strtolower(trim($person->username));
+                        $isDefaultAccount = in_array($currentUsername, $protectedUsernames, true);
+                        $isCurrentAccount = (int) $person->personnel_id === (int) session('personnel_id');
+
+                        $middleInitial = $person->middle_initial ?? null;
+
+                        if (!empty($person->full_name)) {
+                            $displayName = $person->full_name;
+                        } else {
+                            $mi = $middleInitial ? ' ' . rtrim($middleInitial, '.') . '.' : '';
+                            $displayName = ($person->last_name ?? '-') . ', ' . ($person->first_name ?? '-') . $mi;
+                        }
+                    @endphp
+
                     <tr>
                         <td>{{ $person->personnel_id }}</td>
-                        <td class="personnel-username-cell">{{ $person->username }}</td>
+
+                        <td class="personnel-username-cell">
+                            {{ $person->username }}
+                        </td>
+
                         <td>
                             <span class="personnel-role-pill">
                                 {{ ucwords($person->personnel_role) }}
                             </span>
                         </td>
-                        <td>{{ $person->full_name }}</td>
-                        <td>{{ $person->department_name }}</td>
+
+                        <td>{{ $displayName }}</td>
+
+                        <td>{{ $person->department_name ?? '-' }}</td>
+
                         <td>{{ $person->shift_day ?? '-' }}</td>
+
                         <td>{{ $person->shift_period ?? '-' }}</td>
+
                         <td>
-                            <div class="personnel-row-actions">
-                                <a href="{{ route('admin.personnel.edit', $person->personnel_id) }}" class="personnel-edit-button">
+                            <div class="table-action-group">
+                                <a href="{{ route('admin.personnel.edit', $person->personnel_id) }}" class="edit-button">
                                     Edit
                                 </a>
 
-                                <form
-                                    method="POST"
-                                    action="{{ route('admin.personnel.destroy', $person->personnel_id) }}"
-                                    onsubmit="return confirm('Delete this personnel account?');"
-                                >
-                                    @csrf
-                                    @method('DELETE')
+                                @if ($isDefaultAccount || $isCurrentAccount)
+                                    <span class="disabled-delete-button" title="Default or current account cannot be deleted">
+                                        Protected
+                                    </span>
+                                @else
+                                    <form method="POST" action="{{ route('admin.personnel.destroy', $person->personnel_id) }}" class="inline-delete-form">
+                                        @csrf
+                                        @method('DELETE')
 
-                                    <button type="submit" class="personnel-delete-button">
-                                        Delete
-                                    </button>
-                                </form>
+                                        <button
+                                            type="submit"
+                                            class="delete-button"
+                                            onclick="return confirm('Delete this personnel account?')"
+                                        >
+                                            Delete
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="personnel-empty-cell">
-                            No library personnel found.
+                        <td colspan="8" class="empty-table">
+                            No library personnel records found.
                         </td>
                     </tr>
                 @endforelse
@@ -137,7 +171,9 @@
         </table>
     </div>
 
-    <div class="pagination-wrapper">
-        {{ $personnel->links() }}
-    </div>
+    @if ($personnel->hasPages())
+        <div class="pagination-wrapper">
+            {{ $personnel->links() }}
+        </div>
+    @endif
 @endsection

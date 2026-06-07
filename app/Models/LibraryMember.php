@@ -20,11 +20,17 @@ class LibraryMember extends Model
         'm.i.',
     ];
 
+    /**
+     * Exposes the legacy `m.i.` column as a readable attribute.
+     */
     public function getMiddleInitialAttribute(): ?string
     {
         return $this->{'m.i.'};
     }
 
+    /**
+     * Formats the member's full name with an optional middle initial.
+     */
     public function getFullNameAttribute(): string
     {
         $middleInitial = $this->{'m.i.'} ? ' ' . $this->{'m.i.'} . '.' : '';

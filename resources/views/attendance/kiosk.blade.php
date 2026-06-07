@@ -1,11 +1,43 @@
+@php
+    // Resolves named routes safely and uses fallback URLs if the route name is unavailable.
+    $routeUrl = function (string $routeName, string $fallbackUrl) {
+        return \Illuminate\Support\Facades\Route::has($routeName)
+            ? route($routeName)
+            : url($fallbackUrl);
+    };
+
+    $memberTimeInAction = $routeUrl('attendance.member.time-in', '/attendance/member/time-in');
+    $memberTimeOutAction = $routeUrl('attendance.member.time-out', '/attendance/member/time-out');
+
+    $visitorTimeInAction = $routeUrl('attendance.visitor.time-in', '/attendance/visitor/time-in');
+    $visitorTimeOutAction = $routeUrl('attendance.visitor.time-out', '/attendance/visitor/time-out');
+
+    $adminLoginUrl = $routeUrl('kiosk.admin-login', '/login');
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Kiosk | Library Management System</title>
+    <title>Attendance Kiosk | UBNHS Library Management System</title>
+
+    <link rel="stylesheet" href="{{ asset('css/lms.css') }}?v={{ time() }}">
 
     <style>
+        :root {
+            --ubnhs-navy: #08244a;
+            --ubnhs-navy-soft: #0f376c;
+            --ubnhs-blue: #2563eb;
+            --ubnhs-blue-dark: #1d4ed8;
+            --ubnhs-light: #f4f8ff;
+            --ubnhs-border: #dbe7f5;
+            --ubnhs-muted: #64748b;
+            --ubnhs-text: #0f172a;
+            --ubnhs-green: #16a34a;
+            --ubnhs-orange: #f59e0b;
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -13,446 +45,598 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: "Segoe UI", Arial, Helvetica, sans-serif;
             background:
-                linear-gradient(rgba(5, 25, 48, 0.88), rgba(5, 25, 48, 0.94)),
-                radial-gradient(circle at top right, rgba(59, 130, 246, 0.35), transparent 35%),
-                radial-gradient(circle at bottom left, rgba(34, 197, 94, 0.18), transparent 35%),
-                #061b33;
-            color: #ffffff;
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 34%),
+                linear-gradient(180deg, var(--ubnhs-navy) 0 48%, #f3f8ff 48% 100%);
+            color: var(--ubnhs-text);
         }
 
-        .kiosk-page {
-            width: min(1180px, calc(100% - 40px));
+        .ubnhs-kiosk-page {
+            width: min(100% - 32px, 1100px);
             margin: 0 auto;
-            padding: 24px 0 36px;
+            padding: 26px 0 48px;
         }
 
-        .topbar {
+        .ubnhs-kiosk-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 16px;
-            padding: 14px 18px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            margin-bottom: 38px;
+            justify-content: space-between;
+            gap: 18px;
+            background: #ffffff;
+            border: 1px solid rgba(219, 231, 245, 0.9);
+            border-radius: 24px;
+            padding: 18px 22px;
+            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22);
         }
 
-        .brand {
+        .ubnhs-kiosk-brand {
             display: flex;
             align-items: center;
             gap: 14px;
         }
 
-        .brand-logo {
-            background: #ffffff;
-            color: #061b33;
-            font-weight: 900;
-            padding: 10px 14px;
-            border-radius: 999px;
-        }
-
-        .brand-text strong {
-            display: block;
-            font-size: 16px;
-        }
-
-        .admin-link {
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: 800;
-            background: rgba(255, 255, 255, 0.14);
-            padding: 10px 16px;
-            border-radius: 999px;
-        }
-
-        .admin-link:hover {
-            background: rgba(255, 255, 255, 0.24);
-        }
-
-        .hero {
-            margin-bottom: 26px;
-        }
-
-        .date-text {
-            font-family: Georgia, "Times New Roman", serif;
-            color: rgba(255, 255, 255, 0.72);
-            font-size: 30px;
-            font-weight: 900;
-            margin-bottom: 16px;
-        }
-
-        .hero h1 {
-            margin: 0;
-            font-size: clamp(52px, 8vw, 98px);
-            line-height: 0.95;
-            letter-spacing: -4px;
-            text-shadow: 0 12px 24px rgba(0, 0, 0, 0.34);
-        }
-
-        .alert {
-            margin-top: 22px;
-            padding: 15px 18px;
+        .ubnhs-kiosk-mark {
+            width: 58px;
+            height: 58px;
             border-radius: 16px;
-            font-weight: 800;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 950;
+            letter-spacing: -0.4px;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
         }
 
-        .alert p {
+        .ubnhs-kiosk-brand h1 {
             margin: 0;
+            color: var(--ubnhs-text);
+            font-size: 22px;
+            font-weight: 950;
+            letter-spacing: -0.4px;
         }
 
-        .alert.success {
+        .ubnhs-kiosk-brand p {
+            margin: 4px 0 0;
+            color: var(--ubnhs-muted);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .ubnhs-admin-login {
+            min-height: 48px;
+            padding: 0 22px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--ubnhs-blue);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 950;
+            text-decoration: none;
+            box-shadow: 0 14px 28px rgba(37, 99, 235, 0.25);
+        }
+
+        .ubnhs-admin-login:hover {
+            background: var(--ubnhs-blue-dark);
+        }
+
+        .ubnhs-kiosk-hero {
+            margin: 24px 0 20px;
+            color: #ffffff;
+        }
+
+        .ubnhs-hero-label {
+            margin-bottom: 14px;
+        }
+
+        .ubnhs-hero-label span {
+            display: block;
+            margin-bottom: 4px;
+            color: #93c5fd;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .ubnhs-hero-label strong {
+            display: block;
+            color: #ffffff;
+            font-size: clamp(26px, 3vw, 38px);
+            font-weight: 950;
+            line-height: 1.05;
+            letter-spacing: -0.8px;
+        }
+
+        .ubnhs-date-time-panel {
+            width: 100%;
+            max-width: 800px;
+            display: grid;
+            grid-template-columns: minmax(240px, 1fr) 1px minmax(240px, 0.85fr);
+            align-items: center;
+            gap: 20px;
+            padding: 18px 24px;
+            border: 1px solid rgba(191, 219, 254, 0.32);
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+            backdrop-filter: blur(12px);
+        }
+
+        .ubnhs-date-caption {
+            display: block;
+            margin-bottom: 6px;
+            color: #93c5fd;
+            font-size: 12px;
+            font-weight: 950;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .ubnhs-kiosk-date-line {
+            margin: 0;
+            color: #dbeafe;
+            font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+            font-size: clamp(23px, 2.5vw, 34px);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.7px;
+        }
+
+        .ubnhs-time-divider {
+            width: 1px;
+            height: 74px;
+            background: rgba(191, 219, 254, 0.35);
+        }
+
+        .ubnhs-kiosk-time-line {
+            margin: 0;
+            color: #ffffff;
+            font-family: "Segoe UI Variable Display", "Segoe UI", Arial, Helvetica, sans-serif;
+            font-size: clamp(38px, 4vw, 60px);
+            font-weight: 950;
+            line-height: 1;
+            letter-spacing: -1.8px;
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+            text-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+        }
+
+        .ubnhs-kiosk-card {
+            background: #ffffff;
+            border: 1px solid var(--ubnhs-border);
+            border-radius: 28px;
+            padding: 22px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+        }
+
+        .ubnhs-alert {
+            margin-bottom: 18px;
+            border-radius: 16px;
+            padding: 14px 16px;
+            font-size: 14px;
+            font-weight: 850;
+        }
+
+        .ubnhs-alert.success {
             background: #dcfce7;
             color: #166534;
+            border: 1px solid #86efac;
         }
 
-        .alert.error {
+        .ubnhs-alert.error {
             background: #fee2e2;
             color: #991b1b;
+            border: 1px solid #fecaca;
         }
 
-        .kiosk-card {
-            background: rgba(255, 255, 255, 0.14);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            border-radius: 30px;
-            padding: 20px;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+        .ubnhs-alert p {
+            margin: 0;
         }
 
-        .tabs {
+        .ubnhs-kiosk-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 18px;
+            gap: 10px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 20px;
+            padding: 8px;
+            margin-bottom: 24px;
         }
 
-        .tab-button {
+        .ubnhs-kiosk-tab {
+            min-height: 54px;
             border: none;
-            border-radius: 999px;
-            padding: 15px 18px;
-            background: rgba(255, 255, 255, 0.16);
-            color: rgba(255, 255, 255, 0.84);
-            font-size: 15px;
-            font-weight: 900;
+            border-radius: 14px;
+            background: transparent;
+            color: var(--ubnhs-blue-dark);
+            font-size: 16px;
+            font-weight: 950;
             cursor: pointer;
         }
 
-        .tab-button.active {
-            background: #ffffff;
-            color: #0f172a;
+        .ubnhs-kiosk-tab.active {
+            background: var(--ubnhs-blue);
+            color: #ffffff;
+            box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
         }
 
-        .panel {
+        .ubnhs-kiosk-panel {
             display: none;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 24px;
         }
 
-        .panel.active {
+        .ubnhs-kiosk-panel.active {
             display: block;
         }
 
-        .panel-header {
-            margin-bottom: 18px;
+        .ubnhs-panel-title {
+            margin-bottom: 20px;
         }
 
-        .panel-header h2 {
-            margin: 0;
+        .ubnhs-panel-title h2 {
+            margin: 0 0 6px;
+            color: var(--ubnhs-text);
             font-size: 28px;
+            font-weight: 950;
+            letter-spacing: -0.6px;
         }
 
-        .action-grid {
+        .ubnhs-panel-title p {
+            margin: 0;
+            color: var(--ubnhs-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .ubnhs-kiosk-form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 18px;
         }
 
-        .form-box {
-            background: rgba(255, 255, 255, 0.14);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+        .ubnhs-kiosk-form-box {
+            background: #f8fbff;
+            border: 1px solid var(--ubnhs-border);
             border-radius: 22px;
-            padding: 18px;
-            display: grid;
-            gap: 12px;
+            padding: 22px;
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
         }
 
-        .form-box h3 {
-            margin: 0;
-            font-size: 20px;
+        .ubnhs-kiosk-form-box h3 {
+            margin: 0 0 18px;
             text-align: center;
+            color: var(--ubnhs-text);
+            font-size: 20px;
+            font-weight: 950;
         }
 
-        .form-box label {
-            font-weight: 900;
-            color: rgba(255, 255, 255, 0.9);
+        .ubnhs-form-group {
+            margin-bottom: 14px;
         }
 
-        input {
+        .ubnhs-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--ubnhs-text);
+            font-size: 13px;
+            font-weight: 950;
+        }
+
+        .ubnhs-form-group input {
             width: 100%;
-            min-height: 56px;
-            border: none;
+            min-height: 50px;
+            border: 1px solid #cbd5e1;
             border-radius: 14px;
-            padding: 0 16px;
-            font-size: 16px;
+            padding: 0 14px;
             background: #ffffff;
-            color: #111827;
-            box-shadow: inset 0 -3px 0 rgba(15, 23, 42, 0.16);
+            color: var(--ubnhs-text);
+            font-size: 15px;
+            font-weight: 700;
         }
 
-        input:focus {
-            outline: 3px solid rgba(147, 197, 253, 0.55);
+        .ubnhs-form-group input:focus {
+            outline: none;
+            border-color: var(--ubnhs-blue);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
         }
 
-        .name-grid {
+        .ubnhs-name-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 90px;
+            grid-template-columns: 1fr 1fr 110px;
             gap: 10px;
         }
 
-        .kiosk-button {
+        .ubnhs-kiosk-action {
+            width: 100%;
+            min-height: 54px;
             border: none;
-            min-height: 56px;
             border-radius: 14px;
             color: #ffffff;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 950;
             cursor: pointer;
         }
 
-        .time-in {
-            background: #22c55e;
+        .ubnhs-kiosk-action.time-in {
+            background: var(--ubnhs-green);
+            box-shadow: 0 14px 26px rgba(22, 163, 74, 0.20);
         }
 
-        .time-in:hover {
-            background: #16a34a;
+        .ubnhs-kiosk-action.time-in:hover {
+            background: #15803d;
         }
 
-        .time-out {
-            background: #f59e0b;
+        .ubnhs-kiosk-action.time-out {
+            background: var(--ubnhs-orange);
+            box-shadow: 0 14px 26px rgba(245, 158, 11, 0.20);
         }
 
-        .time-out:hover {
+        .ubnhs-kiosk-action.time-out:hover {
             background: #d97706;
         }
 
         @media (max-width: 900px) {
-            .action-grid,
-            .name-grid {
-                grid-template-columns: 1fr;
+            .ubnhs-kiosk-page {
+                width: min(100% - 24px, 1100px);
+                padding-top: 24px;
             }
 
-            .hero h1 {
-                letter-spacing: -2px;
+            .ubnhs-kiosk-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .ubnhs-admin-login {
+                width: 100%;
+            }
+
+            .ubnhs-kiosk-date-line {
+                font-size: 28px;
+            }
+
+            .ubnhs-kiosk-time-line {
+                font-size: 54px;
+                letter-spacing: -1.4px;
+            }
+
+            .ubnhs-kiosk-form-grid,
+            .ubnhs-name-grid {
+                grid-template-columns: 1fr;
             }
         }
 
-        @media (max-width: 650px) {
-            .kiosk-page {
-                width: min(100% - 24px, 1180px);
-            }
-
-            .topbar {
-                display: grid;
+        @media (max-width: 560px) {
+            .ubnhs-date-time-panel {
+                padding: 18px;
                 border-radius: 22px;
             }
 
-            .tabs {
-                grid-template-columns: 1fr;
+            .ubnhs-kiosk-date-line {
+                font-size: 22px;
             }
 
-            .date-text {
-                font-size: 21px;
-            }
-
-            .hero h1 {
-                font-size: 46px;
+            .ubnhs-kiosk-time-line {
+                font-size: 40px;
             }
         }
     </style>
 </head>
 
 <body>
-    <main class="kiosk-page">
-        <header class="topbar">
-            <div class="brand">
-                <div class="brand-logo">UBNHS</div>
+    <main class="ubnhs-kiosk-page">
+        <header class="ubnhs-kiosk-header">
+            <div class="ubnhs-kiosk-brand">
+                <div class="ubnhs-kiosk-mark">UBNHS</div>
 
-                <div class="brand-text">
-                    <strong>Library Management System</strong>
+                <div>
+                    <h1>UBNHS Library Management System</h1>
+                    <p>Attendance Kiosk</p>
                 </div>
             </div>
 
-            <a href="{{ route('login') }}" class="admin-link">
+            <a href="{{ $adminLoginUrl }}" class="ubnhs-admin-login">
                 Admin Login
             </a>
         </header>
 
-        <section class="hero">
-            <div class="date-text" id="kioskDateText">
-                Loading date...
+        <section class="ubnhs-kiosk-hero">
+            <div class="ubnhs-hero-label">
+                <span>Attendance Kiosk</span>
+                <strong>Time In / Time Out</strong>
             </div>
 
-            <h1>TIME IN / TIME OUT</h1>
+            <div class="ubnhs-date-time-panel">
+                <div>
+                    <span class="ubnhs-date-caption">Today</span>
+                    <p class="ubnhs-kiosk-date-line" id="kioskDateLine">
+                        {{ now()->format('l, F j, Y') }}
+                    </p>
+                </div>
 
+                <div class="ubnhs-time-divider"></div>
+
+                <div>
+                    <span class="ubnhs-date-caption">Current Time</span>
+                    <h2 class="ubnhs-kiosk-time-line" id="kioskTimeLine">
+                        {{ now()->format('h:i:s A') }}
+                    </h2>
+                </div>
+            </div>
+        </section>
+
+        <section class="ubnhs-kiosk-card">
+            {{-- Displays successful time-in or time-out messages. --}}
             @if (session('success'))
-                <div class="alert success">
+                <div class="ubnhs-alert success">
                     {{ session('success') }}
                 </div>
             @endif
 
+            {{-- Displays validation and attendance-related errors. --}}
             @if ($errors->any())
-                <div class="alert error">
+                <div class="ubnhs-alert error">
                     @foreach ($errors->all() as $error)
                         <p>{{ $error }}</p>
                     @endforeach
                 </div>
             @endif
-        </section>
 
-        <section class="kiosk-card">
-            <div class="tabs">
-                <button type="button" class="tab-button active" data-tab="member">
+            {{-- Switches the kiosk between member and visitor attendance forms. --}}
+            <div class="ubnhs-kiosk-tabs">
+                <button type="button" class="ubnhs-kiosk-tab active" data-tab="member">
                     Student / Faculty
                 </button>
 
-                <button type="button" class="tab-button" data-tab="visitor">
+                <button type="button" class="ubnhs-kiosk-tab" data-tab="visitor">
                     Visitor
                 </button>
             </div>
 
-            <div class="panel active" id="panel-member">
-                <div class="panel-header">
+            <div class="ubnhs-kiosk-panel active" id="memberPanel">
+                <div class="ubnhs-panel-title">
                     <h2>Student / Faculty Attendance</h2>
+                    <p>Enter your registered reference number to record time-in or time-out.</p>
                 </div>
 
-                <div class="action-grid">
-                    <form method="POST" action="{{ route('attendance.member.time-in') }}" class="form-box">
+                <div class="ubnhs-kiosk-form-grid">
+                    {{-- Records member time-in using a registered reference number. --}}
+                    <form method="POST" action="{{ $memberTimeInAction }}" class="ubnhs-kiosk-form-box">
                         @csrf
 
                         <h3>Time In</h3>
 
-                        <label for="member_reference_time_in">Reference Number</label>
-                        <input
-                            type="text"
-                            name="member_reference"
-                            id="member_reference_time_in"
-                            placeholder="Enter Reference Number"
-                            maxlength="50"
-                            autocomplete="off"
-                            required
-                        >
+                        <div class="ubnhs-form-group">
+                            <label for="member_time_in_reference">Reference Number</label>
+                            <input
+                                type="text"
+                                name="reference_number"
+                                id="member_time_in_reference"
+                                placeholder="Enter Reference Number"
+                                autocomplete="off"
+                                required
+                            >
+                        </div>
 
-                        <button type="submit" class="kiosk-button time-in">
+                        <button type="submit" class="ubnhs-kiosk-action time-in">
                             Time In
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('attendance.member.time-out') }}" class="form-box">
+                    {{-- Records member time-out using a registered reference number. --}}
+                    <form method="POST" action="{{ $memberTimeOutAction }}" class="ubnhs-kiosk-form-box">
                         @csrf
 
                         <h3>Time Out</h3>
 
-                        <label for="member_reference_time_out">Reference Number</label>
-                        <input
-                            type="text"
-                            name="member_reference"
-                            id="member_reference_time_out"
-                            placeholder="Enter reference number"
-                            maxlength="50"
-                            autocomplete="off"
-                            required
-                        >
+                        <div class="ubnhs-form-group">
+                            <label for="member_time_out_reference">Reference Number</label>
+                            <input
+                                type="text"
+                                name="reference_number"
+                                id="member_time_out_reference"
+                                placeholder="Enter Reference Number"
+                                autocomplete="off"
+                                required
+                            >
+                        </div>
 
-                        <button type="submit" class="kiosk-button time-out">
+                        <button type="submit" class="ubnhs-kiosk-action time-out">
                             Time Out
                         </button>
                     </form>
                 </div>
             </div>
 
-            <div class="panel" id="panel-visitor">
-                <div class="panel-header">
+            <div class="ubnhs-kiosk-panel" id="visitorPanel">
+                <div class="ubnhs-panel-title">
                     <h2>Visitor Attendance</h2>
+                    <p>Enter your name to record visitor time-in or time-out.</p>
                 </div>
 
-                <div class="action-grid">
-                    <form method="POST" action="{{ route('attendance.visitor.time-in') }}" class="form-box">
+                <div class="ubnhs-kiosk-form-grid">
+                    {{-- Creates a visitor record and records visitor time-in. --}}
+                    <form method="POST" action="{{ $visitorTimeInAction }}" class="ubnhs-kiosk-form-box">
                         @csrf
 
                         <h3>Visitor Time In</h3>
 
-                        <label>Visitor Name</label>
-                        <div class="name-grid">
-                            <input
-                                type="text"
-                                name="last_name"
-                                placeholder="Last name"
-                                maxlength="50"
-                                autocomplete="off"
-                                required
-                            >
+                        <div class="ubnhs-form-group">
+                            <label>Visitor Name</label>
 
-                            <input
-                                type="text"
-                                name="first_name"
-                                placeholder="First name"
-                                maxlength="50"
-                                autocomplete="off"
-                                required
-                            >
+                            <div class="ubnhs-name-grid">
+                                <input
+                                    type="text"
+                                    name="last_name"
+                                    placeholder="Last Name"
+                                    autocomplete="off"
+                                    required
+                                >
 
-                            <input
-                                type="text"
-                                name="middle_initial"
-                                placeholder="M.I."
-                                maxlength="3"
-                                autocomplete="off"
-                            >
+                                <input
+                                    type="text"
+                                    name="first_name"
+                                    placeholder="First Name"
+                                    autocomplete="off"
+                                    required
+                                >
+
+                                <input
+                                    type="text"
+                                    name="middle_initial"
+                                    placeholder="M.I."
+                                    maxlength="3"
+                                    autocomplete="off"
+                                >
+                            </div>
                         </div>
 
-                        <button type="submit" class="kiosk-button time-in">
+                        <button type="submit" class="ubnhs-kiosk-action time-in">
                             Visitor Time In
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('attendance.visitor.time-out') }}" class="form-box">
+                    {{-- Finds the active visitor log by name and records visitor time-out. --}}
+                    <form method="POST" action="{{ $visitorTimeOutAction }}" class="ubnhs-kiosk-form-box">
                         @csrf
 
                         <h3>Visitor Time Out</h3>
 
-                        <label>Visitor Name</label>
-                        <div class="name-grid">
-                            <input
-                                type="text"
-                                name="last_name"
-                                placeholder="Last name"
-                                maxlength="50"
-                                autocomplete="off"
-                                required
-                            >
+                        <div class="ubnhs-form-group">
+                            <label>Visitor Name</label>
 
-                            <input
-                                type="text"
-                                name="first_name"
-                                placeholder="First name"
-                                maxlength="50"
-                                autocomplete="off"
-                                required
-                            >
+                            <div class="ubnhs-name-grid">
+                                <input
+                                    type="text"
+                                    name="last_name"
+                                    placeholder="Last Name"
+                                    autocomplete="off"
+                                    required
+                                >
 
-                            <input
-                                type="text"
-                                name="middle_initial"
-                                placeholder="M.I."
-                                maxlength="3"
-                                autocomplete="off"
-                            >
+                                <input
+                                    type="text"
+                                    name="first_name"
+                                    placeholder="First Name"
+                                    autocomplete="off"
+                                    required
+                                >
+
+                                <input
+                                    type="text"
+                                    name="middle_initial"
+                                    placeholder="M.I."
+                                    maxlength="3"
+                                    autocomplete="off"
+                                >
+                            </div>
                         </div>
 
-                        <button type="submit" class="kiosk-button time-out">
+                        <button type="submit" class="ubnhs-kiosk-action time-out">
                             Visitor Time Out
                         </button>
                     </form>
@@ -462,53 +646,54 @@
     </main>
 
     <script>
-        function updateKioskClock() {
-            const dateElement = document.getElementById('kioskDateText');
+        const kioskDateLine = document.getElementById('kioskDateLine');
+        const kioskTimeLine = document.getElementById('kioskTimeLine');
 
-            if (!dateElement) {
-                return;
-            }
-
+        /**
+         * Updates the kiosk date and time display every second.
+         */
+        function updateKioskDateTime() {
             const now = new Date();
 
-            const formattedDate = now.toLocaleDateString('en-US', {
+            const dateText = now.toLocaleDateString('en-US', {
                 weekday: 'long',
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric',
             });
 
-            const formattedTime = now.toLocaleTimeString('en-US', {
+            const timeText = now.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 second: '2-digit',
                 hour12: true,
             });
 
-            dateElement.textContent = `${formattedDate} | ${formattedTime}`;
+            kioskDateLine.textContent = dateText;
+            kioskTimeLine.textContent = timeText;
         }
 
-        updateKioskClock();
-        setInterval(updateKioskClock, 1000);
+        updateKioskDateTime();
+        setInterval(updateKioskDateTime, 1000);
 
-        document.querySelectorAll('[data-tab]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const selectedTab = button.getAttribute('data-tab');
+        const kioskTabs = document.querySelectorAll('.ubnhs-kiosk-tab');
+        const memberPanel = document.getElementById('memberPanel');
+        const visitorPanel = document.getElementById('visitorPanel');
 
-                document.querySelectorAll('[data-tab]').forEach((tab) => {
-                    tab.classList.remove('active');
-                });
+        // Handles tab switching between Student/Faculty and Visitor panels.
+        kioskTabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                kioskTabs.forEach((item) => item.classList.remove('active'));
+                tab.classList.add('active');
 
-                document.querySelectorAll('.panel').forEach((panel) => {
-                    panel.classList.remove('active');
-                });
+                const selectedTab = tab.dataset.tab;
 
-                button.classList.add('active');
-
-                const targetPanel = document.getElementById(`panel-${selectedTab}`);
-
-                if (targetPanel) {
-                    targetPanel.classList.add('active');
+                if (selectedTab === 'visitor') {
+                    memberPanel.classList.remove('active');
+                    visitorPanel.classList.add('active');
+                } else {
+                    visitorPanel.classList.remove('active');
+                    memberPanel.classList.add('active');
                 }
             });
         });

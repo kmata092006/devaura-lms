@@ -36,6 +36,12 @@
                 </div>
             </div>
 
+            @if (session('info'))
+                <div class="alert success">
+                    {{ session('info') }}
+                </div>
+            @endif
+
             @if ($errors->any())
                 <div class="alert error">
                     @foreach ($errors->all() as $error)
@@ -43,7 +49,7 @@
                     @endforeach
                 </div>
             @endif
-
+            
             <form method="POST" action="{{ route('login.submit') }}" class="login-form">
                 @csrf
 
