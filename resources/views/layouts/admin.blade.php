@@ -22,34 +22,15 @@
             </div>
 
             <nav class="sidebar-nav">
+                {{-- GROUP 1: ALL ROLES (Admin, Staff, Student Staff) --}}
                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">⌂</span>
                     Dashboard
                 </a>
 
-                <a href="{{ route('admin.attendance.index') }}" class="{{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">
-                    <span class="nav-icon">◷</span>
-                    Attendance Logs
-                </a>
-
-                <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
-                    <span class="nav-icon">▦</span>
-                    Departments
-                </a>
-
-                <a href="{{ route('admin.personnel.index') }}" class="{{ request()->routeIs('admin.personnel.*') ? 'active' : '' }}">
-                    <span class="nav-icon">☷</span>
-                    Library Personnel
-                </a>
-
-                <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">
-                    <span class="nav-icon">◉</span>
-                    Library Members
-                </a>
-
-                <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">
-                    <span class="nav-icon">▣</span>
-                    Book Management
+                <a href="{{ route('admin.book-list.index') }}" class="{{ request()->routeIs('admin.book-list.*') ? 'active' : '' }}">
+                    <span class="nav-icon">⌕</span>
+                    Book List / Search
                 </a>
 
                 <a href="{{ route('admin.borrow.index') }}" class="{{ request()->routeIs('admin.borrow.*') ? 'active' : '' }}">
@@ -62,20 +43,46 @@
                     Return Book
                 </a>
 
-                <a href="{{ route('admin.book-list.index') }}" class="{{ request()->routeIs('admin.book-list.*') ? 'active' : '' }}">
-                    <span class="nav-icon">⌕</span>
-                    Book List / Search
+                <a href="{{ route('admin.attendance.index') }}" class="{{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">
+                    <span class="nav-icon">◷</span>
+                    Attendance Logs
                 </a>
 
-                <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                    <span class="nav-icon">▤</span>
-                    Reports
+                <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
+                    <span class="nav-icon">▦</span>
+                    Departments
                 </a>
 
-                <a href="{{ route('admin.audit-trail.index') }}" class="{{ request()->routeIs('admin.audit-trail.*') ? 'active' : '' }}">
-                    <span class="nav-icon">◎</span>
-                    Audit Trail
+                <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">
+                    <span class="nav-icon">👥</span>
+                    Library Members
                 </a>
+
+                {{-- GROUP 2: ADMIN & STAFF ONLY --}}
+                @if (in_array(session('personnel_role'), ['admin', 'staff']))
+                    <a href="{{ route('admin.audit-trail.index') }}" class="{{ request()->routeIs('admin.audit-trail.*') ? 'active' : '' }}">
+                        <span class="nav-icon">◎</span>
+                        Audit Trail
+                    </a>
+                @endif
+
+                {{-- GROUP 3: STRICTLY ADMIN ONLY --}}
+                @if (session('personnel_role') === 'admin')
+                    <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📚</span>
+                        Book Management
+                    </a>
+
+                    <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                        <span class="nav-icon">▤</span>
+                        Reports
+                    </a>
+
+                    <a href="{{ route('admin.personnel.index') }}" class="{{ request()->routeIs('admin.personnel.*') ? 'active' : '' }}">
+                        <span class="nav-icon">☷</span>
+                        Library Personnel
+                    </a>
+                @endif
             </nav>
 
             <form method="POST" action="{{ route('logout') }}" class="logout-form">

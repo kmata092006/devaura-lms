@@ -12,7 +12,9 @@
     $visitorTimeInAction = $routeUrl('attendance.visitor.time-in', '/attendance/visitor/time-in');
     $visitorTimeOutAction = $routeUrl('attendance.visitor.time-out', '/attendance/visitor/time-out');
 
-    $adminLoginUrl = $routeUrl('kiosk.admin-login', '/login');
+    // $adminLoginUrl = $routeUrl('kiosk.admin-login', '/login');
+    // the code below fixes public kiosk direct access to admin account
+    $adminLoginUrl = $routeUrl('attendance.admin-login', '/attendance/admin-login');
 @endphp
 
 <!DOCTYPE html>
