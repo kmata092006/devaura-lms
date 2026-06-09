@@ -1,7 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Admin Dashboard | UBNHS Library Management System')
-@section('page-title', 'Admin Dashboard')
+{{-- Dynamically generate the title based on the logged-in role --}}
+@php
+    $roleTitle = ucwords(str_replace(['assistant', 'Assistant'], ['staff', 'Staff'], session('personnel_role', 'Admin')));
+@endphp
+
+@section('title', $roleTitle . ' Dashboard | UBNHS Library Management System')
+@section('page-title', $roleTitle . ' Dashboard')
 
 @section('content')
     <div class="dashboard-welcome-card">
@@ -46,13 +51,6 @@
             <span class="dashboard-status available">Available</span>
         </a>
 
-        <a href="{{ route('admin.departments.index') }}" class="dashboard-module-card">
-            <span class="module-icon">▦</span>
-            <h3>Departments</h3>
-            <p>Manage department records assigned to library personnel.</p>
-            <span class="dashboard-status available">Available</span>
-        </a>
-
         <a href="{{ route('admin.members.index') }}" class="dashboard-module-card">
             <span class="module-icon">👥</span>
             <h3>Library Members</h3>
@@ -62,6 +60,13 @@
 
         {{-- GROUP 2: ADMIN & STAFF ONLY --}}
         @if (in_array(session('personnel_role'), ['admin', 'staff']))
+            <a href="{{ route('admin.departments.index') }}" class="dashboard-module-card">
+                <span class="module-icon">▦</span>
+                <h3>Departments</h3>
+                <p>Manage department records assigned to library personnel.</p>
+                <span class="dashboard-status available">Available</span>
+            </a>
+
             <a href="{{ route('admin.audit-trail.index') }}" class="dashboard-module-card">
                 <span class="module-icon">◎</span>
                 <h3>Audit Trail</h3>

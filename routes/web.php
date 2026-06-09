@@ -60,7 +60,7 @@ Route::prefix('admin')
 
         // ----------------------------------------------------------------
         // GROUP 1: ALL ROLES (Admin, Staff, Student Staff)
-        // Permitted: Dashboard, Book List, Borrow, Return, Attendance, Departments, Members
+        // Permitted: Dashboard, Book List, Borrow, Return, Attendance, Members
         // ----------------------------------------------------------------
         Route::middleware(['role:admin,staff,student staff', AuditTrailLogger::class])->group(function () {
             
@@ -98,24 +98,6 @@ Route::prefix('admin')
             Route::post('/attendance/personnel/time-out', [AttendanceController::class, 'timeOutPersonnel'])
                 ->name('attendance.personnel.time-out');
 
-            Route::get('/departments', [DepartmentController::class, 'index'])
-                ->name('departments.index');
-
-            Route::get('/departments/create', [DepartmentController::class, 'create'])
-                ->name('departments.create');
-
-            Route::post('/departments', [DepartmentController::class, 'store'])
-                ->name('departments.store');
-
-            Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
-                ->name('departments.edit');
-
-            Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
-                ->name('departments.update');
-
-            Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
-                ->name('departments.destroy');
-
             Route::get('/members', [LibraryMemberController::class, 'index'])
                 ->name('members.index');
 
@@ -137,10 +119,28 @@ Route::prefix('admin')
 
         // ----------------------------------------------------------------
         // GROUP 2: ADMIN & STAFF ONLY
-        // Permitted: Audit Trail
+        // Permitted: Departments, Audit Trail
         // ----------------------------------------------------------------
         Route::middleware(['role:admin,staff', AuditTrailLogger::class])->group(function () {
             
+            Route::get('/departments', [DepartmentController::class, 'index'])
+                ->name('departments.index');
+
+            Route::get('/departments/create', [DepartmentController::class, 'create'])
+                ->name('departments.create');
+
+            Route::post('/departments', [DepartmentController::class, 'store'])
+                ->name('departments.store');
+
+            Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
+                ->name('departments.edit');
+
+            Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
+                ->name('departments.update');
+
+            Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
+                ->name('departments.destroy');
+
             Route::get('/audit-trail', [AuditTrailController::class, 'index'])
                 ->name('audit-trail.index');
         });

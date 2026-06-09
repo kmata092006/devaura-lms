@@ -48,18 +48,18 @@
                     Attendance Logs
                 </a>
 
-                <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
-                    <span class="nav-icon">▦</span>
-                    Departments
-                </a>
-
                 <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">
-                    <span class="nav-icon">👥</span>
+                    <span class="nav-icon">◉</span>
                     Library Members
                 </a>
 
                 {{-- GROUP 2: ADMIN & STAFF ONLY --}}
                 @if (in_array(session('personnel_role'), ['admin', 'staff']))
+                    <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
+                        <span class="nav-icon">▦</span>
+                        Departments
+                    </a>
+
                     <a href="{{ route('admin.audit-trail.index') }}" class="{{ request()->routeIs('admin.audit-trail.*') ? 'active' : '' }}">
                         <span class="nav-icon">◎</span>
                         Audit Trail
@@ -69,7 +69,7 @@
                 {{-- GROUP 3: STRICTLY ADMIN ONLY --}}
                 @if (session('personnel_role') === 'admin')
                     <a href="{{ route('admin.books.index') }}" class="{{ request()->routeIs('admin.books.*') ? 'active' : '' }}">
-                        <span class="nav-icon">📚</span>
+                        <span class="nav-icon">▣</span>
                         Book Management
                     </a>
 
@@ -106,7 +106,8 @@
 
                     <div>
                         <strong>{{ session('first_name', 'System') }} {{ session('last_name', 'Admin') }}</strong>
-                        <span>{{ ucwords(session('personnel_role', 'Admin')) }}</span>
+                        {{-- Safely format the role and correct 'Assistant' to 'Staff' just in case --}}
+                        <span>{{ ucwords(str_replace(['assistant', 'Assistant'], ['staff', 'Staff'], session('personnel_role', 'Admin'))) }}</span>
                     </div>
                 </div>
             </header>
