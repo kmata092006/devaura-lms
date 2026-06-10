@@ -35,7 +35,7 @@
                 </a>
 
                 {{-- 3. Departments (Admin & Staff Only) --}}
-                @if (in_array(session('personnel_role'), ['admin', 'staff']))
+                @if (in_array(session('personnel_role'), ['admin']))
                     <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
                         <span class="nav-icon">▦</span>
                         Departments
