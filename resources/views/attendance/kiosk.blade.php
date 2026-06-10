@@ -575,6 +575,9 @@
                                     type="text"
                                     name="last_name"
                                     placeholder="Last Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >
@@ -583,6 +586,9 @@
                                     type="text"
                                     name="first_name"
                                     placeholder="First Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >
@@ -616,6 +622,9 @@
                                     type="text"
                                     name="last_name"
                                     placeholder="Last Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >
@@ -624,6 +633,9 @@
                                     type="text"
                                     name="first_name"
                                     placeholder="First Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >
