@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.books.update', $book->book_id) }}" class="record-form">
+        <form method="POST" action="{{ route('admin.books.update', $book->book_id ?? 'N/A') }}" class="record-form">
             @csrf
             @method('PUT')
 
@@ -32,7 +32,7 @@
                             type="text"
                             name="book_title"
                             id="book_title"
-                            value="{{ old('book_title', $book->book_title) }}"
+                            value="{{ old('book_title', $book->book_title ?? 'N/A') }}"
                             maxlength="255"
                             required
                         >
@@ -44,7 +44,7 @@
                             type="text"
                             name="isbn"
                             id="isbn"
-                            value="{{ old('isbn', $book->isbn) }}"
+                            value="{{ old('isbn', $book->isbn ?? 'N/A') }}"
                             maxlength="13"
                             placeholder="Optional"
                         >
@@ -54,7 +54,7 @@
                         <label for="book_status">Book Status</label>
                         <select name="book_status" id="book_status" required>
                             @foreach ($statuses as $status)
-                                <option value="{{ $status }}" {{ old('book_status', $book->book_status) === $status ? 'selected' : '' }}>
+                                <option value="{{ $status }}" {{ old('book_status', $book->book_status ?? 'N/A') === $status ? 'selected' : '' }}>
                                     {{ $status }}
                                 </option>
                             @endforeach
@@ -67,7 +67,7 @@
                             type="text"
                             name="genre_name"
                             id="genre_name"
-                            value="{{ old('genre_name', $book->genre_name) }}"
+                            value="{{ old('genre_name', $book->genre_name ?? 'N/A') }}"
                             maxlength="100"
                             required
                         >
@@ -85,7 +85,7 @@
                             type="text"
                             name="author_last_name"
                             id="author_last_name"
-                            value="{{ old('author_last_name', $book->author_last_name) }}"
+                            value="{{ old('author_last_name', $book->author_last_name ?? 'N/A') }}"
                             maxlength="50"
                             required
                         >
@@ -97,7 +97,7 @@
                             type="text"
                             name="author_first_name"
                             id="author_first_name"
-                            value="{{ old('author_first_name', $book->author_first_name) }}"
+                            value="{{ old('author_first_name', $book->author_first_name ?? 'N/A') }}"
                             maxlength="50"
                             required
                         >
@@ -109,7 +109,7 @@
                             type="text"
                             name="author_middle_initial"
                             id="author_middle_initial"
-                            value="{{ old('author_middle_initial', $book->author_middle_initial) }}"
+                            value="{{ old('author_middle_initial', $book->author_middle_initial ?? 'N/A') }}"
                             maxlength="3"
                             placeholder="Optional"
                         >
@@ -127,7 +127,7 @@
                             type="text"
                             name="publisher_last_name"
                             id="publisher_last_name"
-                            value="{{ old('publisher_last_name', $book->publisher_last_name) }}"
+                            value="{{ old('publisher_last_name', $book->publisher_last_name ?? 'N/A') }}"
                             maxlength="50"
                             required
                         >
@@ -139,7 +139,7 @@
                             type="text"
                             name="publisher_first_name"
                             id="publisher_first_name"
-                            value="{{ old('publisher_first_name', $book->publisher_first_name) }}"
+                            value="{{ old('publisher_first_name', $book->publisher_first_name ?? 'N/A') }}"
                             maxlength="50"
                             required
                         >
@@ -151,7 +151,7 @@
                             type="text"
                             name="publisher_middle_initial"
                             id="publisher_middle_initial"
-                            value="{{ old('publisher_middle_initial', $book->publisher_middle_initial) }}"
+                            value="{{ old('publisher_middle_initial', $book->publisher_middle_initial ?? 'N/A') }}"
                             maxlength="3"
                             placeholder="Optional"
                         >
@@ -163,7 +163,7 @@
                             type="date"
                             name="date_published"
                             id="date_published"
-                            value="{{ old('date_published', $book->date_published) }}"
+                            value="{{ old('date_published', $book->date_published ?? 'N/A') }}"
                         >
                     </div>
                 </div>
