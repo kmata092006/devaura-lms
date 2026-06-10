@@ -136,6 +136,9 @@
                         value="{{ old('author_name') }}"
                         maxlength="150"
                         placeholder="Enter Author Name"
+                        pattern="^[a-zA-Z\s\.,\-]+$"
+                        title="Only letters, spaces, hyphens, periods, and commas are allowed."
+                        oninput="this.value = this.value.replace(/[^a-zA-Z\s\.,\-]/g, '')"
                     >
                 </div>
 
@@ -162,6 +165,9 @@
                         value="{{ old('publisher_name') }}"
                         maxlength="150"
                         placeholder="Enter Publisher Name"
+                        pattern="^[a-zA-Z\s\.,\-]+$"
+                        title="Only letters, spaces, hyphens, periods, and commas are allowed."
+                        oninput="this.value = this.value.replace(/[^a-zA-Z\s\.,\-]/g, '')"
                     >
                 </div>
 
@@ -172,6 +178,7 @@
                         name="date_published"
                         id="date_published"
                         value="{{ old('date_published') }}"
+                        required
                     >
                 </div>
 
@@ -198,6 +205,9 @@
                         value="{{ old('genre_name') }}"
                         maxlength="100"
                         placeholder="Enter Genre"
+                        pattern="^[a-zA-Z\s]+$"
+                        title="Only letters and spaces are allowed."
+                        oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                     >
                 </div>
             </div>
@@ -332,10 +342,12 @@
         function fillBookForm(book) {
             bookTitleInput.value = book.book_title || '';
             isbnInput.value = book.isbn || '';
-            authorNameInput.value = book.author_name || '';
-            publisherNameInput.value = book.publisher_name || '';
+            
+            // Clean dynamic values against text filters on autofill
+            authorNameInput.value = (book.author_name || '').replace(/[^a-zA-Z\s\.,\-]/g, '');
+            publisherNameInput.value = (book.publisher_name || '').replace(/[^a-zA-Z\s\.,\-]/g, '');
+            genreNameInput.value = (book.genre_name || '').replace(/[^a-zA-Z\s]/g, '');
             datePublishedInput.value = book.date_published || '';
-            genreNameInput.value = book.genre_name || '';
 
             authorIdSelect.value = '';
             publisherIdSelect.value = '';
