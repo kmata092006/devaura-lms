@@ -116,7 +116,7 @@
                 </select>
             </div>
 
-            <div class="personnel-form-group">
+            <div class="personnel-form-group" id="shift_day_group">
                 <label for="shift_day">Shift Day</label>
                 <select name="shift_day" id="shift_day" required>
                     <option value="">Select shift day</option>
@@ -128,7 +128,7 @@
                 </select>
             </div>
 
-            <div class="personnel-form-group">
+            <div class="personnel-form-group" id="shift_period_group">
                 <label for="shift_period">Shift Period</label>
                 <select name="shift_period" id="shift_period" required>
                     <option value="">Select shift period</option>
@@ -203,4 +203,51 @@
             </a>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('personnel_role');
+            const shiftDayGroup = document.getElementById('shift_day_group');
+            const shiftPeriodGroup = document.getElementById('shift_period_group');
+            const shiftDaySelect = document.getElementById('shift_day');
+            const shiftPeriodSelect = document.getElementById('shift_period');
+
+            function updateUI() {
+                const role = roleSelect.value;
+
+                // 1. Admin Shift Visibility
+                if (role === 'admin') {
+                    shiftDayGroup.style.display = 'none';
+                    shiftPeriodGroup.style.display = 'none';
+                    shiftDaySelect.removeAttribute('required');
+                    shiftPeriodSelect.removeAttribute('required');
+                } else {
+                    shiftDayGroup.style.display = 'block';
+                    shiftPeriodGroup.style.display = 'block';
+                    shiftDaySelect.setAttribute('required', 'required');
+                    shiftPeriodSelect.setAttribute('required', 'required');
+                }
+
+                // 2. Staff 'Whole Day' Option Logic
+                Array.from(shiftPeriodSelect.options).forEach(opt => {
+                    if (opt.value === 'Whole Day') {
+                        if (role === 'staff') {
+                            opt.style.display = '';
+                            opt.disabled = false;
+                        } else {
+                            opt.style.display = 'none';
+                            opt.disabled = true;
+                            // Reset selection if Student Staff previously selected Whole Day
+                            if (shiftPeriodSelect.value === 'Whole Day') {
+                                shiftPeriodSelect.value = '';
+                            }
+                        }
+                    }
+                });
+            }
+
+            roleSelect.addEventListener('change', updateUI);
+            updateUI(); // Run on initial load
+        });
+    </script>
 @endsection
