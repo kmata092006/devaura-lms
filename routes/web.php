@@ -57,13 +57,8 @@ Route::post('/attendance/visitor/time-out', [AttendanceController::class, 'timeO
 Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
-
-        // ----------------------------------------------------------------
-        // GROUP 1: ALL ROLES (Admin, Staff, Student Staff)
-        // Permitted: Dashboard, Book List, Borrow, Return, Attendance, Members
-        // ----------------------------------------------------------------
+        /* #region ALL ROLES - Dashboard, Attendance, Borrow, Return, Book List, Members */
         Route::middleware(['role:admin,staff,student staff', AuditTrailLogger::class])->group(function () {
-            
             Route::get('/dashboard', function () {
                 return view('admin.dashboard');
             })->name('dashboard');
@@ -116,39 +111,19 @@ Route::prefix('admin')
             Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])
                 ->name('members.destroy');
         });
+        /* #endregion */
 
-        // ----------------------------------------------------------------
-        // GROUP 2: ADMIN & STAFF ONLY
-        // Permitted: Departments, Audit Trail
-        // ----------------------------------------------------------------
+        /* #region ADMIN & STAFF ONLY - Audit Trail */
         Route::middleware(['role:admin,staff', AuditTrailLogger::class])->group(function () {
-            
             Route::get('/departments', [DepartmentController::class, 'index'])
                 ->name('departments.index');
-
-            Route::get('/departments/create', [DepartmentController::class, 'create'])
-                ->name('departments.create');
-
-            Route::post('/departments', [DepartmentController::class, 'store'])
-                ->name('departments.store');
-
-            Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
-                ->name('departments.edit');
-
-            Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
-                ->name('departments.update');
-
-            Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
-                ->name('departments.destroy');
 
             Route::get('/audit-trail', [AuditTrailController::class, 'index'])
                 ->name('audit-trail.index');
         });
+        /* #endregion */
 
-        // ----------------------------------------------------------------
-        // GROUP 3: STRICTLY ADMIN ONLY
-        // Permitted: Book Management, Reports, Personnel
-        // ----------------------------------------------------------------
+        /* #region STRICTLY ADMIN ONLY - Departments, Book Management, Reports, Personnel */
         Route::middleware(['role:admin', AuditTrailLogger::class])->group(function () {
             
             Route::get('/books/google-books/search', [BookController::class, 'searchGoogleBooks'])
@@ -192,5 +167,21 @@ Route::prefix('admin')
 
             Route::delete('/personnel/{personnelId}', [LibraryPersonnelController::class, 'destroy'])
                 ->name('personnel.destroy');
+
+            Route::get('/departments/create', [DepartmentController::class, 'create'])
+                ->name('departments.create');
+
+            Route::post('/departments', [DepartmentController::class, 'store'])
+                ->name('departments.store');
+
+            Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
+                ->name('departments.edit');
+
+            Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
+                ->name('departments.update');
+
+            Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
+                ->name('departments.destroy');
         });
+        /* #endregion */
     });

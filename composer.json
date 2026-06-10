@@ -65,6 +65,16 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "maintenance": [
+            "@php artisan down",
+            "@php artisan auth:clear",
+            "@php artisan auth:clear-resets",
+            "@php artisan optimize:clear"
+        ],
+        "resume": [
+            "@php artisan up",
+            "start php artisan serve"
         ]
     },
     "extra": {
