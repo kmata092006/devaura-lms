@@ -132,9 +132,9 @@ class LibraryPersonnelController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50'],
-            'first_name' => ['required', 'string', 'max:50'],
-            'middle_initial' => ['nullable', 'string', 'max:3'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
             'personnel_role' => ['required', Rule::in($this->roles)],
             'department_id' => ['required', 'integer', 'exists:department,department_id'],
@@ -157,6 +157,9 @@ class LibraryPersonnelController extends Controller
                 'confirmed',
             ],
         ], [
+            'last_name.regex' => 'The last name may only contain letters and spaces.',
+            'first_name.regex' => 'The first name may only contain letters and spaces.',
+            'middle_initial.regex' => 'The middle initial may only contain letters and periods.',
             'username.alpha_dash' => 'The username may only contain letters, numbers, dashes, and underscores.',
             'username.unique' => 'This username is already taken.',
             'password.min' => 'The password must be at least 8 characters.',
@@ -245,9 +248,9 @@ class LibraryPersonnelController extends Controller
         }
 
         $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50'],
-            'first_name' => ['required', 'string', 'max:50'],
-            'middle_initial' => ['nullable', 'string', 'max:3'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
             'personnel_role' => ['required', Rule::in($this->roles)],
             'department_id' => ['required', 'integer', 'exists:department,department_id'],
@@ -270,6 +273,9 @@ class LibraryPersonnelController extends Controller
                 'confirmed',
             ],
         ], [
+            'last_name.regex' => 'The last name may only contain letters and spaces.',
+            'first_name.regex' => 'The first name may only contain letters and spaces.',
+            'middle_initial.regex' => 'The middle initial may only contain letters and periods.',
             'username.alpha_dash' => 'The username may only contain letters, numbers, dashes, and underscores.',
             'username.unique' => 'This username is already taken.',
             'password.min' => 'The password must be at least 8 characters.',

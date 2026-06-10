@@ -44,6 +44,9 @@
                     value="{{ old('last_name') }}"
                     maxlength="50"
                     placeholder="Enter Last Name"
+                    pattern="^[a-zA-Z\s]+$"
+                    title="Only letters and spaces are allowed."
+                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                     required
                 >
             </div>
@@ -57,6 +60,9 @@
                     value="{{ old('first_name') }}"
                     maxlength="50"
                     placeholder="Enter First Name"
+                    pattern="^[a-zA-Z\s]+$"
+                    title="Only letters and spaces are allowed."
+                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                     required
                 >
             </div>
@@ -70,6 +76,9 @@
                     value="{{ old('middle_initial') }}"
                     maxlength="3"
                     placeholder="M.I."
+                    pattern="^[a-zA-Z\.]+$"
+                    title="Only letters and periods are allowed."
+                    oninput="this.value = this.value.replace(/[^a-zA-Z\.]/g, '')"
                 >
             </div>
         </div>
