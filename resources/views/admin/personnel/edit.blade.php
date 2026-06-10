@@ -105,7 +105,7 @@
                 </select>
             </div>
 
-            <div class="personnel-form-group">
+            <div class="personnel-form-group" id="department_group">
                 <label for="department_id">Department</label>
                 <select name="department_id" id="department_id" required>
                     <option value="">Select department</option>
@@ -206,6 +206,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const roleSelect = document.getElementById('personnel_role');
+            const deptGroup = document.getElementById('department_group');
+            const deptSelect = document.getElementById('department_id');
             const shiftDayGroup = document.getElementById('shift_day_group');
             const shiftPeriodGroup = document.getElementById('shift_period_group');
             const shiftDaySelect = document.getElementById('shift_day');
@@ -227,7 +229,16 @@
                     shiftPeriodSelect.setAttribute('required', 'required');
                 }
 
-                // 2. Staff 'Whole Day' Option Logic
+                // 2. Department Visibility (Hide for Student Staff)
+                if (role === 'student staff') {
+                    deptGroup.style.display = 'none';
+                    deptSelect.removeAttribute('required');
+                } else {
+                    deptGroup.style.display = 'block';
+                    deptSelect.setAttribute('required', 'required');
+                }
+
+                // 3. Staff 'Whole Day' Option Logic
                 Array.from(shiftPeriodSelect.options).forEach(opt => {
                     if (opt.value === 'Whole Day') {
                         if (role === 'staff') {

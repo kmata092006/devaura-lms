@@ -138,7 +138,12 @@ class LibraryPersonnelController extends Controller
             'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
             'personnel_role' => ['required', Rule::in($this->roles)],
-            'department_id' => ['required', 'integer', 'exists:department,department_id'],
+            'department_id' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'student staff'), 
+                'nullable', 
+                'integer', 
+                'exists:department,department_id'
+            ],
             
             // Conditionally require shifts only if not an Admin
             'shift_day' => [
@@ -177,6 +182,8 @@ class LibraryPersonnelController extends Controller
             'password.confirmed' => 'The password confirmation does not match.',
         ]);
 
+        $departmentId = ($validated['personnel_role'] === 'student staff') ? null : $validated['department_id'];
+
         // Security check: Prevent student staff from holding a whole day shift
         if ($validated['personnel_role'] === 'student staff' && ($validated['shift_period'] ?? '') === 'Whole Day') {
             return back()->withErrors(['shift_period' => 'Student staff cannot be assigned to Whole Day shifts.'])->withInput();
@@ -194,6 +201,7 @@ class LibraryPersonnelController extends Controller
                 $validated['personnel_role'],
                 $validated['username'],
                 Hash::make($validated['password']),
+                $departmentId,
                 $validated['department_id'],
                 trim($validated['last_name']),
                 trim($validated['first_name']),
@@ -272,7 +280,12 @@ class LibraryPersonnelController extends Controller
             'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
             'personnel_role' => ['required', Rule::in($this->roles)],
-            'department_id' => ['required', 'integer', 'exists:department,department_id'],
+            'department_id' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'student staff'), 
+                'nullable', 
+                'integer', 
+                'exists:department,department_id'
+            ],
             
             'shift_day' => [
                 Rule::requiredIf(fn () => $request->input('personnel_role') !== 'admin'),
@@ -310,6 +323,8 @@ class LibraryPersonnelController extends Controller
             'password.confirmed' => 'The password confirmation does not match.',
         ]);
 
+        $departmentId = ($validated['personnel_role'] === 'student staff') ? null : $validated['department_id'];
+
         if ($validated['personnel_role'] === 'student staff' && ($validated['shift_period'] ?? '') === 'Whole Day') {
             return back()->withErrors(['shift_period' => 'Student staff cannot be assigned to Whole Day shifts.'])->withInput();
         }
@@ -333,7 +348,7 @@ class LibraryPersonnelController extends Controller
                 [
                     $validated['personnel_role'],
                     $validated['username'],
-                    $validated['department_id'],
+                    $departmentId,
                     trim($validated['last_name']),
                     trim($validated['first_name']),
                     $this->formatMiddleInitial($validated['middle_initial'] ?? null),
@@ -358,7 +373,7 @@ class LibraryPersonnelController extends Controller
                 [
                     $validated['personnel_role'],
                     $validated['username'],
-                    $validated['department_id'],
+                    $departmentId,
                     trim($validated['last_name']),
                     trim($validated['first_name']),
                     $this->formatMiddleInitial($validated['middle_initial'] ?? null),
