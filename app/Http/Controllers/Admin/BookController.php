@@ -152,19 +152,38 @@ class BookController extends Controller
             'isbn' => ['nullable', 'string', 'max:13'],
             'book_status' => ['required', Rule::in($this->bookStatuses)],
 
+            // Require author text input only if no existing selection is made
             'author_id' => ['nullable', 'integer', 'exists:book_author,author_id'],
-            'author_name' => ['nullable', 'string', 'max:150'],
+            'author_name' => [
+                Rule::requiredIf(fn() => !$request->filled('author_id')),
+                'nullable', 'string', 'max:150'
+            ],
 
+            // Require publisher text input only if no existing selection is made
             'publisher_id' => ['nullable', 'integer', 'exists:book_publisher,publisher_id'],
-            'publisher_name' => ['nullable', 'string', 'max:150'],
-            'date_published' => ['nullable', 'date'],
+            'publisher_name' => [
+                Rule::requiredIf(fn() => !$request->filled('publisher_id')),
+                'nullable', 'string', 'max:150'
+            ],
+            'date_published' => ['required', 'date'], // Strictly required globally
 
+            // Require genre text input only if no existing selection is made
             'genre_id' => ['nullable', 'integer', 'exists:book_genre,genre_id'],
-            'genre_name' => ['nullable', 'string', 'max:100'],
+            'genre_name' => [
+                Rule::requiredIf(fn() => !$request->filled('genre_id')),
+                'nullable', 'string', 'max:100'
+            ],
+        ], [
+            'author_name.required_if' => 'Please select an existing author or enter a new author name.',
+            'author_name.regex' => 'The author name can only contain letters, spaces, periods, commas, and hyphens.',
+            'publisher_name.required_if' => 'Please select an existing publisher or enter a new publisher name.',
+            'publisher_name.regex' => 'The publisher name can only contain letters, spaces, periods, commas, and hyphens.',
+            'genre_name.required_if' => 'Please select an existing genre or enter a new genre name.',
+            'genre_name.regex' => 'The genre name can only contain letters and spaces.',
+            'date_published.required' => 'The date published field is required.'
         ]);
 
         $isbn = $this->cleanIsbn($validated['isbn'] ?? null);
-
         $authorId = $validated['author_id'] ?? null;
         $publisherId = $validated['publisher_id'] ?? null;
         $genreId = $validated['genre_id'] ?? null;
@@ -177,7 +196,7 @@ class BookController extends Controller
         if (!$publisherId && !empty($validated['publisher_name'])) {
             $publisherId = $this->findOrCreatePublisher(
                 $validated['publisher_name'],
-                $validated['date_published'] ?? null
+                $validated['date_published']
             );
         }
 
@@ -185,7 +204,6 @@ class BookController extends Controller
         if ($publisherId && !empty($validated['date_published'])) {
             DB::table('book_publisher')
                 ->where('publisher_id', $publisherId)
-                ->whereNull('date_published')
                 ->update([
                     'date_published' => $validated['date_published'],
                 ]);
@@ -214,8 +232,26 @@ class BookController extends Controller
      */
     public function edit($bookId)
     {
-        $book = DB::table('book')
-            ->where('book_id', $bookId)
+        // Fix: Added table joins to properly fill the data fields upon loading the edit view
+        $book = DB::table('book as book')
+            ->leftJoin('book_author as author', 'book.author_id', '=', 'author.author_id')
+            ->leftJoin('book_publisher as publisher', 'book.publisher_id', '=', 'publisher.publisher_id')
+            ->leftJoin('book_genre as genre', 'book.genre_id', '=', 'genre.genre_id')
+            ->select(
+                'book.book_id',
+                'book.book_title',
+                'book.isbn',
+                'book.book_status',
+                'genre.genre_name',
+                'publisher.date_published',
+                'author.last_name as author_last_name',
+                'author.first_name as author_first_name',
+                DB::raw('author.`m.i.` as author_middle_initial'),
+                'publisher.last_name as publisher_last_name',
+                'publisher.first_name as publisher_first_name',
+                DB::raw('publisher.`m.i.` as publisher_middle_initial')
+            )
+            ->where('book.book_id', $bookId)
             ->first();
 
         if (!$book) {
@@ -243,9 +279,7 @@ class BookController extends Controller
      */
     public function update(Request $request, $bookId)
     {
-        $book = DB::table('book')
-            ->where('book_id', $bookId)
-            ->first();
+        $book = DB::table('book')->where('book_id', $bookId)->first();
 
         if (!$book) {
             return redirect()
@@ -253,53 +287,63 @@ class BookController extends Controller
                 ->withErrors(['book' => 'Book record not found.']);
         }
 
+        // Updated validation array to match edit.blade.php input variables explicitly
         $validated = $request->validate([
             'book_title' => ['required', 'string', 'max:255'],
             'isbn' => ['nullable', 'string', 'max:13'],
             'book_status' => ['required', Rule::in($this->bookStatuses)],
-
-            'author_id' => ['nullable', 'integer', 'exists:book_author,author_id'],
-            'author_name' => ['nullable', 'string', 'max:150'],
-
-            'publisher_id' => ['nullable', 'integer', 'exists:book_publisher,publisher_id'],
-            'publisher_name' => ['nullable', 'string', 'max:150'],
-            'date_published' => ['nullable', 'date'],
-
-            'genre_id' => ['nullable', 'integer', 'exists:book_genre,genre_id'],
-            'genre_name' => ['nullable', 'string', 'max:100'],
+            'genre_name' => ['required', 'string', 'max:100'],
+            
+            'author_last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'author_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'author_middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
+            
+            'publisher_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'publisher_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'publisher_middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
+            'date_published' => ['required', 'date'],
+        ], [
+            'genre_name.regex' => 'The genre name can only contain letters and spaces.',
+            'author_last_name.regex' => 'The author last name can only contain letters and spaces.',
+            'author_first_name.regex' => 'The author first name can only contain letters and spaces.',
+            'author_middle_initial.regex' => 'The author middle initial can only contain letters and periods.',
+            'publisher_last_name.regex' => 'The publisher last name can only contain letters and spaces.',
+            'publisher_first_name.regex' => 'The publisher first name can only contain letters and spaces.',
+            'publisher_middle_initial.regex' => 'The publisher middle initial can only contain letters and periods.',
+            'date_published.required' => 'The date published field is required.'
         ]);
 
         $isbn = $this->cleanIsbn($validated['isbn'] ?? null);
 
-        $authorId = $validated['author_id'] ?? null;
-        $publisherId = $validated['publisher_id'] ?? null;
-        $genreId = $validated['genre_id'] ?? null;
-
+        // Standardize dynamic lookups for Author, Publisher, and Genre components
+        $authorFullName = $validated['author_last_name'] . ', ' . $validated['author_first_name'];
+        $authorId = $this->findOrCreateAuthor($authorFullName);
+        
         // Reuses existing related records or creates new ones based on user input.
-        if (!$authorId && !empty($validated['author_name'])) {
-            $authorId = $this->findOrCreateAuthor($validated['author_name']);
+        if ($authorId && isset($validated['author_middle_initial'])) {
+            $cleanMI = strtoupper(trim(rtrim($validated['author_middle_initial'], '.')));
+            DB::table('book_author')
+                ->where('author_id', $authorId)
+                ->update(['m.i.' => $cleanMI ?: null]);
         }
 
-        if (!$publisherId && !empty($validated['publisher_name'])) {
-            $publisherId = $this->findOrCreatePublisher(
-                $validated['publisher_name'],
-                $validated['date_published'] ?? null
-            );
-        }
+        $pubName = trim(($validated['publisher_last_name'] ?? '') . ' ' . $validated['publisher_first_name']);
+        $publisherId = $this->findOrCreatePublisher($pubName, $validated['date_published']);
 
         // Preserves existing publisher dates by only filling blank date_published values.
-        if ($publisherId && !empty($validated['date_published'])) {
+        if ($publisherId) {
+            $cleanPubMI = strtoupper(trim(rtrim($validated['publisher_middle_initial'] ?? '', '.')));
             DB::table('book_publisher')
                 ->where('publisher_id', $publisherId)
-                ->whereNull('date_published')
                 ->update([
+                    'last_name' => trim($validated['publisher_last_name'] ?? '') ?: null,
+                    'first_name' => trim($validated['publisher_first_name']),
+                    'm.i.' => $cleanPubMI ?: null,
                     'date_published' => $validated['date_published'],
                 ]);
         }
 
-        if (!$genreId && !empty($validated['genre_name'])) {
-            $genreId = $this->findOrCreateGenre($validated['genre_name']);
-        }
+        $genreId = $this->findOrCreateGenre($validated['genre_name']);
 
         DB::table('book')
             ->where('book_id', $bookId)

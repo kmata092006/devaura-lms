@@ -51,125 +51,137 @@ Route::post('/attendance/visitor/time-out', [AttendanceController::class, 'timeO
     ->middleware(AuditTrailLogger::class)
     ->name('attendance.visitor.time-out');
 
-// Applies admin access control and audit logging to all admin routes.
+// ========================================================================
+// ADMIN ROUTE GROUPS (All URLs here start with /admin and name 'admin.')
+// ========================================================================
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware([AdminOnly::class, AuditTrailLogger::class])
     ->group(function () {
+        /* #region ALL ROLES - Dashboard, Attendance, Borrow, Return, Book List, Members */
+        Route::middleware(['role:admin,staff,student staff', AuditTrailLogger::class])->group(function () {
+            Route::get('/dashboard', function () {
+                return view('admin.dashboard');
+            })->name('dashboard');
 
-// Displays the admin dashboard from inside the protected route group.
-Route::get('/dashboard', function () {
-    return view('admin.dashboard');
-})->name('dashboard');
+            Route::get('/book-list', [BookListController::class, 'index'])
+                ->name('book-list.index');
 
-Route::get('/attendance', [AttendanceController::class, 'index'])
-    ->name('attendance.index');
+            Route::get('/borrow', [BorrowController::class, 'index'])
+                ->name('borrow.index');
 
-Route::post('/attendance/personnel/time-in', [AttendanceController::class, 'timeInPersonnel'])
-    ->name('attendance.personnel.time-in');
+            Route::post('/borrow', [BorrowController::class, 'store'])
+                ->name('borrow.store');
 
- Route::post('/attendance/personnel/time-out', [AttendanceController::class, 'timeOutPersonnel'])
-->name('attendance.personnel.time-out');
+            Route::get('/return', [ReturnController::class, 'index'])
+                ->name('return.index');
 
-Route::get('/departments', [DepartmentController::class, 'index'])
-    ->name('departments.index');
+            Route::post('/return/{transactionId}/return', [ReturnController::class, 'returnBook'])
+                ->name('return.return-book');
 
-Route::get('/departments/create', [DepartmentController::class, 'create'])
-    ->name('departments.create');
+            Route::post('/return/{transactionId}/lost', [ReturnController::class, 'markAsLost'])
+                ->name('return.mark-lost');
 
-Route::post('/departments', [DepartmentController::class, 'store'])
-    ->name('departments.store');
+            Route::post('/return/{transactionId}/damaged', [ReturnController::class, 'markAsDamaged'])
+                ->name('return.mark-damaged');
 
-Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
-    ->name('departments.edit');
+            Route::get('/attendance', [AttendanceController::class, 'index'])
+                ->name('attendance.index');
 
-Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
-    ->name('departments.update');
+            Route::post('/attendance/personnel/time-in', [AttendanceController::class, 'timeInPersonnel'])
+                ->name('attendance.personnel.time-in');
 
-Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
-    ->name('departments.destroy');
+            Route::post('/attendance/personnel/time-out', [AttendanceController::class, 'timeOutPersonnel'])
+                ->name('attendance.personnel.time-out');
 
-Route::get('/personnel', [LibraryPersonnelController::class, 'index'])
-    ->name('personnel.index');
+            Route::get('/members', [LibraryMemberController::class, 'index'])
+                ->name('members.index');
 
-Route::get('/personnel/create', [LibraryPersonnelController::class, 'create'])
-    ->name('personnel.create');
+            Route::get('/members/create', [LibraryMemberController::class, 'create'])
+                ->name('members.create');
 
-Route::post('/personnel', [LibraryPersonnelController::class, 'store'])
-    ->name('personnel.store');
+            Route::post('/members', [LibraryMemberController::class, 'store'])
+                ->name('members.store');
 
-Route::get('/personnel/{personnelId}/edit', [LibraryPersonnelController::class, 'edit'])
-    ->name('personnel.edit');
+            Route::get('/members/{memberId}/edit', [LibraryMemberController::class, 'edit'])
+                ->name('members.edit');
 
-Route::put('/personnel/{personnelId}', [LibraryPersonnelController::class, 'update'])
-    ->name('personnel.update');
+            Route::put('/members/{memberId}', [LibraryMemberController::class, 'update'])
+                ->name('members.update');
 
-Route::delete('/personnel/{personnelId}', [LibraryPersonnelController::class, 'destroy'])
-    ->name('personnel.destroy');
+            Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])
+                ->name('members.destroy');
+        });
+        /* #endregion */
 
-Route::get('/members', [LibraryMemberController::class, 'index'])
-    ->name('members.index');
+        /* #region ADMIN & STAFF ONLY - Audit Trail */
+        Route::middleware(['role:admin,staff', AuditTrailLogger::class])->group(function () {
+            Route::get('/departments', [DepartmentController::class, 'index'])
+                ->name('departments.index');
 
-Route::get('/members/create', [LibraryMemberController::class, 'create'])
-    ->name('members.create');
+            Route::get('/audit-trail', [AuditTrailController::class, 'index'])
+                ->name('audit-trail.index');
+        });
+        /* #endregion */
 
-Route::post('/members', [LibraryMemberController::class, 'store'])
-    ->name('members.store');
+        /* #region STRICTLY ADMIN ONLY - Departments, Book Management, Reports, Personnel */
+        Route::middleware(['role:admin', AuditTrailLogger::class])->group(function () {
+            
+            Route::get('/books/google-books/search', [BookController::class, 'searchGoogleBooks'])
+                ->name('books.google-books.search');
+                
+            Route::get('/books', [BookController::class, 'index'])
+                ->name('books.index');
 
-Route::get('/members/{memberId}/edit', [LibraryMemberController::class, 'edit'])
-    ->name('members.edit');
+            Route::get('/books/create', [BookController::class, 'create'])
+                ->name('books.create');
 
-Route::put('/members/{memberId}', [LibraryMemberController::class, 'update'])
-    ->name('members.update');
+            Route::post('/books', [BookController::class, 'store'])
+                ->name('books.store');
 
-Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])
-    ->name('members.destroy');
-    
-Route::get('/books/google-books/search', [BookController::class, 'searchGoogleBooks'])
-    ->name('books.google-books.search');
-    
-Route::get('/books', [BookController::class, 'index'])
-    ->name('books.index');
+            Route::get('/books/{bookId}/edit', [BookController::class, 'edit'])
+                ->name('books.edit');
 
-Route::get('/books/create', [BookController::class, 'create'])
-    ->name('books.create');
+            Route::put('/books/{bookId}', [BookController::class, 'update'])
+                ->name('books.update');
 
-Route::post('/books', [BookController::class, 'store'])
-    ->name('books.store');
+            Route::delete('/books/{bookId}', [BookController::class, 'destroy'])
+                ->name('books.destroy');
 
-Route::get('/books/{bookId}/edit', [BookController::class, 'edit'])
-    ->name('books.edit');
+            Route::get('/reports', [ReportController::class, 'index'])
+                ->name('reports.index');
 
-Route::put('/books/{bookId}', [BookController::class, 'update'])
-    ->name('books.update');
+            Route::get('/personnel', [LibraryPersonnelController::class, 'index'])
+                ->name('personnel.index');
 
-Route::delete('/books/{bookId}', [BookController::class, 'destroy'])
-    ->name('books.destroy');
+            Route::get('/personnel/create', [LibraryPersonnelController::class, 'create'])
+                ->name('personnel.create');
 
-Route::get('/book-list', [BookListController::class, 'index'])
-    ->name('book-list.index');
+            Route::post('/personnel', [LibraryPersonnelController::class, 'store'])
+                ->name('personnel.store');
 
-Route::get('/borrow', [BorrowController::class, 'index'])
-    ->name('borrow.index');
+            Route::get('/personnel/{personnelId}/edit', [LibraryPersonnelController::class, 'edit'])
+                ->name('personnel.edit');
 
-Route::post('/borrow', [BorrowController::class, 'store'])
-    ->name('borrow.store');
+            Route::put('/personnel/{personnelId}', [LibraryPersonnelController::class, 'update'])
+                ->name('personnel.update');
 
-Route::get('/return', [ReturnController::class, 'index'])
-    ->name('return.index');
+            Route::delete('/personnel/{personnelId}', [LibraryPersonnelController::class, 'destroy'])
+                ->name('personnel.destroy');
 
-Route::post('/return/{transactionId}/return', [ReturnController::class, 'returnBook'])
-    ->name('return.return-book');
+            Route::get('/departments/create', [DepartmentController::class, 'create'])
+                ->name('departments.create');
 
-Route::post('/return/{transactionId}/lost', [ReturnController::class, 'markAsLost'])
-    ->name('return.mark-lost');
+            Route::post('/departments', [DepartmentController::class, 'store'])
+                ->name('departments.store');
 
-Route::post('/return/{transactionId}/damaged', [ReturnController::class, 'markAsDamaged'])
-    ->name('return.mark-damaged');
+            Route::get('/departments/{departmentId}/edit', [DepartmentController::class, 'edit'])
+                ->name('departments.edit');
 
-Route::get('/reports', [ReportController::class, 'index'])
-    ->name('reports.index');
+            Route::put('/departments/{departmentId}', [DepartmentController::class, 'update'])
+                ->name('departments.update');
 
-Route::get('/audit-trail', [AuditTrailController::class, 'index'])
-    ->name('audit-trail.index');
-});
+            Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
+                ->name('departments.destroy');
+        });
+        /* #endregion */
+    });

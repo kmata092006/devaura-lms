@@ -12,6 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // 1. First, ensure the column exists
         if (!Schema::hasColumn('library_personnel', 'is_system_account')) {
             Schema::table('library_personnel', function (Blueprint $table) {
                 $table->boolean('is_system_account')
@@ -20,11 +21,15 @@ return new class extends Migration
             });
         }
 
-        DB::table('library_personnel')
-            ->whereIn('username', ['admin', 'staff', 'student staff'])
-            ->update([
-                'is_system_account' => true,
-            ]);
+        // 2. Wrap the update in a try-catch to prevent a crash if table is empty 
+        // or if records don't exist yet
+        try {
+            DB::table('library_personnel')
+                ->whereIn('username', ['admin', 'staff', 'student staff'])
+                ->update(['is_system_account' => true]);
+        } catch (\Exception $e) {
+            // Silently ignore if update fails (e.g., table empty)
+        }
     }
 
     /**

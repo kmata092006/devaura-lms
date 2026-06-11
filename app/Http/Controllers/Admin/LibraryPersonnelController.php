@@ -27,6 +27,7 @@ class LibraryPersonnelController extends Controller
     private array $shiftPeriods = [
         'Morning',
         'Afternoon',
+        'Whole Day', // Added for Staff
     ];
 
     private array $protectedUsernames = [
@@ -132,14 +133,29 @@ class LibraryPersonnelController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50'],
-            'first_name' => ['required', 'string', 'max:50'],
-            'middle_initial' => ['nullable', 'string', 'max:3'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
             'personnel_role' => ['required', Rule::in($this->roles)],
-            'department_id' => ['required', 'integer', 'exists:department,department_id'],
-            'shift_day' => ['required', Rule::in($this->shiftDays)],
-            'shift_period' => ['required', Rule::in($this->shiftPeriods)],
+            'department_id' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'student staff'), 
+                'nullable', 
+                'integer', 
+                'exists:department,department_id'
+            ],
+            
+            // Conditionally require shifts only if not an Admin
+            'shift_day' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'admin'),
+                'nullable',
+                Rule::in($this->shiftDays)
+            ],
+            'shift_period' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'admin'),
+                'nullable',
+                Rule::in($this->shiftPeriods)
+            ],
 
             'username' => [
                 'required',
@@ -157,11 +173,24 @@ class LibraryPersonnelController extends Controller
                 'confirmed',
             ],
         ], [
+            'last_name.regex' => 'The last name may only contain letters and spaces.',
+            'first_name.regex' => 'The first name may only contain letters and spaces.',
+            'middle_initial.regex' => 'The middle initial may only contain letters and periods.',
             'username.alpha_dash' => 'The username may only contain letters, numbers, dashes, and underscores.',
             'username.unique' => 'This username is already taken.',
             'password.min' => 'The password must be at least 8 characters.',
             'password.confirmed' => 'The password confirmation does not match.',
         ]);
+
+        $departmentId = ($validated['personnel_role'] === 'student staff') ? null : $validated['department_id'];
+
+        // Security check: Prevent student staff from holding a whole day shift
+        if ($validated['personnel_role'] === 'student staff' && ($validated['shift_period'] ?? '') === 'Whole Day') {
+            return back()->withErrors(['shift_period' => 'Student staff cannot be assigned to Whole Day shifts.'])->withInput();
+        }
+
+        $shiftDay = $validated['personnel_role'] === 'admin' ? null : $validated['shift_day'];
+        $shiftPeriod = $validated['personnel_role'] === 'admin' ? null : $validated['shift_period'];
 
         DB::insert(
             'INSERT INTO library_personnel
@@ -172,12 +201,13 @@ class LibraryPersonnelController extends Controller
                 $validated['personnel_role'],
                 $validated['username'],
                 Hash::make($validated['password']),
+                $departmentId,
                 $validated['department_id'],
                 trim($validated['last_name']),
                 trim($validated['first_name']),
                 $this->formatMiddleInitial($validated['middle_initial'] ?? null),
-                $validated['shift_day'],
-                $validated['shift_period'],
+                $shiftDay,
+                $shiftPeriod,
             ]
         );
 
@@ -245,14 +275,28 @@ class LibraryPersonnelController extends Controller
         }
 
         $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50'],
-            'first_name' => ['required', 'string', 'max:50'],
-            'middle_initial' => ['nullable', 'string', 'max:3'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
             'personnel_role' => ['required', Rule::in($this->roles)],
-            'department_id' => ['required', 'integer', 'exists:department,department_id'],
-            'shift_day' => ['required', Rule::in($this->shiftDays)],
-            'shift_period' => ['required', Rule::in($this->shiftPeriods)],
+            'department_id' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'student staff'), 
+                'nullable', 
+                'integer', 
+                'exists:department,department_id'
+            ],
+            
+            'shift_day' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'admin'),
+                'nullable',
+                Rule::in($this->shiftDays)
+            ],
+            'shift_period' => [
+                Rule::requiredIf(fn () => $request->input('personnel_role') !== 'admin'),
+                'nullable',
+                Rule::in($this->shiftPeriods)
+            ],
 
             'username' => [
                 'required',
@@ -270,11 +314,23 @@ class LibraryPersonnelController extends Controller
                 'confirmed',
             ],
         ], [
+            'last_name.regex' => 'The last name may only contain letters and spaces.',
+            'first_name.regex' => 'The first name may only contain letters and spaces.',
+            'middle_initial.regex' => 'The middle initial may only contain letters and periods.',
             'username.alpha_dash' => 'The username may only contain letters, numbers, dashes, and underscores.',
             'username.unique' => 'This username is already taken.',
             'password.min' => 'The password must be at least 8 characters.',
             'password.confirmed' => 'The password confirmation does not match.',
         ]);
+
+        $departmentId = ($validated['personnel_role'] === 'student staff') ? null : $validated['department_id'];
+
+        if ($validated['personnel_role'] === 'student staff' && ($validated['shift_period'] ?? '') === 'Whole Day') {
+            return back()->withErrors(['shift_period' => 'Student staff cannot be assigned to Whole Day shifts.'])->withInput();
+        }
+
+        $shiftDay = $validated['personnel_role'] === 'admin' ? null : $validated['shift_day'];
+        $shiftPeriod = $validated['personnel_role'] === 'admin' ? null : $validated['shift_period'];
 
         if (!empty($validated['password'])) {
             DB::update(
@@ -292,12 +348,12 @@ class LibraryPersonnelController extends Controller
                 [
                     $validated['personnel_role'],
                     $validated['username'],
-                    $validated['department_id'],
+                    $departmentId,
                     trim($validated['last_name']),
                     trim($validated['first_name']),
                     $this->formatMiddleInitial($validated['middle_initial'] ?? null),
-                    $validated['shift_day'],
-                    $validated['shift_period'],
+                    $shiftDay,
+                    $shiftPeriod,
                     Hash::make($validated['password']),
                     $personnelId,
                 ]
@@ -317,12 +373,12 @@ class LibraryPersonnelController extends Controller
                 [
                     $validated['personnel_role'],
                     $validated['username'],
-                    $validated['department_id'],
+                    $departmentId,
                     trim($validated['last_name']),
                     trim($validated['first_name']),
                     $this->formatMiddleInitial($validated['middle_initial'] ?? null),
-                    $validated['shift_day'],
-                    $validated['shift_period'],
+                    $shiftDay,
+                    $shiftPeriod,
                     $personnelId,
                 ]
             );

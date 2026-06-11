@@ -12,7 +12,9 @@
     $visitorTimeInAction = $routeUrl('attendance.visitor.time-in', '/attendance/visitor/time-in');
     $visitorTimeOutAction = $routeUrl('attendance.visitor.time-out', '/attendance/visitor/time-out');
 
-    $adminLoginUrl = $routeUrl('kiosk.admin-login', '/login');
+    // $adminLoginUrl = $routeUrl('kiosk.admin-login', '/login');
+    // the code below fixes public kiosk direct access to admin account
+    $adminLoginUrl = $routeUrl('attendance.admin-login', '/attendance/admin-login');
 @endphp
 
 <!DOCTYPE html>
@@ -573,6 +575,9 @@
                                     type="text"
                                     name="last_name"
                                     placeholder="Last Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >
@@ -581,6 +586,9 @@
                                     type="text"
                                     name="first_name"
                                     placeholder="First Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >
@@ -614,6 +622,9 @@
                                     type="text"
                                     name="last_name"
                                     placeholder="Last Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >
@@ -622,6 +633,9 @@
                                     type="text"
                                     name="first_name"
                                     placeholder="First Name"
+                                    pattern="^[a-zA-Z\s]+$"
+                                    title="Only letters and spaces are allowed."
+                                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                                     autocomplete="off"
                                     required
                                 >

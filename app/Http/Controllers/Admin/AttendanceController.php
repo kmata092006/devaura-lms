@@ -336,10 +336,14 @@ class AttendanceController extends Controller
      */
     public function timeInVisitor(Request $request)
     {
+        // Added strict regex filtering to last_name and first_name
         $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50'],
-            'first_name' => ['required', 'string', 'max:50'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'middle_initial' => ['nullable', 'string', 'max:3'],
+        ], [
+            'last_name.regex' => 'The last name may only contain letters and spaces.',
+            'first_name.regex' => 'The first name may only contain letters and spaces.',
         ]);
 
         $middleInitial = $this->formatMiddleInitial($validated['middle_initial'] ?? null);
@@ -377,25 +381,29 @@ class AttendanceController extends Controller
      */
     public function timeOutVisitor(Request $request)
     {
+        // Added strict regex filtering to last_name and first_name
         $validated = $request->validate([
-            'last_name' => ['required', 'string', 'max:50'],
-            'first_name' => ['required', 'string', 'max:50'],
+            'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'middle_initial' => ['nullable', 'string', 'max:3'],
+        ], [
+            'last_name.regex' => 'The last name may only contain letters and spaces.',
+            'first_name.regex' => 'The first name may only contain letters and spaces.',
         ]);
 
         $middleInitial = $this->formatMiddleInitial($validated['middle_initial'] ?? null);
 
-        // Matches the visitor by name and middle initial before finding the active log.
+        // Uses raw SQL (whereRaw) to bypass the Laravel column escaping bug caused by periods, 
+        // kasi may napapasang values with periods involved. 
         $activeLog = DB::table('attendance_log as log')
             ->join('library_visitor as visitor', 'log.visitor_id', '=', 'visitor.visitor_id')
             ->where('visitor.last_name', trim($validated['last_name']))
             ->where('visitor.first_name', trim($validated['first_name']))
             ->where(function ($query) use ($middleInitial) {
                 if ($middleInitial) {
-                    $query->where('visitor.`m.i.`', $middleInitial);
+                    $query->whereRaw('visitor.`m.i.` = ?', [$middleInitial]);
                 } else {
-                    $query->whereNull('visitor.`m.i.`')
-                        ->orWhere('visitor.`m.i.`', '');
+                    $query->whereRaw('(visitor.`m.i.` IS NULL OR visitor.`m.i.` = "")');
                 }
             })
             ->whereNull('log.time_out')

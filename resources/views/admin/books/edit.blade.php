@@ -69,6 +69,9 @@
                             id="genre_name"
                             value="{{ old('genre_name', $book->genre_name) }}"
                             maxlength="100"
+                            pattern="^[a-zA-Z\s]+$"
+                            title="Only letters and spaces are allowed."
+                            oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             required
                         >
                     </div>
@@ -87,6 +90,9 @@
                             id="author_last_name"
                             value="{{ old('author_last_name', $book->author_last_name) }}"
                             maxlength="50"
+                            pattern="^[a-zA-Z\s]+$"
+                            title="Only letters and spaces are allowed."
+                            oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             required
                         >
                     </div>
@@ -99,6 +105,9 @@
                             id="author_first_name"
                             value="{{ old('author_first_name', $book->author_first_name) }}"
                             maxlength="50"
+                            pattern="^[a-zA-Z\s]+$"
+                            title="Only letters and spaces are allowed."
+                            oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             required
                         >
                     </div>
@@ -111,6 +120,9 @@
                             id="author_middle_initial"
                             value="{{ old('author_middle_initial', $book->author_middle_initial) }}"
                             maxlength="3"
+                            pattern="^[a-zA-Z\.]+$"
+                            title="Only letters and periods are allowed."
+                            oninput="this.value = this.value.replace(/[^a-zA-Z\.]/g, '')"
                             placeholder="Optional"
                         >
                     </div>
@@ -129,18 +141,24 @@
                             id="publisher_last_name"
                             value="{{ old('publisher_last_name', $book->publisher_last_name) }}"
                             maxlength="50"
-                            required
+                            pattern="^[a-zA-Z\s]+$"
+                            title="Only letters and spaces are allowed."
+                            oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                         >
+                        <small>Leave blank if company name is entered in First Name field.</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="publisher_first_name">Publisher First Name</label>
+                        <label for="publisher_first_name">Publisher First Name / Name</label>
                         <input
                             type="text"
                             name="publisher_first_name"
                             id="publisher_first_name"
                             value="{{ old('publisher_first_name', $book->publisher_first_name) }}"
                             maxlength="50"
+                            pattern="^[a-zA-Z\s]+$"
+                            title="Only letters and spaces are allowed."
+                            oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             required
                         >
                     </div>
@@ -153,6 +171,9 @@
                             id="publisher_middle_initial"
                             value="{{ old('publisher_middle_initial', $book->publisher_middle_initial) }}"
                             maxlength="3"
+                            pattern="^[a-zA-Z\.]+$"
+                            title="Only letters and periods are allowed."
+                            oninput="this.value = this.value.replace(/[^a-zA-Z\.]/g, '')"
                             placeholder="Optional"
                         >
                     </div>
@@ -164,6 +185,7 @@
                             name="date_published"
                             id="date_published"
                             value="{{ old('date_published', $book->date_published) }}"
+                            required
                         >
                     </div>
                 </div>

@@ -45,6 +45,9 @@
                     value="{{ old('last_name', $personnel->last_name) }}"
                     maxlength="50"
                     placeholder="Enter Last Name"
+                    pattern="^[a-zA-Z\s]+$"
+                    title="Only letters and spaces are allowed."
+                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                     required
                 >
             </div>
@@ -58,6 +61,9 @@
                     value="{{ old('first_name', $personnel->first_name) }}"
                     maxlength="50"
                     placeholder="Enter First Name"
+                    pattern="^[a-zA-Z\s]+$"
+                    title="Only letters and spaces are allowed."
+                    oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                     required
                 >
             </div>
@@ -71,6 +77,9 @@
                     value="{{ old('middle_initial', $personnel->middle_initial) }}"
                     maxlength="3"
                     placeholder="M.I."
+                    pattern="^[a-zA-Z\.]+$"
+                    title="Only letters and periods are allowed."
+                    oninput="this.value = this.value.replace(/[^a-zA-Z\.]/g, '')"
                 >
             </div>
         </div>
@@ -96,7 +105,7 @@
                 </select>
             </div>
 
-            <div class="personnel-form-group">
+            <div class="personnel-form-group" id="department_group">
                 <label for="department_id">Department</label>
                 <select name="department_id" id="department_id" required>
                     <option value="">Select department</option>
@@ -108,7 +117,7 @@
                 </select>
             </div>
 
-            <div class="personnel-form-group">
+            <div class="personnel-form-group" id="shift_day_group">
                 <label for="shift_day">Shift Day</label>
                 <select name="shift_day" id="shift_day" required>
                     <option value="">Select shift day</option>
@@ -120,7 +129,7 @@
                 </select>
             </div>
 
-            <div class="personnel-form-group">
+            <div class="personnel-form-group" id="shift_period_group">
                 <label for="shift_period">Shift Period</label>
                 <select name="shift_period" id="shift_period" required>
                     <option value="">Select shift period</option>
@@ -193,4 +202,62 @@
             </a>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('personnel_role');
+            const deptGroup = document.getElementById('department_group');
+            const deptSelect = document.getElementById('department_id');
+            const shiftDayGroup = document.getElementById('shift_day_group');
+            const shiftPeriodGroup = document.getElementById('shift_period_group');
+            const shiftDaySelect = document.getElementById('shift_day');
+            const shiftPeriodSelect = document.getElementById('shift_period');
+
+            function updateUI() {
+                const role = roleSelect.value;
+
+                // 1. Admin Shift Visibility
+                if (role === 'admin') {
+                    shiftDayGroup.style.display = 'none';
+                    shiftPeriodGroup.style.display = 'none';
+                    shiftDaySelect.removeAttribute('required');
+                    shiftPeriodSelect.removeAttribute('required');
+                } else {
+                    shiftDayGroup.style.display = 'block';
+                    shiftPeriodGroup.style.display = 'block';
+                    shiftDaySelect.setAttribute('required', 'required');
+                    shiftPeriodSelect.setAttribute('required', 'required');
+                }
+
+                // 2. Department Visibility (Hide for Student Staff)
+                if (role === 'student staff') {
+                    deptGroup.style.display = 'none';
+                    deptSelect.removeAttribute('required');
+                } else {
+                    deptGroup.style.display = 'block';
+                    deptSelect.setAttribute('required', 'required');
+                }
+
+                // 3. Staff 'Whole Day' Option Logic
+                Array.from(shiftPeriodSelect.options).forEach(opt => {
+                    if (opt.value === 'Whole Day') {
+                        if (role === 'staff') {
+                            opt.style.display = '';
+                            opt.disabled = false;
+                        } else {
+                            opt.style.display = 'none';
+                            opt.disabled = true;
+                            // Reset selection if Student Staff previously selected Whole Day
+                            if (shiftPeriodSelect.value === 'Whole Day') {
+                                shiftPeriodSelect.value = '';
+                            }
+                        }
+                    }
+                });
+            }
+
+            roleSelect.addEventListener('change', updateUI);
+            updateUI(); // Run on initial load
+        });
+    </script>
 @endsection

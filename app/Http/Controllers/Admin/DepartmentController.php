@@ -96,8 +96,12 @@ class DepartmentController extends Controller
                 'required',
                 'string',
                 'max:100',
+                'regex:/^[a-zA-Z\s]+$/', // Strictly alphabetic characters and spaces only
                 'unique:department,department_name,' . $departmentId . ',department_id',
             ],
+        ], [
+            // Custom error message for a better user experience
+            'department_name.regex' => 'The department name may only contain letters and spaces.'
         ]);
     }
 }
