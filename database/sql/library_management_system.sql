@@ -9,6 +9,27 @@ CREATE TABLE department (
     department_name VARCHAR(100) NOT NULL
 );
 
+-- PERSONNEL ROLE
+CREATE TABLE personnel_role (
+    personnel_role_id INT AUTO_INCREMENT PRIMARY KEY,
+    personnel_role_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- PERMISSION TABLE
+CREATE TABLE permission (
+    permission_id INT AUTO_INCREMENT PRIMARY KEY,
+    permission_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- ROLE PERMISSION JUNCTION TABLE
+CREATE TABLE role_permission (
+    personnel_role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+    PRIMARY KEY (personnel_role_id, permission_id),
+    FOREIGN KEY (personnel_role_id) REFERENCES personnel_role(personnel_role_id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permission(permission_id) ON DELETE CASCADE
+);
+
 -- VISITOR TABLE
 CREATE TABLE library_visitor (
     visitor_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,15 +74,17 @@ CREATE TABLE book_publisher (
 -- LIBRARY PERSONNEL TABLE
 CREATE TABLE library_personnel (
     personnel_id INT AUTO_INCREMENT PRIMARY KEY,
-    personnel_role VARCHAR(20) NOT NULL,
+    personnel_role_id INT NOT NULL,
+    department_id INT,
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    department_id INT,
     last_name VARCHAR(50) NOT NULL,
     first_name VARCHAR(50) NOT NULL,
-    `m.i.` VARCHAR(3),
-    shift_day VARCHAR(20),
-    shift_period VARCHAR(20)
+    `m.i.` VARCHAR(2),
+    shift_day ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'),
+    shift_period ENUM('Morning', 'Afternoon'),
+    FOREIGN KEY (personnel_role_id) REFERENCES personnel_role(personnel_role_id) ON DELETE RESTRICT,
+    FOREIGN KEY (department_id) REFERENCES department(department_id) ON DELETE SET NULL
 );
 
 -- BOOK TABLE
@@ -114,31 +137,15 @@ CREATE TABLE audit_trail (
 
 -- DEFAULT LIBRARY PERSONNEL ACCOUNTS
 -- Password for all default users: devaura
-INSERT INTO library_personnel (
-    username,
-    password_hash,
-    personnel_role,
-    first_name,
-    last_name
-) VALUES
-(
-    'admin',
-    '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2',
-    'admin',
-    'System',
-    'Admin'
-),
-(
-    'staff',
-    '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2',
-    'staff',
-    'Library',
-    'Staff'
-),
-(
-    'student staff',
-    '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2',
-    'student staff',
-    'Student',
-    'Assistant'
-);
+-- 1. Seed Roles
+INSERT INTO personnel_role (personnel_role_id, personnel_role_name) VALUES 
+(1, 'admin'), 
+(2, 'staff'), 
+(3, 'student staff');
+
+-- 2. Seed Default Accounts
+INSERT INTO library_personnel (username, password_hash, personnel_role_id, first_name, last_name) 
+VALUES
+('admin', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 1, 'System', 'Admin'),
+('staff', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 2, 'Library', 'Staff'),
+('student staff', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 3, 'Student', 'Assistant');
