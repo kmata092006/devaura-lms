@@ -133,6 +133,9 @@ Route::prefix('admin')
             // New Role Permissions Route
             Route::get('/roles', [RoleController::class, 'index'])
                 ->name('roles.index');
+
+            Route::put('/roles', [RoleController::class, 'update'])
+                ->name('roles.update');
                 
             Route::get('/books/google-books/search', [BookController::class, 'searchGoogleBooks'])
                 ->name('books.google-books.search');

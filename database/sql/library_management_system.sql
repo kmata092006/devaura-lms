@@ -148,4 +148,4 @@ INSERT INTO library_personnel (username, password_hash, personnel_role_id, first
 VALUES
 ('admin', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 1, 'System', 'Admin'),
 ('staff', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 2, 'Library', 'Staff'),
-('student staff', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 3, 'Student', 'Assistant');
+('student staff', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 3, 'Student', 'Staff');

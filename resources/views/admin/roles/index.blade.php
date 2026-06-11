@@ -7,62 +7,59 @@
     <div class="page-actions">
         <div>
             <h2>Role Access Matrix</h2>
-            <p>View the current system access levels and module visibility for each library personnel role.</p>
+            <p>Grant or revoke module access for Staff and Student Staff roles.</p>
         </div>
     </div>
 
-    {{-- Simple note explaining the current static nature of the permissions --}}
-    <div class="dashboard-intro" style="padding: 16px 24px; display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 24px;">ℹ️</span>
-        <p style="margin: 0; color: #374151;">
-            <strong>System Security Note:</strong> Role access levels are currently firmly set in the system architecture to maintain strict data integrity. 
-        </p>
-    </div>
+    @if(session('success'))
+        <div class="alert success">{{ session('success') }}</div>
+    @endif
 
-    <div class="table-card">
+    <form method="POST" action="{{ route('admin.roles.update') }}" class="table-card">
+        @csrf
+        @method('PUT')
+
         <table class="data-table">
             <thead>
                 <tr>
                     <th>Module / Feature</th>
-                    <th style="text-align: center;">Admin</th>
-                    <th style="text-align: center;">Staff</th>
-                    <th style="text-align: center;">Student Staff</th>
+                    @foreach ($roles as $role)
+                        <th style="text-align: center;">{{ ucwords($role->personnel_role_name) }}</th>
+                    @endforeach
                 </tr>
             </thead>
             <tbody>
-                @foreach ($matrix as $module => $allowedRoles)
+                @foreach ($matrix as $moduleName => $data)
                     <tr>
-                        <td style="font-weight: 800; color: #111827;">{{ $module }}</td>
+                        {{-- Regular text (no bold) --}}
+                        <td style="color: #374151;">{{ $moduleName }}</td>
                         
-                        {{-- Admin Column --}}
-                        <td style="text-align: center;">
-                            @if(in_array('admin', $allowedRoles))
-                                <span class="status-label status-available" style="color: green;">Access</span>
-                            @else
-                                <span class="status-label status-lost" style="color: red;">Restricted</span>
-                            @endif
-                        </td>
+                        @foreach ($roles as $role)
+                            <td style="text-align: center;">
+                                @php
+                                    $roleId = $role->personnel_role_id;
+                                    $isAllowed = in_array($roleId, $data['allowed_role_ids']);
+                                    $isAdmin = ($role->personnel_role_name === 'admin');
+                                @endphp
 
-                        {{-- Staff Column --}}
-                        <td style="text-align: center;">
-                            @if(in_array('staff', $allowedRoles))
-                                <span class="status-label status-available" style="color: green;">Access</span>
-                            @else
-                                <span class="status-label status-lost" style="color: red;">Restricted</span>
-                            @endif
-                        </td>
-
-                        {{-- Student Staff Column --}}
-                        <td style="text-align: center;">
-                            @if(in_array('student staff', $allowedRoles))
-                                <span class="status-label status-available" style="color: green;">Access</span>
-                            @else
-                                <span class="status-label status-lost" style="color: red;">Restricted</span>
-                            @endif
-                        </td>
+                                @if($isAdmin)
+                                    {{-- Admin access is immutable/locked --}}
+                                    <input type="checkbox" checked disabled>
+                                @else
+                                    <input type="checkbox" 
+                                           name="permissions[{{ $roleId }}][]" 
+                                           value="{{ $data['permission_id'] }}" 
+                                           {{ $isAllowed ? 'checked' : '' }}>
+                                @endif
+                            </td>
+                        @endforeach
                     </tr>
                 @endforeach
             </tbody>
         </table>
-    </div>
+
+        <div class="personnel-form-actions" style="margin-top: 20px;">
+            <button type="submit" class="personnel-primary-button">Save Permissions</button>
+        </div>
+    </form>
 @endsection

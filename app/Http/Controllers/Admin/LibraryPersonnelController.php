@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\RoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -10,11 +11,7 @@ use Illuminate\Validation\Rule;
 
 class LibraryPersonnelController extends Controller
 {
-    private array $roles = [
-        'admin',
-        'staff',
-        'student staff',
-    ];
+    private RoleService $roleService;
 
     private array $shiftDays = [
         'Monday',
@@ -37,16 +34,26 @@ class LibraryPersonnelController extends Controller
     ];
 
     /**
+     * Injects the RoleService so we can dynamically fetch roles from the DB.
+     */
+    public function __construct(RoleService $roleService)
+    {
+        $this->roleService = $roleService;
+    }
+
+    /**
      * Shows paginated personnel records with search and filters.
      */
     public function index(Request $request)
     {
+        // We now JOIN the personnel_role table to get the string name for the view
         $query = DB::table('library_personnel as personnel')
+            ->join('personnel_role as role', 'personnel.personnel_role_id', '=', 'role.personnel_role_id')
             ->leftJoin('department as department', 'personnel.department_id', '=', 'department.department_id')
             ->select(
                 'personnel.personnel_id',
                 'personnel.username',
-                'personnel.personnel_role',
+                'role.personnel_role_name as personnel_role', // Aliased for backward compatibility with the view
                 'personnel.department_id',
                 'department.department_name',
                 'personnel.last_name',
@@ -62,7 +69,7 @@ class LibraryPersonnelController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('personnel.personnel_id', 'like', "%{$search}%")
                     ->orWhere('personnel.username', 'like', "%{$search}%")
-                    ->orWhere('personnel.personnel_role', 'like', "%{$search}%")
+                    ->orWhere('role.personnel_role_name', 'like', "%{$search}%")
                     ->orWhere('personnel.last_name', 'like', "%{$search}%")
                     ->orWhere('personnel.first_name', 'like', "%{$search}%")
                     ->orWhereRaw('personnel.`m.i.` LIKE ?', ["%{$search}%"])
@@ -71,7 +78,7 @@ class LibraryPersonnelController extends Controller
         }
 
         if ($request->filled('role')) {
-            $query->where('personnel.personnel_role', $request->query('role'));
+            $query->where('role.personnel_role_name', $request->query('role'));
         }
 
         if ($request->filled('department_id')) {
@@ -97,7 +104,8 @@ class LibraryPersonnelController extends Controller
             return $person;
         });
 
-        $roles = $this->roles;
+        // Dynamically fetch role names for the filter dropdown
+        $roles = $this->roleService->getRoles()->pluck('personnel_role_name')->toArray();
 
         $departments = DB::table('department')
             ->orderBy('department_name')
@@ -111,7 +119,7 @@ class LibraryPersonnelController extends Controller
      */
     public function create()
     {
-        $roles = $this->roles;
+        $roles = $this->roleService->getRoles()->pluck('personnel_role_name')->toArray();
         $shiftDays = $this->shiftDays;
         $shiftPeriods = $this->shiftPeriods;
 
@@ -132,12 +140,15 @@ class LibraryPersonnelController extends Controller
      */
     public function store(Request $request)
     {
+        $dbRoles = $this->roleService->getRoles();
+        $allowedRoleNames = $dbRoles->pluck('personnel_role_name')->toArray();
+
         $validated = $request->validate([
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
-            'personnel_role' => ['required', Rule::in($this->roles)],
+            'personnel_role' => ['required', Rule::in($allowedRoleNames)],
             'department_id' => [
                 Rule::requiredIf(fn () => $request->input('personnel_role') !== 'student staff'), 
                 'nullable', 
@@ -145,7 +156,6 @@ class LibraryPersonnelController extends Controller
                 'exists:department,department_id'
             ],
             
-            // Conditionally require shifts only if not an Admin
             'shift_day' => [
                 Rule::requiredIf(fn () => $request->input('personnel_role') !== 'admin'),
                 'nullable',
@@ -184,7 +194,6 @@ class LibraryPersonnelController extends Controller
 
         $departmentId = ($validated['personnel_role'] === 'student staff') ? null : $validated['department_id'];
 
-        // Security check: Prevent student staff from holding a whole day shift
         if ($validated['personnel_role'] === 'student staff' && ($validated['shift_period'] ?? '') === 'Whole Day') {
             return back()->withErrors(['shift_period' => 'Student staff cannot be assigned to Whole Day shifts.'])->withInput();
         }
@@ -192,17 +201,19 @@ class LibraryPersonnelController extends Controller
         $shiftDay = $validated['personnel_role'] === 'admin' ? null : $validated['shift_day'];
         $shiftPeriod = $validated['personnel_role'] === 'admin' ? null : $validated['shift_period'];
 
+        // Map the string role name to the integer ID for the database
+        $roleId = $dbRoles->firstWhere('personnel_role_name', $validated['personnel_role'])->personnel_role_id;
+
         DB::insert(
             'INSERT INTO library_personnel
-                (personnel_role, username, password_hash, department_id, last_name, first_name, `m.i.`, shift_day, shift_period)
+                (personnel_role_id, username, password_hash, department_id, last_name, first_name, `m.i.`, shift_day, shift_period)
              VALUES
                 (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
-                $validated['personnel_role'],
+                $roleId,
                 $validated['username'],
                 Hash::make($validated['password']),
                 $departmentId,
-                $validated['department_id'],
                 trim($validated['last_name']),
                 trim($validated['first_name']),
                 $this->formatMiddleInitial($validated['middle_initial'] ?? null),
@@ -221,19 +232,20 @@ class LibraryPersonnelController extends Controller
      */
     public function edit($personnelId)
     {
-        $personnel = DB::table('library_personnel')
+        $personnel = DB::table('library_personnel as p')
+            ->join('personnel_role as r', 'p.personnel_role_id', '=', 'r.personnel_role_id')
             ->select(
-                'personnel_id',
-                'personnel_role',
-                'username',
-                'department_id',
-                'last_name',
-                'first_name',
-                DB::raw('`m.i.` as middle_initial'),
-                'shift_day',
-                'shift_period'
+                'p.personnel_id',
+                'r.personnel_role_name as personnel_role', // Aligns with the view's expectation
+                'p.username',
+                'p.department_id',
+                'p.last_name',
+                'p.first_name',
+                DB::raw('p.`m.i.` as middle_initial'),
+                'p.shift_day',
+                'p.shift_period'
             )
-            ->where('personnel_id', $personnelId)
+            ->where('p.personnel_id', $personnelId)
             ->first();
 
         if (!$personnel) {
@@ -242,7 +254,7 @@ class LibraryPersonnelController extends Controller
                 ->withErrors(['personnel' => 'Library personnel record not found.']);
         }
 
-        $roles = $this->roles;
+        $roles = $this->roleService->getRoles()->pluck('personnel_role_name')->toArray();
         $shiftDays = $this->shiftDays;
         $shiftPeriods = $this->shiftPeriods;
 
@@ -274,12 +286,15 @@ class LibraryPersonnelController extends Controller
                 ->withErrors(['personnel' => 'Library personnel record not found.']);
         }
 
+        $dbRoles = $this->roleService->getRoles();
+        $allowedRoleNames = $dbRoles->pluck('personnel_role_name')->toArray();
+
         $validated = $request->validate([
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
 
-            'personnel_role' => ['required', Rule::in($this->roles)],
+            'personnel_role' => ['required', Rule::in($allowedRoleNames)],
             'department_id' => [
                 Rule::requiredIf(fn () => $request->input('personnel_role') !== 'student staff'), 
                 'nullable', 
@@ -332,10 +347,13 @@ class LibraryPersonnelController extends Controller
         $shiftDay = $validated['personnel_role'] === 'admin' ? null : $validated['shift_day'];
         $shiftPeriod = $validated['personnel_role'] === 'admin' ? null : $validated['shift_period'];
 
+        // Map the string role name to the integer ID for the database update
+        $roleId = $dbRoles->firstWhere('personnel_role_name', $validated['personnel_role'])->personnel_role_id;
+
         if (!empty($validated['password'])) {
             DB::update(
                 'UPDATE library_personnel
-                 SET personnel_role = ?,
+                 SET personnel_role_id = ?,
                      username = ?,
                      department_id = ?,
                      last_name = ?,
@@ -346,7 +364,7 @@ class LibraryPersonnelController extends Controller
                      password_hash = ?
                  WHERE personnel_id = ?',
                 [
-                    $validated['personnel_role'],
+                    $roleId,
                     $validated['username'],
                     $departmentId,
                     trim($validated['last_name']),
@@ -361,7 +379,7 @@ class LibraryPersonnelController extends Controller
         } else {
             DB::update(
                 'UPDATE library_personnel
-                 SET personnel_role = ?,
+                 SET personnel_role_id = ?,
                      username = ?,
                      department_id = ?,
                      last_name = ?,
@@ -371,7 +389,7 @@ class LibraryPersonnelController extends Controller
                      shift_period = ?
                  WHERE personnel_id = ?',
                 [
-                    $validated['personnel_role'],
+                    $roleId,
                     $validated['username'],
                     $departmentId,
                     trim($validated['last_name']),

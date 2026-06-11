@@ -32,9 +32,11 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $personnel = DB::table('library_personnel')
-            ->where('username', $validated['username'])
-            ->where('personnel_role', $validated['role'])
+        $personnel = DB::table('library_personnel as p')
+            ->join('personnel_role as r', 'p.personnel_role_id', '=', 'r.personnel_role_id')
+            ->where('p.username', $validated['username'])
+            ->where('r.personnel_role_name', $validated['role'])
+            ->select('p.*', 'r.personnel_role_name') // Fetch role name for session
             ->first();
 
         if (!$personnel || !Hash::check($validated['password'], $personnel->password_hash)) {
@@ -57,11 +59,11 @@ class AuthController extends Controller
         }
 
         session([
-            'personnel_id' => $personnel->personnel_id,
-            'username' => $personnel->username,
-            'personnel_role' => $personnel->personnel_role,
-            'first_name' => $personnel->first_name,
-            'last_name' => $personnel->last_name,
+            'personnel_id'      => $personnel->personnel_id,
+            'username'          => $personnel->username,
+            'personnel_role'    => $personnel->personnel_role_name,
+            'first_name'        => $personnel->first_name,
+            'last_name'         => $personnel->last_name,
         ]);
 
         app(AuditTrailService::class)->record(
