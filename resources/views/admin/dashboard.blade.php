@@ -32,8 +32,8 @@
             <span class="dashboard-status available">Available</span>
         </a>
 
-        {{-- 2. Departments (Admin & Staff Only) --}}
-        @if (in_array(session('personnel_role'), ['admin', 'staff']))
+        {{-- 2. Departments (Admin Only) --}}
+        @if (session('personnel_role') === 'admin')
             <a href="{{ route('admin.departments.index') }}" class="dashboard-module-card">
                 <span class="module-icon">▦</span>
                 <h3>Departments</h3>
@@ -52,13 +52,15 @@
             </a>
         @endif
 
-        {{-- 4. Library Members (All Roles) --}}
-        <a href="{{ route('admin.members.index') }}" class="dashboard-module-card">
-            <span class="module-icon">◉</span>
-            <h3>Library Members</h3>
-            <p>Manage student and faculty library members and details.</p>
-            <span class="dashboard-status available">Available</span>
-        </a>
+        {{-- 4. Library Members (Admin & Staff Only) --}}
+        @if (in_array(session('personnel_role'), ['admin', 'staff']))
+            <a href="{{ route('admin.members.index') }}" class="dashboard-module-card">
+                <span class="module-icon">◉</span>
+                <h3>Library Members</h3>
+                <p>Manage student and faculty library members and details.</p>
+                <span class="dashboard-status available">Available</span>
+            </a>
+        @endif
 
         {{-- 5. Book Management (Admin Only) --}}
         @if (session('personnel_role') === 'admin')
@@ -94,8 +96,8 @@
             <span class="dashboard-status available">Available</span>
         </a>
 
-        {{-- 9. Reports (Admin Only) --}}
-        @if (session('personnel_role') === 'admin')
+        {{-- 9. Reports (Admin & Staff Only) --}}
+        @if (in_array(session('personnel_role'), ['admin', 'staff']))
             <a href="{{ route('admin.reports.index') }}" class="dashboard-module-card">
                 <span class="module-icon">▤</span>
                 <h3>Reports</h3>
@@ -110,6 +112,16 @@
                 <span class="module-icon">◎</span>
                 <h3>Audit Trail</h3>
                 <p>Track login activity, record changes, transactions, and system actions.</p>
+                <span class="dashboard-status available">Available</span>
+            </a>
+        @endif
+
+        {{-- 11. Role Permission (Admin Only) --}}
+        @if (session('personnel_role') === 'admin')
+            <a href="{{ route('admin.roles.index') }}" class="dashboard-module-card">
+                <span class="module-icon">⚙</span>
+                <h3>Role & Permissions</h3>
+                <p>View system access levels and visibility for library personnel.</p>
                 <span class="dashboard-status available">Available</span>
             </a>
         @endif

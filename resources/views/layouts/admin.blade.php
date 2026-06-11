@@ -34,8 +34,8 @@
                     Attendance Logs
                 </a>
 
-                {{-- 3. Departments (Admin & Staff Only) --}}
-                @if (in_array(session('personnel_role'), ['admin']))
+                {{-- 3. Departments (Admin Only) --}}
+                @if (session('personnel_role') === 'admin')
                     <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
                         <span class="nav-icon">▦</span>
                         Departments
@@ -50,11 +50,13 @@
                     </a>
                 @endif
 
-                {{-- 5. Library Members (All Roles) --}}
-                <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">
-                    <span class="nav-icon">◉</span>
-                    Library Members
-                </a>
+                {{-- 5. Library Members (Admin & Staff Only) --}}
+                @if (in_array(session('personnel_role'), ['admin', 'staff']))
+                    <a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.*') ? 'active' : '' }}">
+                        <span class="nav-icon">◉</span>
+                        Library Members
+                    </a>
+                @endif
 
                 {{-- 6. Book Management (Admin Only) --}}
                 @if (session('personnel_role') === 'admin')
@@ -82,8 +84,8 @@
                     Book List / Search
                 </a>
 
-                {{-- 10. Reports (Admin Only) --}}
-                @if (session('personnel_role') === 'admin')
+                {{-- 10. Reports (Admin & Staff Only) --}}
+                @if (in_array(session('personnel_role'), ['admin', 'staff']))
                     <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <span class="nav-icon">▤</span>
                         Reports
@@ -95,6 +97,14 @@
                     <a href="{{ route('admin.audit-trail.index') }}" class="{{ request()->routeIs('admin.audit-trail.*') ? 'active' : '' }}">
                         <span class="nav-icon">◎</span>
                         Audit Trail
+                    </a>
+                @endif
+
+                {{-- 12. Role Permission (Admin Only) --}}
+                @if (session('personnel_role') === 'admin')
+                    <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                        <span class="nav-icon">⚙</span>
+                        Role Permissions
                     </a>
                 @endif
             </nav>
