@@ -79,82 +79,33 @@
     </form>
 
     <div class="table-card">
-        <table class="data-table personnel-table">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Personnel ID</th>
                     <th>Username</th>
-                    <th>Role</th>
                     <th>Name</th>
+                    <th>Role</th>
                     <th>Department</th>
-                    <th>Shift Day</th>
-                    <th>Shift Period</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-
             <tbody>
                 @forelse ($personnel as $person)
-                    @php
-                        $protectedUsernames = ['admin', 'staff', 'student staff'];
-
-                        $currentUsername = strtolower(trim($person->username));
-                        $isDefaultAccount = in_array($currentUsername, $protectedUsernames, true);
-                        $isCurrentAccount = (int) $person->personnel_id === (int) session('personnel_id');
-
-                        $middleInitial = $person->middle_initial ?? null;
-
-                        if (!empty($person->full_name)) {
-                            $displayName = $person->full_name;
-                        } else {
-                            $mi = $middleInitial ? ' ' . rtrim($middleInitial, '.') . '.' : '';
-                            $displayName = ($person->last_name ?? '-') . ', ' . ($person->first_name ?? '-') . $mi;
-                        }
-                    @endphp
-
                     <tr>
-                        <td>{{ $person->personnel_id }}</td>
-
-                        <td class="personnel-username-cell">
-                            {{ $person->username }}
-                        </td>
-
-                        <td>
-                            <span class="personnel-role-pill">
-                                {{ ucwords($person->personnel_role) }}
-                            </span>
-                        </td>
-
-                        <td>{{ $displayName }}</td>
-
-                        <td>{{ $person->department_name ?? '-' }}</td>
-
-                        <td>{{ $person->shift_day ?? '-' }}</td>
-
-                        <td>{{ $person->shift_period ?? '-' }}</td>
-
+                        <td class="personnel-username-cell">{{ $person->username }}</td>
+                        <td>{{ $person->first_name }} {{ $person->middle_initial ?? '' }} {{ $person->last_name }}</td>
+                        <td><span class="personnel-role-pill">{{ ucwords($person->personnel_role) }}</span></td>
+                        <td>{{ $person->department_name ?? 'N/A' }}</td>
                         <td>
                             <div class="table-action-group">
-                                <a href="{{ route('admin.personnel.edit', $person->personnel_id) }}" class="edit-button">
-                                    Edit
-                                </a>
-
-                                @if ($isDefaultAccount || $isCurrentAccount)
-                                    <span class="disabled-delete-button" title="Default or current account cannot be deleted">
-                                        Protected
-                                    </span>
+                                <a href="{{ route('admin.personnel.edit', $person->personnel_id) }}" class="edit-button">Edit</a>
+                                @if ($person->personnel_id === session('personnel_id'))
+                                    <span class="disabled-delete-button" title="Cannot delete self">Protected</span>
                                 @else
                                     <form method="POST" action="{{ route('admin.personnel.destroy', $person->personnel_id) }}" class="inline-delete-form">
                                         @csrf
                                         @method('DELETE')
-
-                                        <button
-                                            type="submit"
-                                            class="delete-button"
-                                            onclick="return confirm('Delete this personnel account?')"
-                                        >
-                                            Delete
-                                        </button>
+                                        <button type="submit" class="delete-button" onclick="return confirm('Delete this personnel account?')">Delete</button>
                                     </form>
                                 @endif
                             </div>
@@ -162,9 +113,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="empty-table">
-                            No library personnel records found.
-                        </td>
+                        <td colspan="5" class="empty-table">No library personnel found.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -55,6 +55,11 @@
     gap: 10px;
 }
 
+.personnel-form-actions {
+    margin-top: 10px !important; /* Forces separation */
+    padding-top: 16px;
+}
+
 .personnel-primary-button,
 .personnel-search-button {
     min-height: 48px;
@@ -198,10 +203,16 @@
 }
 
 .personnel-form-grid {
+    align-items: start;
     display: grid;
     grid-template-columns: repeat(2, minmax(220px, 1fr));
     gap: 18px;
     margin-bottom: 24px;
+}
+
+.personnel-form-group [id="department_id"],
+.personnel-form-group [id="shift_day"] {
+    margin-top: 6px; /* Adjust this to pull it down if needed */
 }
 
 @media (max-width: 1100px) {

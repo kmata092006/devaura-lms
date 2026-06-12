@@ -100,9 +100,8 @@
             <table class="audit-table">
                 <thead>
                     <tr>
-                        <th>Audit ID</th>
                         <th>Date & Time</th>
-                        <th>Username</th>
+                        <th>User</th>
                         <th>Role</th>
                         <th>Action</th>
                         <th>Module</th>
@@ -110,32 +109,20 @@
                         <th>IP Address</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     @forelse ($auditLogs as $log)
                         <tr>
-                            <td>{{ $log->audit_id }}</td>
                             <td>{{ \Carbon\Carbon::parse($log->created_at)->format('M d, Y h:i A') }}</td>
                             <td>{{ $log->username ?? 'Unknown' }}</td>
-                            <td>
-                                <span class="audit-role-pill">
-                                    {{ $log->personnel_role ? ucwords($log->personnel_role) : 'Unknown' }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="audit-action-pill">
-                                    {{ $log->action_type }}
-                                </span>
-                            </td>
+                            <td><span class="audit-role-pill">{{ $log->personnel_role ? ucwords($log->personnel_role) : 'Unknown' }}</span></td>
+                            <td><span class="audit-action-pill">{{ $log->action_type }}</span></td>
                             <td>{{ $log->module_name }}</td>
                             <td class="audit-details-cell">{{ $log->action_details ?? '-' }}</td>
                             <td>{{ $log->ip_address ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="audit-empty-cell">
-                                No audit trail records found.
-                            </td>
+                            <td colspan="7" class="audit-empty-cell">No audit trail records found.</td>
                         </tr>
                     @endforelse
                 </tbody>

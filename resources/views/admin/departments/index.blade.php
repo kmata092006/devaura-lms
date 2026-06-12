@@ -56,49 +56,30 @@
         <table class="department-table">
             <thead>
                 <tr>
-                    <th>Department ID</th>
                     <th>Department Name</th>
-                    <th>Assigned Personnel</th>
+                    <th>Personnel Count</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-
             <tbody>
                 @forelse ($departments as $department)
                     <tr>
-                        <td>{{ $department->department_id }}</td>
                         <td class="department-name-cell">{{ $department->department_name }}</td>
-                        <td>
-                            <span class="department-count-pill">
-                                {{ $department->personnel_count }}
-                            </span>
-                        </td>
+                        <td><span class="department-count-pill">{{ $department->personnel_count }}</span></td>
                         <td>
                             <div class="department-row-actions">
-                                <a href="{{ route('admin.departments.edit', $department->department_id) }}" class="department-edit-button">
-                                    Edit
-                                </a>
-
-                                <form
-                                    method="POST"
-                                    action="{{ route('admin.departments.destroy', $department->department_id) }}"
-                                    onsubmit="return confirm('Delete this department?');"
-                                >
+                                <a href="{{ route('admin.departments.edit', $department->department_id) }}" class="department-edit-button">Edit</a>
+                                <form method="POST" action="{{ route('admin.departments.destroy', $department->department_id) }}" onsubmit="return confirm('Delete this department?');">
                                     @csrf
                                     @method('DELETE')
-
-                                    <button type="submit" class="department-delete-button">
-                                        Delete
-                                    </button>
+                                    <button type="submit" class="department-delete-button">Delete</button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="department-empty-cell">
-                            No departments found.
-                        </td>
+                        <td colspan="3" class="department-empty-cell">No departments found.</td>
                     </tr>
                 @endforelse
             </tbody>

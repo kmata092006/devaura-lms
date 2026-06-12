@@ -136,29 +136,20 @@
         <table class="data-table borrow-table">
             <thead>
                 <tr>
-                    <th>Transaction ID</th>
                     <th>Member</th>
                     <th>Role</th>
                     <th>Book</th>
                     <th>ISBN</th>
                     <th>Borrow Date</th>
                     <th>Due Date</th>
-                    <th>Transaction Status</th>
-                    <th>Book Status</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($activeTransactions as $transaction)
                     <tr>
-                        <td>{{ $transaction->transaction_id }}</td>
-                        <td>
-                            {{ $transaction->member_first_name }}
-                            {{ $transaction->member_middle_initial ? $transaction->member_middle_initial . '.' : '' }}
-                            {{ $transaction->member_last_name }}
-                        </td>
-                        <td>
-                            <span class="role-pill">{{ ucfirst($transaction->member_role) }}</span>
-                        </td>
+                        <td>{{ $transaction->member_first_name }} {{ $transaction->member_middle_initial ? $transaction->member_middle_initial . '.' : '' }} {{ $transaction->member_last_name }}</td>
+                        <td><span class="role-pill">{{ ucfirst($transaction->member_role) }}</span></td>
                         <td class="book-title-cell">{{ $transaction->book_title }}</td>
                         <td>{{ $transaction->isbn ?? '-' }}</td>
                         <td>{{ $transaction->borrow_date }}</td>
@@ -168,17 +159,10 @@
                                 {{ $transaction->borrow_status }}
                             </span>
                         </td>
-                        <td>
-                            <span class="status-label status-{{ str_replace(' ', '-', strtolower($transaction->book_status)) }}">
-                                {{ $transaction->book_status }}
-                            </span>
-                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="empty-table">
-                            No active borrow transactions found.
-                        </td>
+                        <td colspan="7" class="empty-table">No active borrow transactions found.</td>
                     </tr>
                 @endforelse
             </tbody>

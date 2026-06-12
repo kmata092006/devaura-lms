@@ -41,27 +41,17 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Member ID</th>
                     <th>Reference Number</th>
                     <th>Role</th>
-                    <th>Last Name</th>
-                    <th>First Name</th>
-                    <th>M.I.</th>
-                    <th>Full Name</th>
-                    <th class="table-actions-column">Actions</th>
+                    <th>Name</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($members as $member)
                     <tr>
-                        <td>{{ $member->member_id }}</td>
                         <td>{{ $member->reference_number }}</td>
-                        <td>
-                            <span class="role-pill">{{ ucfirst($member->member_role) }}</span>
-                        </td>
-                        <td>{{ $member->last_name }}</td>
-                        <td>{{ $member->first_name }}</td>
-                        <td>{{ $member->middle_initial ?? '-' }}</td>
+                        <td>{{ ucfirst($member->member_role) }}</td>
                         <td>
                             {{ $member->first_name }}
                             {{ $member->middle_initial ? $member->middle_initial . '.' : '' }}
@@ -70,12 +60,7 @@
                         <td>
                             <div class="table-actions">
                                 <a href="{{ route('admin.members.edit', $member->member_id) }}" class="small-button edit">Edit</a>
-
-                                <form
-                                    method="POST"
-                                    action="{{ route('admin.members.destroy', $member->member_id) }}"
-                                    onsubmit="return confirm('Delete this library member? This action cannot be undone.');"
-                                >
+                                <form method="POST" action="{{ route('admin.members.destroy', $member->member_id) }}" onsubmit="return confirm('Delete this member?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="small-button delete">Delete</button>
@@ -85,7 +70,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="empty-table">No library members found.</td>
+                        <td colspan="4" class="empty-table">No library members found.</td>
                     </tr>
                 @endforelse
             </tbody>

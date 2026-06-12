@@ -139,55 +139,34 @@
     </form>
 
     <div class="table-card attendance-table-card">
-        <table class="data-table attendance-data-table">
+        <table class="data-table attendance-table">
             <thead>
                 <tr>
-                    <th>Log ID</th>
+                    <th>User</th>
                     <th>Type</th>
-                    <th>Role</th>
-                    <th>Identifier</th>
-                    <th>Name</th>
                     <th>Date</th>
                     <th>Time In</th>
                     <th>Time Out</th>
                     <th>Status</th>
                 </tr>
             </thead>
-
             <tbody>
                 @forelse ($attendanceLogs as $log)
                     <tr>
-                        <td>{{ $log->log_id }}</td>
+                        <td class="attendance-name-cell">{{ $log->display_name }} ({{ $log->identifier }})</td>
                         <td>{{ $log->record_type }}</td>
-                        <td>{{ ucwords($log->role) }}</td>
-                        <td>{{ $log->identifier }}</td>
-                        <td>{{ $log->display_name }}</td>
                         <td>{{ \Carbon\Carbon::parse($log->log_date)->format('M d, Y') }}</td>
                         <td>{{ \Carbon\Carbon::parse($log->time_in)->format('h:i A') }}</td>
+                        <td>{{ $log->time_out ? \Carbon\Carbon::parse($log->time_out)->format('h:i A') : '-' }}</td>
                         <td>
-                            @if ($log->time_out)
-                                {{ \Carbon\Carbon::parse($log->time_out)->format('h:i A') }}
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td>
-                            @if ($log->status === 'Currently Inside')
-                                <span class="status-badge active-status">
-                                    Currently Inside
-                                </span>
-                            @else
-                                <span class="status-badge completed-status">
-                                    Completed
-                                </span>
-                            @endif
+                            <span class="status-badge {{ $log->status === 'Currently Inside' ? 'active-status' : 'completed-status' }}">
+                                {{ $log->status }}
+                            </span>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="empty-table">
-                            No attendance records found.
-                        </td>
+                        <td colspan="6" class="empty-table">No attendance records found.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -67,7 +67,6 @@
         <table class="data-table return-table">
             <thead>
                 <tr>
-                    <th>Transaction ID</th>
                     <th>Member</th>
                     <th>Role</th>
                     <th>Book</th>
@@ -83,7 +82,6 @@
             <tbody>
                 @forelse ($activeTransactions as $transaction)
                     <tr>
-                        <td>{{ $transaction->transaction_id }}</td>
                         <td>
                             {{ $transaction->member_first_name }}
                             {{ $transaction->member_middle_initial ? $transaction->member_middle_initial . '.' : '' }}

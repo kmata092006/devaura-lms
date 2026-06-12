@@ -105,7 +105,7 @@
             </div>
 
             <div class="personnel-form-group" id="department_group">
-                <label for="department_id">Department</label>
+                <label for="department_id" id="select_dept">Department</label>
                 <select name="department_id" id="department_id" required>
                     <option value="">Select department</option>
                     @foreach ($departments as $department)
@@ -117,7 +117,7 @@
             </div>
 
             <div class="personnel-form-group" id="shift_day_group">
-                <label for="shift_day">Shift Day</label>
+                <label for="shift_day" id="select_shift_day">Shift Day</label>
                 <select name="shift_day" id="shift_day" required>
                     <option value="">Select shift day</option>
                     @foreach ($shiftDays as $shiftDay)

@@ -92,7 +92,6 @@
         <table class="data-table book-list-table">
             <thead>
                 <tr>
-                    <th>Book ID</th>
                     <th>ISBN</th>
                     <th>Title</th>
                     <th>Author</th>
@@ -105,7 +104,6 @@
             <tbody>
                 @forelse ($books as $book)
                     <tr>
-                        <td>{{ $book->book_id }}</td>
                         <td>{{ $book->isbn ?? '-' }}</td>
                         <td class="book-title-cell">{{ $book->book_title }}</td>
                         <td>
