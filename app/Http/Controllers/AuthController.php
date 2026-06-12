@@ -36,9 +36,10 @@ class AuthController extends Controller
             ->join('personnel_role as r', 'p.personnel_role_id', '=', 'r.personnel_role_id')
             ->where('p.username', $validated['username'])
             ->where('r.personnel_role_name', $validated['role'])
-            ->select('p.*', 'r.personnel_role_name') // Fetch role name for session
+            ->select('p.*', 'r.personnel_role_name') 
             ->first();
 
+        // 1. Check basic credentials
         if (!$personnel || !Hash::check($validated['password'], $personnel->password_hash)) {
             app(AuditTrailService::class)->record(
                 'LOGIN FAILED',
@@ -58,6 +59,28 @@ class AuthController extends Controller
                 ->withInput($request->except('password'));
         }
 
+        // 2. SAFETY NET: Check if this role actually has any active permissions
+        $hasPermissions = DB::table('role_permission')
+            ->where('personnel_role_id', $personnel->personnel_role_id)
+            ->exists();
+
+        if (!$hasPermissions) {
+            app(AuditTrailService::class)->record(
+                'LOGIN BLOCKED',
+                'Authentication',
+                'Blocked login: Role has zero permissions assigned.',
+                $request,
+                ['username' => $validated['username']]
+            );
+
+            return back()
+                ->withErrors([
+                    'access' => 'Your account role currently has no permissions assigned. Please contact an administrator.',
+                ])
+                ->withInput($request->except('password'));
+        }
+
+        // 3. Proceed with session setup
         session([
             'personnel_id'      => $personnel->personnel_id,
             'username'          => $personnel->username,

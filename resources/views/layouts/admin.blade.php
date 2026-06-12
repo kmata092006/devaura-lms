@@ -102,7 +102,17 @@
                     </div>
                 </div>
             </header>
-            <section class="admin-content">@yield('content')</section>
+            <section class="admin-content">
+                {{-- ADD THIS SAFETY NET BLOCK --}}
+                @if ($errors->has('access'))
+                    <div class="alert error" style="margin-bottom: 24px;">
+                        <p>{{ $errors->first('access') }}</p>
+                    </div>
+                @endif
+                {{-- END OF SAFETY NET --}}
+
+                @yield('content')
+            </section>
         </main>
     </div>
 </body>

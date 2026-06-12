@@ -53,7 +53,7 @@ class CheckRole
 
         // Get the current user's role from the session
         $currentRole = session('personnel_role');
-        
+
         // Determine which module is being accessed based on the route name
         $routeName = $request->route()->getName();
         $requestedModule = null;
@@ -68,21 +68,24 @@ class CheckRole
             }
         }
 
+        // Determine a safe fallback route to prevent redirect loops
+        $fallbackUrl = url()->previous() !== url()->current() ? url()->previous() : route('login');
+        $errorMessage = 'Unauthorized access. You do not have permission to view this module.';
+
         if ($requestedModule) {
-            // NEW LOGIC: Check the dynamic database matrix
+            // Check the dynamic database matrix
             if (!$this->roleService->hasPermission($currentRole, $requestedModule)) {
-                // If not allowed, kick them to the 403 Access Denied page
-                abort(403, 'Unauthorized access. You do not have permission to view this module.');
+                // Bounce back with an error message instead of 403
+                return redirect($fallbackUrl)->withErrors(['access' => $errorMessage]);
             }
         } else {
-            // FALLBACK LOGIC: If route isn't mapped above, use the old hardcoded web.php roles
+            // Fallback to hardcoded roles
             if (!in_array($currentRole, $roles)) {
-                // If not allowed, kick them to the 403 Access Denied page
-                abort(403, 'Unauthorized access. You do not have permission to view this module.');
+                // Bounce back with an error message instead of 403
+                return redirect($fallbackUrl)->withErrors(['access' => $errorMessage]);
             }
         }
 
-        // If they are allowed, let the request proceed normally
         return $next($request);
     }
 }
