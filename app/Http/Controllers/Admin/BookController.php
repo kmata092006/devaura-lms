@@ -232,7 +232,6 @@ class BookController extends Controller
      */
     public function edit($bookId)
     {
-        // Fix: Added table joins to properly fill the data fields upon loading the edit view
         $book = DB::table('book as book')
             ->leftJoin('book_author as author', 'book.author_id', '=', 'author.author_id')
             ->leftJoin('book_publisher as publisher', 'book.publisher_id', '=', 'publisher.publisher_id')
@@ -287,7 +286,6 @@ class BookController extends Controller
                 ->withErrors(['book' => 'Book record not found.']);
         }
 
-        // Updated validation array to match edit.blade.php input variables explicitly
         $validated = $request->validate([
             'book_title' => ['required', 'string', 'max:255'],
             'isbn' => ['nullable', 'string', 'max:13'],
@@ -327,19 +325,27 @@ class BookController extends Controller
                 ->update(['m.i.' => $cleanMI ?: null]);
         }
 
-        $pubName = trim(($validated['publisher_last_name'] ?? '') . ' ' . $validated['publisher_first_name']);
+        // FIX: We now correctly format the name string using a comma so splitPersonName() 
+        // can accurately separate the first and last name inside findOrCreatePublisher.
+        $pubName = !empty($validated['publisher_last_name']) 
+            ? trim($validated['publisher_last_name']) . ', ' . trim($validated['publisher_first_name']) 
+            : trim($validated['publisher_first_name']);
+            
         $publisherId = $this->findOrCreatePublisher($pubName, $validated['date_published']);
 
         // Preserves existing publisher dates by only filling blank date_published values.
         if ($publisherId) {
             $cleanPubMI = strtoupper(trim(rtrim($validated['publisher_middle_initial'] ?? '', '.')));
-            // FIX: Replaced DB::table()->update() with DB::update() raw string to prevent 
-            // Laravel from parsing `m.i.` as a JSON column update.
+            
+            // FIX: We apply the split logic here again so the UPDATE query saves 
+            // the cleanly sliced names instead of trusting the raw form boxes.
+            [$pubFirstName, $pubLastName] = $this->splitPersonName($pubName);
+
             DB::update(
                 'UPDATE book_publisher SET last_name = ?, first_name = ?, `m.i.` = ?, date_published = ? WHERE publisher_id = ?',
                 [
-                    trim($validated['publisher_last_name'] ?? '') ?: null,
-                    trim($validated['publisher_first_name']),
+                    $pubLastName,
+                    $pubFirstName,
                     $cleanPubMI ?: null,
                     $validated['date_published'],
                     $publisherId
@@ -500,7 +506,6 @@ class BookController extends Controller
             return (int) $existingAuthor->author_id;
         }
 
-        // Uses raw SQL because the database column name `m.i.` contains dots.
         DB::insert(
             'INSERT INTO book_author (last_name, first_name, `m.i.`) VALUES (?, ?, ?)',
             [
@@ -524,11 +529,19 @@ class BookController extends Controller
             return null;
         }
 
-        // Checks both first_name and last_name because publisher names may be stored in either field.
+        // FIX: Applied the same split logic used for authors so names are properly separated.
+        [$firstName, $lastName] = $this->splitPersonName($publisherName);
+
         $existingPublisher = DB::table('book_publisher')
-            ->where(function ($query) use ($publisherName) {
-                $query->whereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [strtolower($publisherName)])
-                    ->orWhereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [strtolower($publisherName)]);
+            ->where(function ($query) use ($firstName, $lastName, $publisherName) {
+                // Check if it exists exactly matching the newly split name structure
+                $query->where(function ($q) use ($firstName, $lastName) {
+                    $q->whereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [strtolower($firstName ?? '')])
+                      ->whereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [strtolower($lastName ?? '')]);
+                })
+                // Fallback: Also check if the publisher was previously saved entirely into a single column
+                ->orWhereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [strtolower($publisherName)])
+                ->orWhereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [strtolower($publisherName)]);
             })
             ->first();
 
@@ -536,12 +549,11 @@ class BookController extends Controller
             return (int) $existingPublisher->publisher_id;
         }
 
-        // Uses raw SQL because the database column name `m.i.` contains dots.
         DB::insert(
             'INSERT INTO book_publisher (last_name, first_name, `m.i.`, date_published) VALUES (?, ?, ?, ?)',
             [
-                null,
-                $publisherName,
+                $lastName,
+                $firstName,
                 null,
                 $datePublished,
             ]

@@ -205,9 +205,9 @@
                         value="{{ old('genre_name') }}"
                         maxlength="100"
                         placeholder="Enter Genre"
-                        pattern="^[a-zA-Z\s]+$"
-                        title="Only letters and spaces are allowed."
-                        oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
+                        pattern="^[a-zA-Z\s.\-–—]+$"
+                        title="Only letters, spaces, dashes, and periods are allowed."
+                        oninput="this.value = this.value.replace(/[^a-zA-Z\s.\-–—]/g, '')"
                     >
                 </div>
             </div>

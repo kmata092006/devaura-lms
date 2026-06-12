@@ -10,9 +10,12 @@
             <p>View and manage attendance records privately. Public users should use the attendance kiosk.</p>
         </div>
 
-        <a href="{{ route('attendance.kiosk') }}" class="action-button" target="_blank">
-            Open Public Kiosk
-        </a>
+        {{-- Only show the Kiosk link if the personnel is currently 'Timed In' --}}
+        @if ($activePersonnelLog)
+            <a href="{{ route('attendance.kiosk') }}" class="action-button" target="_blank">
+                Open Public Kiosk
+            </a>
+        @endif
     </div>
 
     @if (session('success'))
