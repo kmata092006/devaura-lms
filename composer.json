@@ -73,9 +73,11 @@
             "@php artisan optimize:clear"
         ],
         "resume": [
-            "@php artisan optimize:clear",
             "@php artisan up",
             "start php artisan serve"
+        ],
+        "reload": [
+            "@php artisan optimize:clear"
         ]
     },
     "extra": {

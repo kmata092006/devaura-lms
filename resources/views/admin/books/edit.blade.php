@@ -90,8 +90,8 @@
                             id="author_last_name"
                             value="{{ old('author_last_name', $book->author_last_name) }}"
                             maxlength="50"
-                            pattern="^[a-zA-Z\s]+$"
-                            title="Only letters and spaces are allowed."
+                            pattern="^[a-zA-Z\.\s]+$"
+                            title="Only letters, spaces, and periods are allowed."
                             oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             required
                         >
@@ -105,8 +105,8 @@
                             id="author_first_name"
                             value="{{ old('author_first_name', $book->author_first_name) }}"
                             maxlength="50"
-                            pattern="^[a-zA-Z\s]+$"
-                            title="Only letters and spaces are allowed."
+                            pattern="^[a-zA-Z\.\s]+$"
+                            title="Only letters, spaces, and periods are allowed."
                             oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             required
                         >
@@ -141,8 +141,8 @@
                             id="publisher_last_name"
                             value="{{ old('publisher_last_name', $book->publisher_last_name) }}"
                             maxlength="50"
-                            pattern="^[a-zA-Z\s]+$"
-                            title="Only letters and spaces are allowed."
+                            pattern="^[a-zA-Z\.\s]+$"
+                            title="Only letters, spaces, and periods are allowed."
                             oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                         >
                         <small>Leave blank if company name is entered in First Name field.</small>
@@ -156,8 +156,8 @@
                             id="publisher_first_name"
                             value="{{ old('publisher_first_name', $book->publisher_first_name) }}"
                             maxlength="50"
-                            pattern="^[a-zA-Z\s]+$"
-                            title="Only letters and spaces are allowed."
+                            pattern="^[a-zA-Z\.\s]+$"
+                            title="Only letters, spaces, and periods are allowed."
                             oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             required
                         >

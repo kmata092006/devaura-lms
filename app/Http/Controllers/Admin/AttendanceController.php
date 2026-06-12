@@ -27,8 +27,10 @@ class AttendanceController extends Controller
         }
 
         // Builds the attendance query with personnel, member, and visitor details.
+        // FIX: Added join to personnel_role to fetch the updated role string.
         $attendanceQuery = DB::table('attendance_log as log')
             ->leftJoin('library_personnel as personnel', 'log.personnel_id', '=', 'personnel.personnel_id')
+            ->leftJoin('personnel_role as role', 'personnel.personnel_role_id', '=', 'role.personnel_role_id')
             ->leftJoin('library_member as member', 'log.member_id', '=', 'member.member_id')
             ->leftJoin('library_visitor as visitor', 'log.visitor_id', '=', 'visitor.visitor_id')
             ->select(
@@ -42,7 +44,7 @@ class AttendanceController extends Controller
                 'log.visitor_id',
 
                 'personnel.username as personnel_username',
-                'personnel.personnel_role as personnel_role',
+                'role.personnel_role_name as personnel_role', // FIX: Pulling from the role table now
                 'personnel.last_name as personnel_last_name',
                 'personnel.first_name as personnel_first_name',
                 DB::raw('personnel.`m.i.` as personnel_middle_initial'),

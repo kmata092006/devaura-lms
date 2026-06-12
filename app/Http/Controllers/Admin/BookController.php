@@ -294,12 +294,12 @@ class BookController extends Controller
             'book_status' => ['required', Rule::in($this->bookStatuses)],
             'genre_name' => ['required', 'string', 'max:100'],
             
-            'author_last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
-            'author_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'author_last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
+            'author_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
             'author_middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
             
-            'publisher_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
-            'publisher_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
+            'publisher_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
+            'publisher_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
             'publisher_middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
             'date_published' => ['required', 'date'],
         ], [
@@ -333,14 +333,18 @@ class BookController extends Controller
         // Preserves existing publisher dates by only filling blank date_published values.
         if ($publisherId) {
             $cleanPubMI = strtoupper(trim(rtrim($validated['publisher_middle_initial'] ?? '', '.')));
-            DB::table('book_publisher')
-                ->where('publisher_id', $publisherId)
-                ->update([
-                    'last_name' => trim($validated['publisher_last_name'] ?? '') ?: null,
-                    'first_name' => trim($validated['publisher_first_name']),
-                    'm.i.' => $cleanPubMI ?: null,
-                    'date_published' => $validated['date_published'],
-                ]);
+            // FIX: Replaced DB::table()->update() with DB::update() raw string to prevent 
+            // Laravel from parsing `m.i.` as a JSON column update.
+            DB::update(
+                'UPDATE book_publisher SET last_name = ?, first_name = ?, `m.i.` = ?, date_published = ? WHERE publisher_id = ?',
+                [
+                    trim($validated['publisher_last_name'] ?? '') ?: null,
+                    trim($validated['publisher_first_name']),
+                    $cleanPubMI ?: null,
+                    $validated['date_published'],
+                    $publisherId
+                ]
+            );
         }
 
         $genreId = $this->findOrCreateGenre($validated['genre_name']);
