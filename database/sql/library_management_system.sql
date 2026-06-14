@@ -68,7 +68,7 @@ CREATE TABLE book_publisher (
     last_name VARCHAR(50),
     first_name VARCHAR(50),
     `m.i.` VARCHAR(3),
-    date_published DATE
+    year_published YEAR
 );
 
 -- LIBRARY PERSONNEL TABLE

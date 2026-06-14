@@ -1,0 +1,701 @@
+/* =========================================================
+   UBNHS LOGIN PAGE
+   Campus Background with Smooth Image-to-Panel Transition
+   ========================================================= */
+
+html,
+body.login-body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+    background: #e8eef6 !important;
+}
+
+/* =========================================================
+   MAIN LOGIN LAYOUT
+   ========================================================= */
+
+body.login-body .login-page {
+    position: relative !important;
+    isolation: isolate;
+
+    width: 100% !important;
+    min-height: 100vh !important;
+
+    display: grid !important;
+    grid-template-columns: 55% 45% !important;
+    align-items: stretch !important;
+
+    gap: 0 !important;
+    padding: 0 !important;
+
+    background:
+        url("/images/ubnhs-campus.jpg")
+        center center / cover no-repeat !important;
+}
+
+/*
+ * Subtle full-page treatment to keep the campus image balanced.
+ */
+body.login-body .login-page::before {
+    content: "" !important;
+
+    position: absolute !important;
+    inset: 0 !important;
+
+    display: block !important;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(5, 20, 42, 0.05) 0%,
+            rgba(5, 20, 42, 0.02) 54%,
+            rgba(5, 20, 42, 0.08) 100%
+        ) !important;
+
+    z-index: 0 !important;
+    pointer-events: none !important;
+}
+
+/*
+ * Wide translucent white gradient for the right side.
+ *
+ * The gradient begins before the grid division so the transition
+ * between the campus photo and login section does not appear abrupt.
+ */
+body.login-body .login-page::after {
+    content: "" !important;
+
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+
+    display: block !important;
+
+    width: 64% !important;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(244, 248, 252, 0) 0%,
+            rgba(244, 248, 252, 0.04) 8%,
+            rgba(244, 248, 252, 0.12) 16%,
+            rgba(244, 248, 252, 0.26) 25%,
+            rgba(244, 248, 252, 0.44) 35%,
+            rgba(244, 248, 252, 0.62) 47%,
+            rgba(244, 248, 252, 0.76) 60%,
+            rgba(244, 248, 252, 0.86) 75%,
+            rgba(244, 248, 252, 0.91) 100%
+        ) !important;
+
+    z-index: 1 !important;
+    pointer-events: none !important;
+}
+
+/* =========================================================
+   LEFT BRANDING PANEL
+   ========================================================= */
+
+/*
+ * Remove decorative layers from older login styles.
+ */
+body.login-body .login-brand-panel::before,
+body.login-body .login-brand-panel::after {
+    content: none !important;
+    display: none !important;
+}
+
+/*
+ * Dark overlay fades gradually toward the login side.
+ * It overlaps the white gradient to create a smooth crossfade.
+ */
+body.login-body .login-brand-panel {
+    position: relative !important;
+    z-index: 2 !important;
+
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+
+    padding: 76px 82px !important;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(4, 18, 39, 0.88) 0%,
+            rgba(5, 22, 46, 0.82) 42%,
+            rgba(5, 25, 51, 0.70) 67%,
+            rgba(5, 25, 51, 0.42) 84%,
+            rgba(5, 25, 51, 0.10) 97%,
+            rgba(5, 25, 51, 0) 100%
+        ) !important;
+
+    color: #ffffff !important;
+}
+
+/* =========================================================
+   SCHOOL LOGO
+   ========================================================= */
+
+body.login-body .login-school-mark {
+    margin-bottom: 28px !important;
+}
+
+body.login-body .login-school-mark img {
+    display: block;
+
+    width: 118px;
+    height: 118px;
+
+    padding: 8px;
+
+    object-fit: contain;
+
+    border-radius: 28px;
+
+    background: rgba(255, 255, 255, 0.94);
+
+    box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.20),
+        0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+/*
+ * Compatibility for older text-only logo markup.
+ */
+body.login-body .login-school-mark.text-only {
+    width: 118px !important;
+    height: 118px !important;
+
+    display: grid !important;
+    place-items: center !important;
+
+    margin-bottom: 28px !important;
+
+    border-radius: 28px !important;
+
+    background: rgba(255, 255, 255, 0.94) !important;
+    color: #12376d !important;
+
+    font-size: 22px !important;
+    font-weight: 950 !important;
+
+    box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.20),
+        0 0 0 1px rgba(255, 255, 255, 0.25) !important;
+}
+
+/* =========================================================
+   LEFT-SIDE TEXT
+   ========================================================= */
+
+body.login-body .login-brand-panel .login-eyebrow {
+    margin: 0 0 14px !important;
+
+    color: #e0ebfb !important;
+
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    line-height: 1.4 !important;
+
+    letter-spacing: 0.16em !important;
+    text-transform: uppercase !important;
+}
+
+body.login-body .login-brand-panel h1 {
+    max-width: 700px !important;
+
+    margin: 0 0 20px !important;
+
+    color: #ffffff !important;
+
+    font-size: clamp(48px, 4vw, 66px) !important;
+    font-weight: 900 !important;
+    line-height: 0.99 !important;
+
+    letter-spacing: -2px !important;
+
+    text-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.30) !important;
+}
+
+body.login-body .login-brand-panel p {
+    max-width: 650px !important;
+
+    margin: 0 !important;
+
+    color: #edf4ff !important;
+
+    font-size: 17px !important;
+    line-height: 1.7 !important;
+
+    text-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.24) !important;
+}
+
+/* =========================================================
+   LOGIN CARD
+   ========================================================= */
+
+body.login-body .login-card {
+    position: relative !important;
+    z-index: 3 !important;
+
+    align-self: center !important;
+    justify-self: center !important;
+
+    width: min(460px, calc(100% - 64px)) !important;
+
+    margin: 0 !important;
+    padding: 42px 38px 36px !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.66) !important;
+    border-radius: 30px !important;
+
+    background: rgba(255, 255, 255, 0.79) !important;
+
+    backdrop-filter: blur(14px) saturate(112%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(112%) !important;
+
+    box-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.18),
+        0 6px 18px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+}
+
+/* =========================================================
+   LOGIN CARD HEADER
+   ========================================================= */
+
+body.login-body .login-card-header {
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 16px !important;
+
+    margin-bottom: 28px !important;
+}
+
+body.login-body .login-card-header img {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 62px;
+
+    padding: 5px;
+
+    object-fit: contain;
+
+    border: 1px solid rgba(147, 197, 253, 0.48);
+    border-radius: 16px;
+
+    background: rgba(255, 255, 255, 0.74);
+
+    box-shadow:
+        0 8px 22px rgba(30, 64, 175, 0.10);
+}
+
+/*
+ * Compatibility for an older text-only logo inside the login card.
+ */
+body.login-body .login-card-text-logo {
+    width: 62px !important;
+    height: 62px !important;
+    flex: 0 0 62px !important;
+
+    display: grid !important;
+    place-items: center !important;
+
+    padding: 5px !important;
+
+    border: 1px solid rgba(147, 197, 253, 0.48) !important;
+    border-radius: 16px !important;
+
+    background: rgba(255, 255, 255, 0.74) !important;
+    color: #1d4ed8 !important;
+
+    font-size: 12px !important;
+    font-weight: 950 !important;
+
+    box-shadow:
+        0 8px 22px rgba(30, 64, 175, 0.10) !important;
+}
+
+body.login-body .login-card-header h2 {
+    margin: 0 0 6px !important;
+
+    color: #0f172a !important;
+
+    font-size: 34px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+
+    letter-spacing: -0.7px !important;
+}
+
+body.login-body .login-card-header p {
+    margin: 0 !important;
+
+    color: #5f7088 !important;
+
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+}
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+body.login-body .alert {
+    margin-bottom: 18px !important;
+    padding: 13px 15px !important;
+
+    border-radius: 15px !important;
+
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+body.login-body .alert.success {
+    border: 1px solid #bbf7d0 !important;
+    background: rgba(240, 253, 244, 0.90) !important;
+    color: #166534 !important;
+}
+
+body.login-body .alert.error {
+    border: 1px solid #fecaca !important;
+    background: rgba(254, 242, 242, 0.92) !important;
+    color: #991b1b !important;
+}
+
+/* =========================================================
+   LOGIN FORM
+   ========================================================= */
+
+body.login-body .login-form {
+    margin-top: 4px !important;
+}
+
+body.login-body .form-group {
+    margin-bottom: 21px !important;
+}
+
+body.login-body .form-group label {
+    display: block !important;
+
+    margin-bottom: 9px !important;
+
+    color: #0f172a !important;
+
+    font-size: 14px !important;
+    font-weight: 850 !important;
+}
+
+body.login-body .form-group input {
+    width: 100% !important;
+    min-height: 54px !important;
+
+    padding: 0 17px !important;
+
+    border: 1px solid rgba(148, 163, 184, 0.34) !important;
+    border-radius: 15px !important;
+
+    background: rgba(255, 255, 255, 0.76) !important;
+    color: #0f172a !important;
+
+    font-size: 15px !important;
+
+    box-shadow:
+        inset 0 1px 1px rgba(15, 23, 42, 0.02),
+        0 1px 0 rgba(255, 255, 255, 0.45) !important;
+
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease !important;
+}
+
+body.login-body .form-group input::placeholder {
+    color: #7b8799 !important;
+}
+
+body.login-body .form-group input:hover {
+    border-color: rgba(100, 116, 139, 0.44) !important;
+}
+
+body.login-body .form-group input:focus {
+    outline: none !important;
+
+    border-color: #4f8df7 !important;
+
+    background: rgba(255, 255, 255, 0.93) !important;
+
+    box-shadow:
+        0 0 0 4px rgba(37, 99, 235, 0.11),
+        0 8px 18px rgba(37, 99, 235, 0.06) !important;
+}
+
+/*
+ * Helper text below the login fields.
+ */
+body.login-body .login-form > p {
+    margin: -2px 0 16px !important;
+
+    color: #607089 !important;
+
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+/* =========================================================
+   LOGIN BUTTON
+   ========================================================= */
+
+body.login-body .login-button {
+    width: 100% !important;
+    min-height: 58px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border: none !important;
+    border-radius: 16px !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2457b1 0%,
+            #3168db 100%
+        ) !important;
+
+    color: #ffffff !important;
+
+    font-size: 17px !important;
+    font-weight: 900 !important;
+
+    cursor: pointer !important;
+
+    box-shadow:
+        0 14px 30px rgba(37, 99, 235, 0.25) !important;
+
+    transition:
+        transform 0.16s ease,
+        box-shadow 0.16s ease,
+        filter 0.16s ease !important;
+}
+
+body.login-body .login-button:hover {
+    transform: translateY(-1px) !important;
+
+    filter: brightness(1.025) !important;
+
+    box-shadow:
+        0 18px 36px rgba(37, 99, 235, 0.30) !important;
+}
+
+body.login-body .login-button:active {
+    transform: translateY(0) !important;
+}
+
+body.login-body .login-button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.24) !important;
+    outline-offset: 3px !important;
+}
+
+/* =========================================================
+   DEFAULT ACCOUNT / HELP BOX
+   ========================================================= */
+
+body.login-body .login-help-box {
+    margin-top: 20px !important;
+    padding: 15px 17px !important;
+
+    border: 1px solid rgba(203, 213, 225, 0.56) !important;
+    border-radius: 16px !important;
+
+    background: rgba(241, 245, 249, 0.60) !important;
+
+    color: #475569 !important;
+
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+}
+
+body.login-body .login-help-box p {
+    margin: 0 0 4px !important;
+}
+
+body.login-body .login-help-box p:last-child {
+    margin-bottom: 0 !important;
+}
+
+body.login-body .login-help-box strong {
+    color: #1e293b !important;
+}
+
+/* =========================================================
+   LARGE TABLET / SMALL DESKTOP
+   ========================================================= */
+
+@media (max-width: 1150px) {
+    body.login-body .login-page {
+        grid-template-columns: 52% 48% !important;
+    }
+
+    body.login-body .login-brand-panel {
+        padding: 64px 48px !important;
+    }
+
+    body.login-body .login-page::after {
+        width: 68% !important;
+    }
+
+    body.login-body .login-brand-panel h1 {
+        font-size: clamp(46px, 5vw, 58px) !important;
+    }
+
+    body.login-body .login-card {
+        width: min(440px, calc(100% - 46px)) !important;
+        padding: 38px 32px 32px !important;
+    }
+}
+
+/* =========================================================
+   TABLET / MOBILE LOGIN
+   ========================================================= */
+
+@media (max-width: 900px) {
+    html,
+    body.login-body {
+        min-height: 100%;
+    }
+
+    body.login-body .login-page {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        min-height: 100vh !important;
+
+        padding: 24px !important;
+
+        background:
+            linear-gradient(
+                rgba(4, 18, 39, 0.36),
+                rgba(4, 18, 39, 0.36)
+            ),
+            url("/images/ubnhs-campus.jpg")
+            center center / cover no-repeat !important;
+    }
+
+    body.login-body .login-page::before {
+        background:
+            linear-gradient(
+                180deg,
+                rgba(5, 20, 42, 0.08),
+                rgba(5, 20, 42, 0.20)
+            ) !important;
+    }
+
+    body.login-body .login-page::after {
+        width: 100% !important;
+
+        background:
+            rgba(241, 246, 252, 0.48) !important;
+    }
+
+    body.login-body .login-brand-panel {
+        display: none !important;
+    }
+
+    body.login-body .login-card {
+        width: min(460px, 100%) !important;
+
+        padding: 34px 26px 28px !important;
+
+        border-radius: 26px !important;
+
+        background:
+            rgba(255, 255, 255, 0.86) !important;
+    }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+    body.login-body .login-page {
+        padding: 15px !important;
+    }
+
+    body.login-body .login-card {
+        width: 100% !important;
+
+        padding: 26px 18px 22px !important;
+
+        border-radius: 23px !important;
+    }
+
+    body.login-body .login-card-header {
+        align-items: flex-start !important;
+
+        gap: 12px !important;
+
+        margin-bottom: 22px !important;
+    }
+
+    body.login-body .login-card-header img,
+    body.login-body .login-card-text-logo {
+        width: 54px !important;
+        height: 54px !important;
+        flex-basis: 54px !important;
+
+        border-radius: 14px !important;
+    }
+
+    body.login-body .login-card-header h2 {
+        font-size: 29px !important;
+    }
+
+    body.login-body .login-card-header p {
+        font-size: 14px !important;
+    }
+
+    body.login-body .form-group {
+        margin-bottom: 18px !important;
+    }
+
+    body.login-body .form-group input {
+        min-height: 51px !important;
+
+        border-radius: 14px !important;
+    }
+
+    body.login-body .login-button {
+        min-height: 54px !important;
+
+        border-radius: 15px !important;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    body.login-body .form-group input,
+    body.login-body .login-button {
+        transition: none !important;
+    }
+
+    body.login-body .login-button:hover {
+        transform: none !important;
+    }
+}
