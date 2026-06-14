@@ -5,9 +5,12 @@
 
 @section('content')
     @php
-        // Restore editable status and genre selections after validation errors.
-        $selectedBookStatus = old('book_status', $book->book_status);
-        $hasActiveTransaction = (bool) ($book->has_active_transaction ?? false);
+        // Restore editable fields while keeping transaction-managed status read-only.
+        $hasTransactionHistory = (bool) ($book->has_transaction_history ?? false);
+        $transactionCount = (int) ($book->borrow_transaction_count ?? 0);
+        $selectedBookStatus = $hasTransactionHistory
+            ? $book->book_status
+            : old('book_status', $book->book_status);
         $storedGenre = trim((string) ($book->genre_name ?? ''));
         $selectedGenreChoice = old('genre_choice');
 
@@ -55,7 +58,6 @@
         action="{{ route('admin.books.update', $book->book_id) }}"
         class="book-form-card"
         id="editBookForm"
-        data-has-active-transaction="{{ $hasActiveTransaction ? '1' : '0' }}"
         novalidate
     >
         @csrf
@@ -129,43 +131,57 @@
                         Book Status <b class="required-mark">*</b>
                     </label>
 
-                    <select
-                        name="book_status"
-                        id="book_status"
-                        class="{{ $errors->has('book_status') ? 'is-invalid' : '' }}"
-                        aria-invalid="{{ $errors->has('book_status') ? 'true' : 'false' }}"
-                        required
-                    >
-                        @foreach ($statuses as $status)
-                            @php
-                                $statusDisabled = $hasActiveTransaction
-                                    ? !in_array($status, ['Borrowed', 'Available'], true)
-                                    : $status === 'Borrowed';
-                            @endphp
+                    @if ($hasTransactionHistory)
+                        <input
+                            type="hidden"
+                            name="book_status"
+                            value="{{ $book->book_status }}"
+                        >
 
-                            <option
-                                value="{{ $status }}"
-                                {{ $selectedBookStatus === $status ? 'selected' : '' }}
-                                {{ $statusDisabled ? 'disabled' : '' }}
-                            >
-                                {{ $status }}
+                        <select
+                            id="book_status"
+                            aria-label="Current book status"
+                            aria-disabled="true"
+                            disabled
+                        >
+                            <option selected>{{ $book->book_status }}</option>
+                        </select>
 
-                                @if (!$hasActiveTransaction && $status === 'Borrowed')
-                                    — use Borrow Book module
-                                @elseif ($hasActiveTransaction && !in_array($status, ['Borrowed', 'Available'], true))
-                                    — use Return Book module
-                                @endif
-                            </option>
-                        @endforeach
-                    </select>
-
-                    @if ($hasActiveTransaction)
                         <small>
-                            An active borrowing transaction exists. Selecting Available will complete the return
-                            and update the book status across Book Management, Borrow Book, Return Book, and Book List/Search.
+                            Book Status is managed by the Borrow Book and Return Book modules because this book has
+                            {{ $transactionCount }}
+                            {{ \Illuminate\Support\Str::plural('borrowing transaction', $transactionCount) }}.
+
+                            @if (in_array($book->book_status, ['Lost', 'Damaged'], true))
+                                This book is currently {{ $book->book_status }} and is excluded from borrowing.
+                            @endif
                         </small>
                     @else
-                        <small>Borrowed status is assigned only after a borrowing transaction is created in the Borrow Book module.</small>
+                        <select
+                            name="book_status"
+                            id="book_status"
+                            class="{{ $errors->has('book_status') ? 'is-invalid' : '' }}"
+                            aria-invalid="{{ $errors->has('book_status') ? 'true' : 'false' }}"
+                            required
+                        >
+                            @foreach ($statuses as $status)
+                                <option
+                                    value="{{ $status }}"
+                                    {{ $selectedBookStatus === $status ? 'selected' : '' }}
+                                    {{ $status === 'Borrowed' ? 'disabled' : '' }}
+                                >
+                                    {{ $status }}
+
+                                    @if ($status === 'Borrowed')
+                                        — use Borrow Book module
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <small>
+                            Borrowed status is assigned only after a borrowing transaction is created in the Borrow Book module.
+                        </small>
                     @endif
 
                     @error('book_status')
@@ -346,7 +362,6 @@
         const editBookForm = document.getElementById('editBookForm');
         const updateBookButton = document.getElementById('updateBookButton');
         const isbnInput = document.getElementById('isbn');
-        const bookStatusSelect = document.getElementById('book_status');
         const authorNameInput = document.getElementById('author_name');
         const publisherNameInput = document.getElementById('publisher_name');
         const genreChoiceSelect = document.getElementById('genre_choice');
@@ -390,7 +405,7 @@
             'Enter a valid genre using letters, numbers, spaces, ampersands, slashes, commas, apostrophes, or hyphens only.'
         );
 
-        // Validate fields and confirm transaction closure before saving status changes.
+        // Validate editable catalog fields before saving changes.
         editBookForm.addEventListener('submit', function (event) {
             validateIsbnField();
             validateCatalogInput(authorNameInput, authorPattern, 'Enter a valid author name.');
@@ -406,19 +421,6 @@
                 event.preventDefault();
                 this.reportValidity();
                 return;
-            }
-
-            const hasActiveTransaction = this.dataset.hasActiveTransaction === '1';
-
-            if (hasActiveTransaction && bookStatusSelect.value === 'Available') {
-                const confirmed = window.confirm(
-                    'This book has an active borrowing transaction. Changing the status to Available will mark that transaction as Returned and remove it from the Return Book queue. Continue?'
-                );
-
-                if (!confirmed) {
-                    event.preventDefault();
-                    return;
-                }
             }
 
             updateBookButton.disabled = true;

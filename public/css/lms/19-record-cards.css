@@ -280,7 +280,7 @@
     font-size: 13px;
 }
 
-/* Module-specific card grid layouts. */
+/* Module-specific grids */
 .system-record-body.attendance-record-grid {
     grid-template-columns: 1.15fr 1fr 1fr 1fr;
 }
@@ -426,5 +426,96 @@
 
     .system-record-actions-panel {
         display: none;
+    }
+}
+
+
+/* =========================================================
+   BOOK MANAGEMENT — STATUS COLOR INDICATORS
+   ========================================================= */
+
+.book-status-card {
+    --book-status-color: #64748b;
+    --book-status-soft: #f1f5f9;
+    --book-status-border: #cbd5e1;
+    border-left-color: var(--book-status-color);
+}
+
+.book-status-card.is-status-available {
+    --book-status-color: #15803d;
+    --book-status-soft: #dcfce7;
+    --book-status-border: #86efac;
+}
+
+.book-status-card.is-status-borrowed {
+    --book-status-color: #1d4ed8;
+    --book-status-soft: #dbeafe;
+    --book-status-border: #93c5fd;
+}
+
+.book-status-card.is-status-lost {
+    --book-status-color: #b91c1c;
+    --book-status-soft: #fee2e2;
+    --book-status-border: #fca5a5;
+}
+
+.book-status-card.is-status-damaged {
+    --book-status-color: #c2410c;
+    --book-status-soft: #ffedd5;
+    --book-status-border: #fdba74;
+}
+
+.book-status-card.is-status-reserved {
+    --book-status-color: #6d28d9;
+    --book-status-soft: #ede9fe;
+    --book-status-border: #c4b5fd;
+}
+
+.book-status-card.is-status-under-repair {
+    --book-status-color: #a16207;
+    --book-status-soft: #fef3c7;
+    --book-status-border: #fcd34d;
+}
+
+.book-status-card .book-status-avatar {
+    background: var(--book-status-soft);
+    color: var(--book-status-color);
+    box-shadow: inset 0 0 0 1px var(--book-status-border);
+}
+
+.book-status-card .book-status-badge {
+    gap: 7px;
+    border: 1px solid var(--book-status-border);
+    background: var(--book-status-soft);
+    color: var(--book-status-color);
+}
+
+.book-status-card .book-status-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 999px;
+    background: var(--book-status-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--book-status-soft) 78%, transparent);
+}
+
+.book-status-card .book-status-field {
+    background: color-mix(in srgb, var(--book-status-soft) 38%, #ffffff);
+}
+
+.book-status-card .book-status-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--book-status-color);
+}
+
+.book-status-card .book-status-field small {
+    max-width: 230px;
+}
+
+@supports not (background: color-mix(in srgb, red, white)) {
+    .book-status-card .book-status-field {
+        background: #fbfdff;
     }
 }

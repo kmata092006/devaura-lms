@@ -60,7 +60,7 @@
     <section class="return-outcome-guide" aria-label="Return processing guide">
         <div class="return-guide-heading">
             <h3>Processing outcomes</h3>
-            <p>Use return book for a normal return. Use exception only when book is lost or damaged.</p>
+            <p>Use Return Book for a normal return. Lost and Damaged outcomes close the transaction and keep the book unavailable.</p>
         </div>
 
         <div class="return-guide-items">
@@ -76,7 +76,7 @@
                 <span class="return-guide-dot" aria-hidden="true"></span>
                 <div>
                     <strong>Lost Book</strong>
-                    <small>Transaction: Lost &middot; Book: Lost</small>
+                    <small>Transaction: Lost &middot; Book: Lost and unavailable</small>
                 </div>
             </div>
 
@@ -84,7 +84,7 @@
                 <span class="return-guide-dot" aria-hidden="true"></span>
                 <div>
                     <strong>Damaged Book</strong>
-                    <small>Transaction: Returned &middot; Book: Damaged</small>
+                    <small>Transaction: Returned &middot; Book: Damaged and unavailable</small>
                 </div>
             </div>
         </div>
@@ -241,7 +241,7 @@
                                             type="submit"
                                             formaction="{{ route('admin.return.mark-lost', $transaction->transaction_id) }}"
                                             class="return-exception-button return-lost-action"
-                                            onclick="return confirm('Mark this book as lost? The current date will be recorded automatically.');"
+                                            onclick="return confirm('Mark this book as lost? The transaction will close, the current date will be recorded, and the book cannot be borrowed again.');"
                                         >
                                             Mark as Lost
                                         </button>
@@ -250,7 +250,7 @@
                                             type="submit"
                                             formaction="{{ route('admin.return.mark-damaged', $transaction->transaction_id) }}"
                                             class="return-exception-button return-damaged-action"
-                                            onclick="return confirm('Mark this book as damaged? The current date will be recorded automatically.');"
+                                            onclick="return confirm('Mark this book as damaged? The transaction will close, the current date will be recorded, and the book cannot be borrowed again.');"
                                         >
                                             Mark as Damaged
                                         </button>

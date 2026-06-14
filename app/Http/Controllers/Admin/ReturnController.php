@@ -59,7 +59,7 @@ class ReturnController extends Controller
             ->route('admin.return.index')
             ->with(
                 'success',
-                'Book marked as Lost. The current date was recorded automatically, and the transaction was closed.'
+                'Book marked as Lost. The transaction was closed, and the book is no longer available for borrowing.'
             );
     }
 
@@ -74,7 +74,7 @@ class ReturnController extends Controller
             ->route('admin.return.index')
             ->with(
                 'success',
-                'Book marked as Damaged. The current date was recorded automatically, and the transaction was closed.'
+                'Book marked as Damaged. The transaction was closed, and the book is no longer available for borrowing.'
             );
     }
 }

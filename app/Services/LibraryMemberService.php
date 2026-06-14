@@ -10,8 +10,9 @@ class LibraryMemberService
     /**
      * Returns paginated library members with optional search and role filters.
      *
-     * The result also includes linked borrowing and attendance record counts so
-     * the interface can prevent users from attempting an invalid deletion.
+     * The result includes active borrowing and attendance counts. Returned
+     * transactions remain historical records but are not shown as active loans
+     * and do not prevent member deletion.
      */
     public function getMembers(?string $search = null, ?string $role = null): LengthAwarePaginator
     {
@@ -31,6 +32,10 @@ class LibraryMemberService
                     ->whereColumn(
                         'borrow_transaction.member_id',
                         'library_member.member_id'
+                    )
+                    ->whereIn(
+                        'borrow_transaction.borrow_status',
+                        ['Borrowed', 'Overdue']
                     );
             }, 'borrow_transaction_count')
             ->selectSub(function ($subquery) {
@@ -136,8 +141,9 @@ class LibraryMemberService
     }
 
     /**
-     * Attempts to delete a member while preserving linked transaction and
-     * attendance history.
+     * Deletes a member when no active Borrowed or Overdue transaction exists.
+     * Attendance logs and completed borrowing rows are removed with the member,
+     * including attendance records whose time_out is still null.
      *
      * @return array{deleted: bool, message: string}
      */
@@ -156,35 +162,45 @@ class LibraryMemberService
                 ];
             }
 
-            $borrowTransactionCount = DB::table('borrow_transaction')
+            $borrowTransactions = DB::table('borrow_transaction')
                 ->where('member_id', $memberId)
+                ->select('transaction_id', 'borrow_status')
+                ->lockForUpdate()
+                ->get();
+
+            $activeBorrowTransactionCount = $borrowTransactions
+                ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
                 ->count();
+
+            if ($activeBorrowTransactionCount > 0) {
+                $borrowingDescription = $activeBorrowTransactionCount === 1
+                    ? '1 active borrowing transaction'
+                    : "{$activeBorrowTransactionCount} active borrowing transactions";
+
+                return [
+                    'deleted' => false,
+                    'message' => 'This library member cannot be deleted because the account still has '
+                        . $borrowingDescription
+                        . '. Return or resolve the borrowed book first.',
+                ];
+            }
+
+            $completedBorrowTransactionCount = $borrowTransactions->count();
+
+            if ($completedBorrowTransactionCount > 0) {
+                DB::table('borrow_transaction')
+                    ->where('member_id', $memberId)
+                    ->delete();
+            }
 
             $attendanceLogCount = DB::table('attendance_log')
                 ->where('member_id', $memberId)
                 ->count();
 
-            if ($borrowTransactionCount > 0 || $attendanceLogCount > 0) {
-                $linkedRecords = [];
-
-                if ($borrowTransactionCount > 0) {
-                    $linkedRecords[] = $borrowTransactionCount === 1
-                        ? '1 borrowing transaction'
-                        : "{$borrowTransactionCount} borrowing transactions";
-                }
-
-                if ($attendanceLogCount > 0) {
-                    $linkedRecords[] = $attendanceLogCount === 1
-                        ? '1 attendance record'
-                        : "{$attendanceLogCount} attendance records";
-                }
-
-                return [
-                    'deleted' => false,
-                    'message' => 'This library member cannot be deleted because the account is linked to '
-                        . $this->formatLinkedRecords($linkedRecords)
-                        . '. Keep the member record to preserve the system history.',
-                ];
+            if ($attendanceLogCount > 0) {
+                DB::table('attendance_log')
+                    ->where('member_id', $memberId)
+                    ->delete();
             }
 
             $deletedRows = DB::table('library_member')
@@ -198,26 +214,25 @@ class LibraryMemberService
                 ];
             }
 
+            $removedRecordTypes = [];
+
+            if ($completedBorrowTransactionCount > 0) {
+                $removedRecordTypes[] = 'completed borrowing records';
+            }
+
+            if ($attendanceLogCount > 0) {
+                $removedRecordTypes[] = 'attendance records';
+            }
+
+            $message = empty($removedRecordTypes)
+                ? 'Library member deleted successfully.'
+                : 'Library member and related ' . implode(' and ', $removedRecordTypes) . ' deleted successfully.';
+
             return [
                 'deleted' => true,
-                'message' => 'Library member deleted successfully.',
+                'message' => $message,
             ];
         });
     }
 
-    /**
-     * Formats dependency descriptions for a readable validation message.
-     *
-     * @param array<int, string> $records
-     */
-    private function formatLinkedRecords(array $records): string
-    {
-        if (count($records) <= 1) {
-            return $records[0] ?? 'existing system records';
-        }
-
-        $lastRecord = array_pop($records);
-
-        return implode(', ', $records) . ' and ' . $lastRecord;
-    }
 }

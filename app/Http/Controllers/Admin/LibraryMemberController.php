@@ -81,7 +81,7 @@ class LibraryMemberController extends Controller
     }
 
     /**
-     * Deletes a member only when no system records depend on the account.
+     * Deletes a member when no borrowing transaction depends on the account.
      */
     public function destroy(int $memberId)
     {

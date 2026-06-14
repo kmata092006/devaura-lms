@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 
 class ReturnService
 {
+    private const ACTIVE_TRANSACTION_STATUSES = ['Borrowed', 'Overdue'];
+
     /**
      * Prepares active transactions and queue summary data for the return page.
      */
@@ -23,73 +25,84 @@ class ReturnService
     }
 
     /**
-     * Closes an active transaction and makes the book available again.
+     * Closes an active transaction as a normal return.
+     *
+     * A normal return makes the book Available again, so it can appear in the
+     * Borrow Book selector after the transaction is completed.
      */
     public function returnBookNormally(int $transactionId): void
     {
-        DB::transaction(function () use ($transactionId) {
-            $transaction = $this->getLockedActiveTransaction($transactionId);
-            $automaticReturnDate = $this->getAutomaticProcessingDate($transaction);
-
-            DB::table('borrow_transaction')
-                ->where('transaction_id', $transactionId)
-                ->update([
-                    'return_date' => $automaticReturnDate,
-                    'borrow_status' => 'Returned',
-                ]);
-
-            DB::table('book')
-                ->where('book_id', $transaction->book_id)
-                ->update([
-                    'book_status' => 'Available',
-                ]);
-        });
+        $this->processReturnOutcome(
+            transactionId: $transactionId,
+            transactionStatus: 'Returned',
+            bookStatus: 'Available'
+        );
     }
 
     /**
-     * Closes an active transaction and marks the book as lost.
+     * Closes an active transaction and marks the book as Lost.
+     *
+     * Lost is a non-borrowable status. The book will not appear in the Borrow
+     * Book selector unless a future authorized recovery workflow changes it.
      */
     public function markBookAsLost(int $transactionId): void
     {
-        DB::transaction(function () use ($transactionId) {
-            $transaction = $this->getLockedActiveTransaction($transactionId);
-            $automaticReturnDate = $this->getAutomaticProcessingDate($transaction);
-
-            DB::table('borrow_transaction')
-                ->where('transaction_id', $transactionId)
-                ->update([
-                    'return_date' => $automaticReturnDate,
-                    'borrow_status' => 'Lost',
-                ]);
-
-            DB::table('book')
-                ->where('book_id', $transaction->book_id)
-                ->update([
-                    'book_status' => 'Lost',
-                ]);
-        });
+        $this->processReturnOutcome(
+            transactionId: $transactionId,
+            transactionStatus: 'Lost',
+            bookStatus: 'Lost'
+        );
     }
 
     /**
-     * Closes an active transaction and marks the returned book as damaged.
+     * Closes an active transaction and marks the returned book as Damaged.
+     *
+     * The transaction is Returned because the physical book came back, while
+     * the book itself remains Damaged and therefore cannot be borrowed.
      */
     public function markBookAsDamaged(int $transactionId): void
     {
-        DB::transaction(function () use ($transactionId) {
+        $this->processReturnOutcome(
+            transactionId: $transactionId,
+            transactionStatus: 'Returned',
+            bookStatus: 'Damaged'
+        );
+    }
+
+    /**
+     * Applies one return outcome atomically while protecting terminal statuses.
+     */
+    private function processReturnOutcome(
+        int $transactionId,
+        string $transactionStatus,
+        string $bookStatus
+    ): void {
+        DB::transaction(function () use ($transactionId, $transactionStatus, $bookStatus) {
             $transaction = $this->getLockedActiveTransaction($transactionId);
+            $book = $this->getLockedBook((int) $transaction->book_id);
+
+            if ($book->book_status !== 'Borrowed') {
+                throw ValidationException::withMessages([
+                    'transaction' => sprintf(
+                        'This transaction cannot be processed because the book is currently marked %s.',
+                        $book->book_status
+                    ),
+                ]);
+            }
+
             $automaticReturnDate = $this->getAutomaticProcessingDate($transaction);
 
             DB::table('borrow_transaction')
                 ->where('transaction_id', $transactionId)
                 ->update([
                     'return_date' => $automaticReturnDate,
-                    'borrow_status' => 'Returned',
+                    'borrow_status' => $transactionStatus,
                 ]);
 
             DB::table('book')
                 ->where('book_id', $transaction->book_id)
                 ->update([
-                    'book_status' => 'Damaged',
+                    'book_status' => $bookStatus,
                 ]);
         });
     }
@@ -101,7 +114,7 @@ class ReturnService
     {
         $transaction = DB::table('borrow_transaction')
             ->where('transaction_id', $transactionId)
-            ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
+            ->whereIn('borrow_status', self::ACTIVE_TRANSACTION_STATUSES)
             ->lockForUpdate()
             ->first();
 
@@ -112,6 +125,25 @@ class ReturnService
         }
 
         return $transaction;
+    }
+
+    /**
+     * Locks the connected book so its status cannot change concurrently.
+     */
+    private function getLockedBook(int $bookId): object
+    {
+        $book = DB::table('book')
+            ->where('book_id', $bookId)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$book) {
+            throw ValidationException::withMessages([
+                'transaction' => 'The book connected to this transaction no longer exists.',
+            ]);
+        }
+
+        return $book;
     }
 
     /**
@@ -162,7 +194,7 @@ class ReturnService
                 DB::raw('book_author.`m.i.` as author_middle_initial'),
                 'book_genre.genre_name'
             )
-            ->whereIn('borrow_transaction.borrow_status', ['Borrowed', 'Overdue']);
+            ->whereIn('borrow_transaction.borrow_status', self::ACTIVE_TRANSACTION_STATUSES);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -195,7 +227,7 @@ class ReturnService
     private function getReturnSummary(): array
     {
         $activeQuery = DB::table('borrow_transaction')
-            ->whereIn('borrow_status', ['Borrowed', 'Overdue']);
+            ->whereIn('borrow_status', self::ACTIVE_TRANSACTION_STATUSES);
 
         return [
             'active' => (clone $activeQuery)->count(),

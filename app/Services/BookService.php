@@ -116,11 +116,47 @@ class BookService
     }
 
     /**
-     * Updates a book while reusing or creating its related records.
+     * Updates catalog details while protecting transaction-managed statuses.
+     *
+     * Once borrowing history exists, the current status can only be changed by
+     * the Borrow Book or Return Book workflow. This prevents Lost or Damaged
+     * books from being changed back to Available through a normal edit request.
      */
     public function updateBook(int $bookId, array $data): void
     {
         DB::transaction(function () use ($bookId, $data) {
+            $book = DB::table('book')
+                ->where('book_id', $bookId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$book) {
+                throw ValidationException::withMessages([
+                    'book' => 'Book record not found.',
+                ]);
+            }
+
+            $transactionHistory = DB::table('borrow_transaction')
+                ->where('book_id', $bookId)
+                ->select('transaction_id')
+                ->lockForUpdate()
+                ->first();
+
+            $hasTransactionHistory = $transactionHistory !== null;
+            $requestedStatus = $data['book_status'];
+
+            if ($hasTransactionHistory && $requestedStatus !== $book->book_status) {
+                throw ValidationException::withMessages([
+                    'book_status' => 'This book status is managed by borrowing and return transactions and cannot be changed from the Edit Book page.',
+                ]);
+            }
+
+            if (!$hasTransactionHistory && $requestedStatus === 'Borrowed') {
+                throw ValidationException::withMessages([
+                    'book_status' => 'A book can only become Borrowed through the Borrow Book module.',
+                ]);
+            }
+
             $authorId = $this->findOrCreateAuthor($data);
             $publisherId = $this->findOrCreatePublisher($data);
             $genreId = $this->findOrCreateGenre($data['genre_name']);
@@ -133,7 +169,9 @@ class BookService
                     'genre_id' => $genreId,
                     'isbn' => $data['isbn'],
                     'book_title' => $data['book_title'],
-                    'book_status' => $data['book_status'],
+                    'book_status' => $hasTransactionHistory
+                        ? $book->book_status
+                        : $requestedStatus,
                 ]);
         });
     }

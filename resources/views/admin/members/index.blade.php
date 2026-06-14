@@ -184,8 +184,8 @@
         <div class="system-record-list">
             @forelse ($members as $member)
                     @php
-                        // Members with borrowing or attendance history stay protected.
-                        $borrowTransactionCount = (int) (
+                        // Only active Borrowed or Overdue transactions block deletion.
+                        $activeBorrowTransactionCount = (int) (
                             $member->borrow_transaction_count ?? 0
                         );
 
@@ -193,37 +193,21 @@
                             $member->attendance_log_count ?? 0
                         );
 
-                        $hasLinkedRecords =
-                            $borrowTransactionCount > 0
-                            || $attendanceLogCount > 0;
+                        $hasActiveBorrowing = $activeBorrowTransactionCount > 0;
+                        $hasAttendanceRecords = $attendanceLogCount > 0;
 
-                        $linkedRecordDescriptions = [];
-
-                        if ($borrowTransactionCount > 0) {
-                            $linkedRecordDescriptions[] =
-                                $borrowTransactionCount === 1
-                                    ? '1 borrowing transaction'
-                                    : $borrowTransactionCount
-                                        . ' borrowing transactions';
-                        }
-
-                        if ($attendanceLogCount > 0) {
-                            $linkedRecordDescriptions[] =
-                                $attendanceLogCount === 1
-                                    ? '1 attendance record'
-                                    : $attendanceLogCount
-                                        . ' attendance records';
-                        }
-
-                        $linkedRecordText = implode(
-                            ' and ',
-                            $linkedRecordDescriptions
-                        );
+                        $activeBorrowingText = $activeBorrowTransactionCount === 1
+                            ? '1 active borrowing transaction'
+                            : $activeBorrowTransactionCount . ' active borrowing transactions';
 
                         $cannotDeleteMessage =
-                            'This member cannot be deleted because the account is linked to '
-                            . ($linkedRecordText ?: 'existing system records')
-                            . '.';
+                            'This member cannot be deleted because the account still has '
+                            . $activeBorrowingText
+                            . '. Return or resolve the borrowed book first.';
+
+                        $deleteConfirmation = $hasAttendanceRecords
+                            ? 'Permanently delete this library member? Related attendance and completed borrowing records will also be removed. This action cannot be undone.'
+                            : 'Permanently delete this library member? Completed borrowing records, if any, will also be removed. This action cannot be undone.';
 
                         // Normalize optional middle initials for display names.
                         $middleInitial = trim(
@@ -264,8 +248,8 @@
 
                         <div class="system-record-badges">
                             <span class="system-record-badge">{{ ucfirst($member->member_role) }}</span>
-                            @if ($hasLinkedRecords)
-                                <span class="system-record-badge is-neutral">Linked Records</span>
+                            @if ($hasActiveBorrowing)
+                                <span class="system-record-badge is-neutral">Active Loan</span>
                             @endif
                         </div>
                     </header>
@@ -277,8 +261,8 @@
                         </div>
 
                         <div class="system-record-field">
-                            <span>Borrowing Records</span>
-                            <strong>{{ $borrowTransactionCount }}</strong>
+                            <span>Active Borrowing Records</span>
+                            <strong>{{ $activeBorrowTransactionCount }}</strong>
                         </div>
 
                         <div class="system-record-field">
@@ -286,13 +270,13 @@
                             <strong>{{ $attendanceLogCount }}</strong>
                         </div>
 
-                        {{-- Edit is always available; delete is blocked when history exists. --}}
+                        {{-- Attendance and completed history do not block deletion; active loans do. --}}
                         <div class="system-record-actions-panel">
                             <span class="system-record-section-label">Actions</span>
                             <div class="system-record-actions member-actions">
                                 <a href="{{ route('admin.members.edit', $member->member_id) }}" class="small-button edit">Edit</a>
 
-                                @if ($hasLinkedRecords)
+                                @if ($hasActiveBorrowing)
                                     <span
                                         class="member-cannot-delete-badge"
                                         title="{{ $cannotDeleteMessage }}"
@@ -310,7 +294,7 @@
                                         method="POST"
                                         action="{{ route('admin.members.destroy', $member->member_id) }}"
                                         class="member-delete-form"
-                                        onsubmit="return confirm('Permanently delete this library member? This action cannot be undone.');"
+                                        onsubmit='return confirm(@js($deleteConfirmation));'
                                     >
                                         @csrf
                                         @method('DELETE')

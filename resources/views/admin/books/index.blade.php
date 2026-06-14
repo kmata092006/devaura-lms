@@ -5,7 +5,6 @@
 
 @section('content')
     <style>
-        /* Keep delete restrictions readable inside compact book action rows. */
         .book-actions {
             display: flex;
             align-items: center;
@@ -41,7 +40,6 @@
         }
     </style>
 
-    {{-- Provides book management actions and links to the add-book form. --}}
     <div class="page-actions">
         <div>
             <h2>Book Records</h2>
@@ -65,7 +63,6 @@
         </div>
     @endif
 
-    {{-- Filters book records by keyword and circulation status. --}}
     <form method="GET" action="{{ route('admin.books.index') }}" class="filter-form">
         <input
             type="text"
@@ -99,25 +96,47 @@
         <div class="system-record-list">
             @forelse ($books as $book)
                     @php
-                        // Only an active Borrowed or Overdue transaction prevents deletion.
-                        $transactionCount = (int) ($book->borrow_transaction_count ?? 0);
+                        $totalTransactionCount = (int) ($book->borrow_transaction_count ?? 0);
                         $activeTransactionCount = (int) ($book->active_borrow_transaction_count ?? 0);
-                        $isBorrowed = $book->book_status === 'Borrowed';
-                        $cannotDelete = $activeTransactionCount > 0 || $isBorrowed;
+                        $bookStatus = trim((string) ($book->book_status ?? 'Unknown'));
+                        $statusKey = strtolower(str_replace([' ', '_'], '-', $bookStatus));
+                        $isBorrowed = strcasecmp($bookStatus, 'Borrowed') === 0;
+                        $hasActiveBorrowing = $activeTransactionCount > 0 || $isBorrowed;
+                        $cannotDelete = $hasActiveBorrowing;
 
-                        $cannotDeleteMessage = $cannotDelete
-                            ? 'This book cannot be deleted while it has an active borrowing transaction.'
+                        $statusClass = match ($statusKey) {
+                            'available' => 'is-status-available',
+                            'borrowed' => 'is-status-borrowed',
+                            'lost' => 'is-status-lost',
+                            'damaged' => 'is-status-damaged',
+                            'reserved' => 'is-status-reserved',
+                            'under-repair' => 'is-status-under-repair',
+                            default => 'is-status-neutral',
+                        };
+
+                        $statusDescription = match ($statusKey) {
+                            'available' => 'Ready for borrowing',
+                            'borrowed' => 'Currently checked out',
+                            'lost' => 'Unavailable because the book was reported lost',
+                            'damaged' => 'Unavailable because the book was returned damaged',
+                            'reserved' => 'Reserved and not currently available',
+                            'under-repair' => 'Temporarily unavailable while being repaired',
+                            default => 'Current circulation status',
+                        };
+
+                        $cannotDeleteMessage = $hasActiveBorrowing
+                            ? 'This book cannot be deleted because it still has an active borrowing transaction.'
                             : '';
 
-                        $deleteConfirmation = $transactionCount > 0
-                            ? 'Delete this book and its completed borrowing history? This action cannot be undone.'
+                        $deleteConfirmation = $totalTransactionCount > 0
+                            ? 'Delete this book and its completed borrowing records? This action cannot be undone.'
                             : 'Delete this book? This action cannot be undone.';
                     @endphp
 
-                <article class="system-record-card {{ $book->book_status === 'Borrowed' ? 'is-warning' : '' }}">
+                <article class="system-record-card book-status-card {{ $statusClass }}">
                     <header class="system-record-header">
                         <div class="system-record-identity">
-                            <div class="system-record-avatar" aria-hidden="true">BK</div>
+                            <div class="system-record-avatar book-status-avatar" aria-hidden="true">BK</div>
                             <div class="system-record-copy">
                                 <span class="system-record-eyebrow">Book Record</span>
                                 <h3>{{ $book->book_title }}</h3>
@@ -126,8 +145,9 @@
                         </div>
 
                         <div class="system-record-badges">
-                            <span class="system-record-badge status-{{ str_replace(' ', '-', strtolower($book->book_status)) }}">
-                                {{ $book->book_status }}
+                            <span class="system-record-badge book-status-badge">
+                                <span class="book-status-dot" aria-hidden="true"></span>
+                                {{ $bookStatus }}
                             </span>
                         </div>
                     </header>
@@ -148,9 +168,13 @@
                             <strong>{{ $book->genre_name ?: 'Not available' }}</strong>
                         </div>
 
-                        <div class="system-record-field">
-                            <span>Borrowing History</span>
-                            <strong>{{ $transactionCount }} {{ \Illuminate\Support\Str::plural('transaction', $transactionCount) }}</strong>
+                        <div class="system-record-field book-status-field">
+                            <span>Book Status</span>
+                            <strong class="book-status-value">
+                                <span class="book-status-dot" aria-hidden="true"></span>
+                                {{ $bookStatus }}
+                            </strong>
+                            <small>{{ $statusDescription }}</small>
                         </div>
 
                         <div class="system-record-actions-panel">
@@ -176,7 +200,7 @@
                                         method="POST"
                                         action="{{ route('admin.books.destroy', $book->book_id) }}"
                                         class="book-delete-form"
-                                        onsubmit="return confirm(@js($deleteConfirmation));"
+                                        onsubmit='return confirm(@js($deleteConfirmation));'
                                     >
                                         @csrf
                                         @method('DELETE')

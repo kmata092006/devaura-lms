@@ -9,6 +9,9 @@ use Illuminate\Validation\ValidationException;
 
 class BorrowService
 {
+    private const ACTIVE_TRANSACTION_STATUSES = ['Borrowed', 'Overdue'];
+    private const BORROWABLE_BOOK_STATUS = 'Available';
+
     /**
      * Prepares member, book, and transaction data for the borrow page.
      */
@@ -25,7 +28,10 @@ class BorrowService
     }
 
     /**
-     * Creates an active borrow transaction and marks the book as borrowed.
+     * Creates an active borrow transaction and marks the book as Borrowed.
+     *
+     * Lost, Damaged, Reserved, and Under Repair books are rejected even when a
+     * manipulated request attempts to submit their database identifier.
      */
     public function borrowBook(array $data): void
     {
@@ -51,9 +57,22 @@ class BorrowService
                 ]);
             }
 
-            if ($book->book_status !== 'Available') {
+            if ($book->book_status !== self::BORROWABLE_BOOK_STATUS) {
                 throw ValidationException::withMessages([
-                    'book_id' => 'This book is not available for borrowing.',
+                    'book_id' => $this->getUnavailableBookMessage($book->book_status),
+                ]);
+            }
+
+            $activeTransaction = DB::table('borrow_transaction')
+                ->where('book_id', $data['book_id'])
+                ->whereIn('borrow_status', self::ACTIVE_TRANSACTION_STATUSES)
+                ->select('transaction_id')
+                ->lockForUpdate()
+                ->first();
+
+            if ($activeTransaction !== null) {
+                throw ValidationException::withMessages([
+                    'book_id' => 'This book already has an active borrowing transaction and cannot be borrowed again.',
                 ]);
             }
 
@@ -62,6 +81,7 @@ class BorrowService
                 'book_id' => $data['book_id'],
                 'borrow_date' => now()->toDateString(),
                 'due_date' => $data['due_date'],
+                'return_date' => null,
                 'borrow_status' => 'Borrowed',
             ]);
 
@@ -92,7 +112,7 @@ class BorrowService
     }
 
     /**
-     * Lists books that are currently available to borrow.
+     * Lists only genuinely available books with no active transaction.
      */
     private function getAvailableBooks(): Collection
     {
@@ -109,13 +129,20 @@ class BorrowService
                 DB::raw('book_author.`m.i.` as author_middle_initial'),
                 'book_genre.genre_name'
             )
-            ->where('book.book_status', 'Available')
+            ->where('book.book_status', self::BORROWABLE_BOOK_STATUS)
+            ->whereNotExists(function ($query) {
+                $query
+                    ->selectRaw('1')
+                    ->from('borrow_transaction')
+                    ->whereColumn('borrow_transaction.book_id', 'book.book_id')
+                    ->whereIn('borrow_transaction.borrow_status', self::ACTIVE_TRANSACTION_STATUSES);
+            })
             ->orderBy('book.book_title')
             ->get();
     }
 
     /**
-     * Returns active borrowed or overdue transactions for the borrow table.
+     * Returns active Borrowed or Overdue transactions for the borrow list.
      */
     private function getActiveBorrowTransactions(?string $search = null): LengthAwarePaginator
     {
@@ -142,7 +169,7 @@ class BorrowService
                 'book_author.last_name as author_last_name',
                 DB::raw('book_author.`m.i.` as author_middle_initial')
             )
-            ->whereIn('borrow_transaction.borrow_status', ['Borrowed', 'Overdue']);
+            ->whereIn('borrow_transaction.borrow_status', self::ACTIVE_TRANSACTION_STATUSES);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -165,7 +192,22 @@ class BorrowService
     }
 
     /**
-     * Marks borrowed transactions as overdue once their due date has passed.
+     * Gives a clear validation message for each non-borrowable book status.
+     */
+    private function getUnavailableBookMessage(string $status): string
+    {
+        return match ($status) {
+            'Lost' => 'This book is marked Lost and cannot be borrowed.',
+            'Damaged' => 'This book is marked Damaged and cannot be borrowed.',
+            'Under Repair' => 'This book is under repair and cannot be borrowed.',
+            'Reserved' => 'This book is reserved and cannot be borrowed.',
+            'Borrowed' => 'This book is already borrowed.',
+            default => 'This book is not available for borrowing.',
+        };
+    }
+
+    /**
+     * Marks Borrowed transactions as Overdue once their due date has passed.
      */
     private function updateOverdueTransactions(): void
     {
