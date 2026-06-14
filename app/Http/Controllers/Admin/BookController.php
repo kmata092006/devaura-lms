@@ -260,15 +260,18 @@ class BookController extends Controller
         $book->author_name = $formattedAuthorName === '-' ? '' : $formattedAuthorName;
         $book->publisher_name = $formattedPublisherName === '-' ? '' : $formattedPublisherName;
 
-        $activeTransaction = DB::table('borrow_transaction')
+        $transactionSummary = DB::table('borrow_transaction')
             ->where('book_id', $bookId)
-            ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
-            ->orderByDesc('transaction_id')
+            ->selectRaw('COUNT(*) as total_transactions')
+            ->selectRaw(
+                "SUM(CASE WHEN borrow_status IN ('Borrowed', 'Overdue') THEN 1 ELSE 0 END) as active_transactions"
+            )
             ->first();
 
-        $book->has_active_transaction = $activeTransaction !== null;
-        $book->active_transaction_id = $activeTransaction?->transaction_id;
-        $book->active_transaction_status = $activeTransaction?->borrow_status;
+        $book->borrow_transaction_count = (int) ($transactionSummary->total_transactions ?? 0);
+        $book->active_borrow_transaction_count = (int) ($transactionSummary->active_transactions ?? 0);
+        $book->has_transaction_history = $book->borrow_transaction_count > 0;
+        $book->has_active_transaction = $book->active_borrow_transaction_count > 0;
 
         $statuses = $this->bookStatuses;
         $controlledGenres = $this->controlledGenres;
@@ -282,7 +285,8 @@ class BookController extends Controller
 
     /**
      * Validates and updates an existing book record without mutating shared
-     * catalog records used by other books. Optional metadata may be cleared.
+     * catalog records used by other books. Once borrowing history exists, the
+     * circulation status is preserved and can only change through transactions.
      */
     public function update(Request $request, $bookId)
     {
@@ -305,35 +309,30 @@ class BookController extends Controller
                 ]);
             }
 
-            $activeTransaction = DB::table('borrow_transaction')
+            $transactionHistory = DB::table('borrow_transaction')
                 ->where('book_id', $bookId)
-                ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
-                ->orderByDesc('transaction_id')
+                ->select('transaction_id', 'borrow_status')
                 ->lockForUpdate()
-                ->first();
+                ->get();
 
+            $hasTransactionHistory = $transactionHistory->isNotEmpty();
             $requestedStatus = $validated['book_status'];
 
-            if ($activeTransaction && !in_array($requestedStatus, ['Borrowed', 'Available'], true)) {
+            if ($hasTransactionHistory && $requestedStatus !== $book->book_status) {
                 throw ValidationException::withMessages([
-                    'book_status' => 'This book has an active borrowing transaction. Use the Return Book module to mark it as Lost or Damaged, or select Available to complete the return.',
+                    'book_status' => 'This book status is managed by borrowing and return transactions. Lost and Damaged books cannot be changed back to Available from the Edit Book page.',
                 ]);
             }
 
-            if (!$activeTransaction && $requestedStatus === 'Borrowed') {
+            if (!$hasTransactionHistory && $requestedStatus === 'Borrowed') {
                 throw ValidationException::withMessages([
                     'book_status' => 'A book can only become Borrowed through the Borrow Book module so a member and due date are recorded.',
                 ]);
             }
 
-            if ($activeTransaction && $requestedStatus === 'Available') {
-                DB::table('borrow_transaction')
-                    ->where('transaction_id', $activeTransaction->transaction_id)
-                    ->update([
-                        'return_date' => now()->toDateString(),
-                        'borrow_status' => 'Returned',
-                    ]);
-            }
+            $statusToSave = $hasTransactionHistory
+                ? $book->book_status
+                : $requestedStatus;
 
             $authorId = $this->findOrCreateAuthor($validated['author_name'] ?? null);
             $publisherId = $this->findOrCreatePublisher(
@@ -350,13 +349,13 @@ class BookController extends Controller
                     'genre_id' => $genreId,
                     'isbn' => $this->cleanIsbn($validated['isbn'] ?? null),
                     'book_title' => $validated['book_title'],
-                    'book_status' => $requestedStatus,
+                    'book_status' => $statusToSave,
                 ]);
         });
 
         return redirect()
             ->route('admin.books.index')
-            ->with('success', 'Book updated successfully. Related borrowing and catalog modules were synchronized.');
+            ->with('success', 'Book updated successfully. The transaction-managed status was preserved.');
     }
 
     /**
