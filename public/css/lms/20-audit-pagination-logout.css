@@ -1,4 +1,11 @@
-/* Audit Trail date/time separation and shared logout confirmation. */
+/* =========================================================
+   AUDIT TRAIL DATE/TIME AND LOGOUT CONFIRMATION
+   UBNHS Library Management System
+   ========================================================= */
+
+/* =========================================================
+   AUDIT TRAIL — DATE AND TIME SEPARATION
+   ========================================================= */
 
 .audit-header-datetime {
     display: flex;
@@ -19,10 +26,14 @@
 .audit-datetime-split {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 0.78fr);
+
     margin-top: 9px;
+
     overflow: hidden;
+
     border: 1px solid #dbe5f1;
     border-radius: 12px;
+
     background: #ffffff;
 }
 
@@ -38,8 +49,11 @@
 
 .audit-datetime-split small {
     display: block;
+
     margin-bottom: 3px;
+
     color: #64748b;
+
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.07em;
@@ -48,11 +62,372 @@
 
 .audit-datetime-split strong {
     display: block;
+
     color: #0f172a;
+
     font-size: 12px;
     font-weight: 900;
     line-height: 1.35;
 }
+
+/* =========================================================
+   LOGOUT CONFIRMATION — DIALOG CONTAINER
+   ========================================================= */
+
+.logout-confirmation-modal {
+    width: min(560px, calc(100% - 32px));
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+
+    margin: auto;
+    padding: 0;
+
+    overflow: visible;
+
+    border: none;
+    border-radius: 30px;
+
+    background: transparent;
+
+    color: #0f172a;
+
+    box-shadow: none;
+}
+
+.logout-confirmation-modal[open] {
+    animation: logout-dialog-fade-in 0.2s ease-out;
+}
+
+.logout-confirmation-modal::backdrop {
+    background: rgba(15, 23, 42, 0.68);
+
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+
+    animation: logout-backdrop-fade-in 0.2s ease-out;
+}
+
+/* =========================================================
+   LOGOUT CONFIRMATION — CARD
+   ========================================================= */
+
+.logout-confirmation-card {
+    position: relative;
+
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr);
+    align-items: start;
+
+    column-gap: 20px;
+    row-gap: 0;
+
+    padding: 34px;
+
+    overflow: hidden;
+
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    border-radius: 28px;
+
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(254, 226, 226, 0.55),
+            transparent 34%
+        ),
+        #ffffff;
+
+    box-shadow:
+        0 36px 90px rgba(15, 23, 42, 0.32),
+        0 14px 32px rgba(15, 23, 42, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+    animation: logout-card-enter 0.24s ease-out;
+}
+
+/* Thin danger accent at the top */
+.logout-confirmation-card::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+
+    height: 5px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #dc2626 0%,
+            #ef4444 52%,
+            #f97316 100%
+        );
+}
+
+/* =========================================================
+   LOGOUT CONFIRMATION — ICON
+   ========================================================= */
+
+.logout-confirmation-icon {
+    width: 64px;
+    height: 64px;
+
+    display: grid;
+    place-items: center;
+
+    margin: 0;
+
+    border: 1px solid #fecaca;
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #fff1f2 0%,
+            #fee2e2 100%
+        );
+
+    color: #b91c1c;
+
+    font-size: 30px;
+    font-weight: 950;
+    line-height: 1;
+
+    box-shadow:
+        0 10px 24px rgba(220, 38, 38, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* =========================================================
+   LOGOUT CONFIRMATION — TEXT
+   ========================================================= */
+
+.logout-confirmation-copy {
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.logout-confirmation-copy > span {
+    display: inline-flex;
+    align-items: center;
+
+    margin: 0 0 8px;
+
+    color: #dc2626;
+
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: 0.11em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.logout-confirmation-copy h2 {
+    margin: 0;
+
+    color: #0f172a;
+
+    font-size: clamp(25px, 3vw, 30px);
+    font-weight: 900;
+    letter-spacing: -0.7px;
+    line-height: 1.18;
+}
+
+.logout-confirmation-copy p {
+    max-width: 430px;
+
+    margin: 12px 0 0;
+
+    color: #64748b;
+
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.65;
+}
+
+/* =========================================================
+   LOGOUT CONFIRMATION — ACTIONS
+   ========================================================= */
+
+.logout-confirmation-actions {
+    grid-column: 1 / -1;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+    gap: 12px;
+
+    margin-top: 30px;
+    padding-top: 22px;
+
+    border-top: 1px solid #e2e8f0;
+}
+
+.logout-confirmation-actions button {
+    width: 100%;
+    min-height: 56px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 20px;
+
+    border-radius: 16px;
+
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}
+
+/* Stay Logged In */
+.logout-cancel-button {
+    border: 1px solid #cbd5e1;
+
+    background: #ffffff;
+    color: #334155;
+
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.logout-cancel-button:hover {
+    border-color: #94a3b8;
+
+    background: #f8fafc;
+    color: #0f172a;
+
+    transform: translateY(-1px);
+}
+
+.logout-cancel-button:active {
+    transform: translateY(0);
+}
+
+.logout-cancel-button:focus-visible {
+    outline: none;
+
+    border-color: #64748b;
+
+    box-shadow:
+        0 0 0 4px rgba(100, 116, 139, 0.14);
+}
+
+/* Confirm Logout */
+.logout-confirm-button {
+    border: 1px solid #dc2626;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ef2929 0%,
+            #dc2626 55%,
+            #c91f1f 100%
+        );
+
+    color: #ffffff;
+
+    box-shadow:
+        0 12px 24px rgba(220, 38, 38, 0.24);
+}
+
+.logout-confirm-button:hover {
+    border-color: #b91c1c;
+
+    background:
+        linear-gradient(
+            135deg,
+            #dc2626 0%,
+            #c91f1f 58%,
+            #b91c1c 100%
+        );
+
+    box-shadow:
+        0 16px 30px rgba(185, 28, 28, 0.3);
+
+    transform: translateY(-1px);
+}
+
+.logout-confirm-button:active {
+    transform: translateY(0);
+}
+
+.logout-confirm-button:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 4px rgba(239, 68, 68, 0.18),
+        0 12px 24px rgba(220, 38, 38, 0.24);
+}
+
+.logout-confirm-button:disabled {
+    border-color: #fca5a5;
+
+    background: #fca5a5;
+    color: #ffffff;
+
+    box-shadow: none;
+
+    cursor: wait;
+    opacity: 0.82;
+
+    transform: none;
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes logout-dialog-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes logout-backdrop-fade-in {
+    from {
+        background: rgba(15, 23, 42, 0);
+        backdrop-filter: blur(0);
+        -webkit-backdrop-filter: blur(0);
+    }
+
+    to {
+        background: rgba(15, 23, 42, 0.68);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+    }
+}
+
+@keyframes logout-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 620px) {
     .audit-datetime-split {
@@ -63,122 +438,100 @@
         border-top: 1px solid #dbe5f1;
         border-left: none;
     }
-}
 
-.logout-confirmation-modal {
-    width: min(440px, calc(100% - 32px));
-    padding: 0;
-    border: none;
-    border-radius: 22px;
-    background: transparent;
-    box-shadow: none;
-}
+    .logout-confirmation-modal {
+        width: min(100% - 24px, 520px);
+    }
 
-.logout-confirmation-modal::backdrop {
-    background: rgba(15, 23, 42, 0.62);
-    backdrop-filter: blur(3px);
-}
-
-.logout-confirmation-card {
-    padding: 28px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    border-radius: 22px;
-    background: #ffffff;
-    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
-}
-
-.logout-confirmation-icon {
-    width: 52px;
-    height: 52px;
-    display: grid;
-    place-items: center;
-    margin-bottom: 18px;
-    border-radius: 16px;
-    background: #fee2e2;
-    color: #b91c1c;
-    font-size: 24px;
-    font-weight: 950;
-}
-
-.logout-confirmation-copy > span {
-    display: block;
-    margin-bottom: 5px;
-    color: #dc2626;
-    font-size: 11px;
-    font-weight: 950;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.logout-confirmation-copy h2 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 23px;
-    letter-spacing: -0.35px;
-}
-
-.logout-confirmation-copy p {
-    margin: 10px 0 0;
-    color: #64748b;
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.logout-confirmation-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 24px;
-}
-
-.logout-confirmation-actions button {
-    min-height: 46px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 900;
-    cursor: pointer;
-    transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
-}
-
-.logout-cancel-button {
-    border: 1px solid #d5dfeb;
-    background: #ffffff;
-    color: #334155;
-}
-
-.logout-cancel-button:hover {
-    border-color: #94a3b8;
-    background: #f8fafc;
-}
-
-.logout-confirm-button {
-    border: 1px solid #dc2626;
-    background: #dc2626;
-    color: #ffffff;
-}
-
-.logout-confirm-button:hover {
-    border-color: #b91c1c;
-    background: #b91c1c;
-    transform: translateY(-1px);
-}
-
-.logout-confirm-button:disabled {
-    border-color: #fca5a5;
-    background: #fca5a5;
-    cursor: wait;
-    transform: none;
-}
-
-@media (max-width: 520px) {
     .logout-confirmation-card {
-        padding: 22px;
+        grid-template-columns: 58px minmax(0, 1fr);
+
+        column-gap: 16px;
+
+        padding: 28px 24px 24px;
+
+        border-radius: 24px;
+    }
+
+    .logout-confirmation-icon {
+        width: 56px;
+        height: 56px;
+
+        border-radius: 17px;
+
+        font-size: 27px;
+    }
+
+    .logout-confirmation-copy h2 {
+        font-size: 24px;
+    }
+
+    .logout-confirmation-copy p {
+        font-size: 14px;
+    }
+
+    .logout-confirmation-actions {
+        margin-top: 24px;
+        padding-top: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logout-confirmation-card {
+        grid-template-columns: 1fr;
+
+        padding: 26px 20px 20px;
+    }
+
+    .logout-confirmation-icon {
+        margin-bottom: 18px;
+    }
+
+    .logout-confirmation-copy {
+        padding-top: 0;
+    }
+
+    .logout-confirmation-copy h2 {
+        font-size: 23px;
     }
 
     .logout-confirmation-actions {
         grid-template-columns: 1fr;
+
+        gap: 10px;
+
+        margin-top: 24px;
+    }
+
+    .logout-confirmation-actions button {
+        min-height: 52px;
     }
 }
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .logout-confirmation-modal[open],
+    .logout-confirmation-modal::backdrop,
+    .logout-confirmation-card {
+        animation: none !important;
+    }
+
+    .logout-confirmation-actions button {
+        transition: none !important;
+    }
+
+    .logout-cancel-button:hover,
+    .logout-confirm-button:hover {
+        transform: none !important;
+    }
+}
+
+/* =========================================================
+   PRINT
+   ========================================================= */
 
 @media print {
     .logout-confirmation-modal {
