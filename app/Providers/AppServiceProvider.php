@@ -7,18 +7,16 @@ use Illuminate\Support\ServiceProvider;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register LMS service bindings.
      */
     public function register(): void
     {
-        //
     }
 
     /**
-     * Bootstrap any application services.
+     * Bootstrap LMS-wide application behavior.
      */
     public function boot(): void
     {
-        //
     }
 }

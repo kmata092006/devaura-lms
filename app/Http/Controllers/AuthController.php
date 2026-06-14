@@ -22,44 +22,52 @@ class AuthController extends Controller
     }
 
     /**
-     * Validates login credentials, starts the session, and records the attempt.
+     * Authenticates a personnel account and detects its role automatically.
      */
     public function login(Request $request)
     {
         $validated = $request->validate([
-            'role' => ['required', 'in:admin,staff,student staff'],
-            'username' => ['required', 'string'],
+            'username' => ['required', 'string', 'max:50'],
             'password' => ['required', 'string'],
         ]);
 
+        $username = trim($validated['username']);
+
         $personnel = DB::table('library_personnel as p')
-            ->join('personnel_role as r', 'p.personnel_role_id', '=', 'r.personnel_role_id')
-            ->where('p.username', $validated['username'])
-            ->where('r.personnel_role_name', $validated['role'])
-            ->select('p.*', 'r.personnel_role_name') 
+            ->join(
+                'personnel_role as r',
+                'p.personnel_role_id',
+                '=',
+                'r.personnel_role_id'
+            )
+            ->where('p.username', $username)
+            ->select(
+                'p.*',
+                'r.personnel_role_name'
+            )
             ->first();
 
-        // 1. Check basic credentials
         if (!$personnel || !Hash::check($validated['password'], $personnel->password_hash)) {
             app(AuditTrailService::class)->record(
                 'LOGIN FAILED',
                 'Authentication',
-                'Failed login attempt for username: ' . $validated['username'] . ', role: ' . $validated['role'],
+                'Failed login attempt for username: ' . $username,
                 $request,
                 [
-                    'username' => $validated['username'],
-                    'personnel_role' => $validated['role'],
+                    'username' => $username,
+                    'personnel_role' => $personnel->personnel_role_name ?? null,
                 ]
             );
 
             return back()
                 ->withErrors([
-                    'login' => 'Invalid username, password, or role.',
+                    'login' => 'Invalid username or password.',
                 ])
-                ->withInput($request->except('password'));
+                ->withInput([
+                    'username' => $username,
+                ]);
         }
 
-        // 2. SAFETY NET: Check if this role actually has any active permissions
         $hasPermissions = DB::table('role_permission')
             ->where('personnel_role_id', $personnel->personnel_role_id)
             ->exists();
@@ -68,31 +76,39 @@ class AuthController extends Controller
             app(AuditTrailService::class)->record(
                 'LOGIN BLOCKED',
                 'Authentication',
-                'Blocked login: Role has zero permissions assigned.',
+                'Blocked login because the account role has no permissions assigned.',
                 $request,
-                ['username' => $validated['username']]
+                [
+                    'personnel_id' => $personnel->personnel_id,
+                    'username' => $personnel->username,
+                    'personnel_role' => $personnel->personnel_role_name,
+                ]
             );
 
             return back()
                 ->withErrors([
                     'access' => 'Your account role currently has no permissions assigned. Please contact an administrator.',
                 ])
-                ->withInput($request->except('password'));
+                ->withInput([
+                    'username' => $username,
+                ]);
         }
 
-        // 3. Proceed with session setup
-        session([
-            'personnel_id'      => $personnel->personnel_id,
-            'username'          => $personnel->username,
-            'personnel_role'    => $personnel->personnel_role_name,
-            'first_name'        => $personnel->first_name,
-            'last_name'         => $personnel->last_name,
+        $request->session()->regenerate();
+
+        $request->session()->put([
+            'personnel_id' => $personnel->personnel_id,
+            'personnel_role_id' => $personnel->personnel_role_id,
+            'username' => $personnel->username,
+            'personnel_role' => $personnel->personnel_role_name,
+            'first_name' => $personnel->first_name,
+            'last_name' => $personnel->last_name,
         ]);
 
         app(AuditTrailService::class)->record(
             'LOGIN',
             'Authentication',
-            'User logged in successfully.',
+            'User logged in successfully as ' . ucwords($personnel->personnel_role_name) . '.',
             $request
         );
 
@@ -119,7 +135,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Resets any kiosk session before sending an admin to the login page.
+     * Resets any kiosk session before sending an administrator to the login page.
      */
     public function kioskAdminLogin(Request $request)
     {

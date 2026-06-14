@@ -1,8 +1,6 @@
-/* =====================================================
-   GOOGLE BOOKS HELPER - ADD BOOK PAGE
-===================================================== */
+/* Book lookup helper used by the add and edit book forms. */
 
-.google-books-card,
+.book-lookup-card,
 .book-form-card {
     background: #ffffff;
     border: 1px solid #dbe3ef;
@@ -12,7 +10,7 @@
     margin-bottom: 24px;
 }
 
-.google-books-header {
+.book-lookup-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -20,7 +18,7 @@
     margin-bottom: 18px;
 }
 
-.google-books-eyebrow {
+.book-lookup-eyebrow {
     display: inline-flex;
     margin-bottom: 8px;
     color: #2563eb;
@@ -30,7 +28,7 @@
     letter-spacing: 0.12em;
 }
 
-.google-books-header h3,
+.book-lookup-header h3,
 .book-section-title h3 {
     margin: 0 0 6px;
     color: #0f172a;
@@ -39,7 +37,7 @@
     letter-spacing: -0.5px;
 }
 
-.google-books-header p,
+.book-lookup-header p,
 .book-section-title p {
     margin: 0;
     color: #64748b;
@@ -47,13 +45,13 @@
     line-height: 1.55;
 }
 
-.google-books-search-row {
+.book-lookup-search-row {
     display: grid;
     grid-template-columns: minmax(260px, 1fr) auto;
     gap: 14px;
 }
 
-.google-books-search-row input {
+.book-lookup-search-row input {
     width: 100%;
     min-height: 50px;
     border: 1px solid #cbd5e1;
@@ -64,14 +62,14 @@
     font-weight: 650;
 }
 
-.google-books-search-row input:focus {
+.book-lookup-search-row input:focus {
     outline: none;
     border-color: #2563eb;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
 }
 
-.google-books-search-row button,
-.use-google-book-button {
+.book-lookup-search-row button,
+.use-book-result-button {
     min-height: 50px;
     border: none;
     border-radius: 14px;
@@ -84,17 +82,17 @@
     box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
 }
 
-.google-books-search-row button:hover,
-.use-google-book-button:hover {
+.book-lookup-search-row button:hover,
+.use-book-result-button:hover {
     background: #1d4ed8;
 }
 
-.google-books-search-row button:disabled {
+.book-lookup-search-row button:disabled {
     opacity: 0.65;
     cursor: not-allowed;
 }
 
-.google-books-message {
+.book-lookup-message {
     margin-top: 16px;
     border-radius: 14px;
     padding: 12px 14px;
@@ -102,31 +100,31 @@
     font-weight: 800;
 }
 
-.google-books-message.info {
+.book-lookup-message.info {
     background: #eff6ff;
     color: #1e3a8a;
     border: 1px solid #bfdbfe;
 }
 
-.google-books-message.success {
+.book-lookup-message.success {
     background: #dcfce7;
     color: #166534;
     border: 1px solid #86efac;
 }
 
-.google-books-message.error {
+.book-lookup-message.error {
     background: #fee2e2;
     color: #991b1b;
     border: 1px solid #fecaca;
 }
 
-.google-books-results {
+.book-lookup-results {
     margin-top: 18px;
     display: grid;
     gap: 14px;
 }
 
-.google-book-result-card {
+.book-lookup-result-card {
     display: grid;
     grid-template-columns: 92px 1fr;
     gap: 16px;
@@ -136,8 +134,8 @@
     background: #f8fbff;
 }
 
-.google-book-cover img,
-.google-book-placeholder {
+.book-lookup-cover img,
+.book-lookup-placeholder {
     width: 92px;
     height: 132px;
     border-radius: 12px;
@@ -146,7 +144,7 @@
     border: 1px solid #cbd5e1;
 }
 
-.google-book-placeholder {
+.book-lookup-placeholder {
     display: grid;
     place-items: center;
     color: #64748b;
@@ -155,20 +153,20 @@
     text-align: center;
 }
 
-.google-book-info h4 {
+.book-lookup-info h4 {
     margin: 0 0 8px;
     color: #0f172a;
     font-size: 18px;
     font-weight: 950;
 }
 
-.google-book-info p {
+.book-lookup-info p {
     margin: 4px 0;
     color: #475569;
     font-size: 14px;
 }
 
-.google-book-info .use-google-book-button {
+.book-lookup-info .use-book-result-button {
     margin-top: 12px;
 }
 
@@ -249,8 +247,8 @@
 }
 
 @media (max-width: 900px) {
-    .google-books-search-row,
-    .google-book-result-card,
+    .book-lookup-search-row,
+    .book-lookup-result-card,
     .book-form-grid {
         grid-template-columns: 1fr;
     }
@@ -258,4 +256,115 @@
     .book-title-field {
         grid-column: span 1;
     }
+}
+/* Catalog metadata validation and guidance states. */
+.required-mark {
+    color: #dc2626;
+    font-weight: 900;
+}
+
+.catalog-guidance {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+
+.catalog-guidance svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    margin-top: 1px;
+}
+
+.catalog-guidance p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.book-form-group input.is-invalid,
+.book-form-group select.is-invalid {
+    border-color: #dc2626;
+    background: #fff7f7;
+}
+
+.book-form-group input.is-invalid:focus,
+.book-form-group select.is-invalid:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+}
+
+.book-form-group .book-field-error {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.book-form-group input[list] {
+    padding-right: 42px;
+}
+
+.book-form-actions .primary-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+    .catalog-guidance {
+        padding: 11px 12px;
+    }
+}
+
+/* Add and edit book field status styles. */
+.optional-mark {
+    display: inline-flex;
+    margin-left: 6px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.book-status-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 50px;
+    padding: 10px 14px;
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.book-status-dot {
+    width: 11px;
+    height: 11px;
+    flex: 0 0 11px;
+    border-radius: 999px;
+    background: #22c55e;
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
+}
+
+.book-status-display strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.book-status-display small {
+    margin-top: 2px;
+    color: #15803d;
+}
+
+.genre-other-field[hidden] {
+    display: none !important;
+}
+
+.book-form-group select {
+    cursor: pointer;
 }

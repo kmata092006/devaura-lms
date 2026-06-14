@@ -388,7 +388,7 @@ button[name="action"][value="time_out"]:hover {
     background: #1d4ed8;
 }
 
-/* Remove old weird header styling */
+/* Reset legacy kiosk wrappers so the refreshed header controls spacing. */
 .kiosk-header,
 .kiosk-header-inner {
     background: transparent !important;
@@ -397,7 +397,7 @@ button[name="action"][value="time_out"]:hover {
     padding: 0 !important;
 }
 
-/* Main kiosk layout */
+/* Main kiosk content layout. */
 .kiosk-main,
 .kiosk-content {
     margin-top: 34px !important;
@@ -420,7 +420,7 @@ button[name="action"][value="time_out"]:hover {
     margin: 0 0 28px !important;
 }
 
-/* Main attendance panel */
+/* Main attendance panel container. */
 .kiosk-panel,
 .kiosk-attendance-card {
     border-radius: 24px !important;
@@ -430,7 +430,7 @@ button[name="action"][value="time_out"]:hover {
     box-shadow: 0 22px 55px rgba(15, 23, 42, 0.18) !important;
 }
 
-/* Tabs */
+/* Kiosk member and visitor tabs. */
 .kiosk-tabs {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -458,7 +458,7 @@ button[name="action"][value="time_out"]:hover {
     color: #ffffff !important;
 }
 
-/* Inner section */
+/* Inner kiosk form sections. */
 .kiosk-section,
 .kiosk-form-area {
     border-radius: 22px !important;
@@ -475,7 +475,7 @@ button[name="action"][value="time_out"]:hover {
     margin: 0 0 18px !important;
 }
 
-/* Time-in / time-out cards */
+/* Time-in and time-out action cards. */
 .kiosk-form-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -526,7 +526,7 @@ button[name="action"][value="time_out"]:hover {
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14) !important;
 }
 
-/* Buttons */
+/* Kiosk form action buttons. */
 .kiosk-action-card button,
 .kiosk-form-box button {
     width: 100% !important;
@@ -550,7 +550,7 @@ button[name="action"][value="time_out"]:hover {
     background: #1d4ed8 !important;
 }
 
-/* Preserve color meaning for existing buttons if classes exist */
+/* Preserve existing in/out button color meaning. */
 .kiosk-time-in-button,
 .kiosk-btn-in,
 .time-in {
@@ -563,7 +563,7 @@ button[name="action"][value="time_out"]:hover {
     background: #f59e0b !important;
 }
 
-/* Responsive */
+/* Kiosk responsive layout adjustments. */
 @media (max-width: 900px) {
     .kiosk-page {
         width: min(100% - 24px, 720px) !important;

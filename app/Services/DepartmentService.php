@@ -24,10 +24,7 @@ class DepartmentService
             ->groupBy('department.department_id', 'department.department_name');
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('department.department_id', 'like', "%{$search}%")
-                    ->orWhere('department.department_name', 'like', "%{$search}%");
-            });
+            $query->where('department.department_name', 'like', "%{$search}%");
         }
 
         return $query

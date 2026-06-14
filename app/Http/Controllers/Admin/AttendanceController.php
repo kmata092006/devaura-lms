@@ -15,6 +15,27 @@ class AttendanceController extends Controller
     {
         $currentPersonnelId = session('personnel_id');
 
+        $validatedFilters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'role' => ['nullable', 'string', 'max:50'],
+            'date_from' => ['nullable', 'date', 'after_or_equal:today'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:today'],
+        ], [
+            'date_from.after_or_equal' => 'The start date cannot be earlier than today.',
+            'date_to.after_or_equal' => 'The end date cannot be earlier than today.',
+        ]);
+
+        $dateFrom = $validatedFilters['date_from'] ?? null;
+        $dateTo = $validatedFilters['date_to'] ?? null;
+
+        if ($dateFrom && $dateTo && $dateTo < $dateFrom) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'date_to' => 'The end date cannot be earlier than the start date.',
+                ]);
+        }
+
         $activePersonnelLog = null;
 
         // Checks if the logged-in personnel currently has an active time-in record.
@@ -26,8 +47,7 @@ class AttendanceController extends Controller
                 ->first();
         }
 
-        // Builds the attendance query with personnel, member, and visitor details.
-        // FIX: Added join to personnel_role to fetch the updated role string.
+        // Join personnel roles so displayed role names stay current.
         $attendanceQuery = DB::table('attendance_log as log')
             ->leftJoin('library_personnel as personnel', 'log.personnel_id', '=', 'personnel.personnel_id')
             ->leftJoin('personnel_role as role', 'personnel.personnel_role_id', '=', 'role.personnel_role_id')
@@ -44,7 +64,7 @@ class AttendanceController extends Controller
                 'log.visitor_id',
 
                 'personnel.username as personnel_username',
-                'role.personnel_role_name as personnel_role', // FIX: Pulling from the role table now
+                'role.personnel_role_name as personnel_role',
                 'personnel.last_name as personnel_last_name',
                 'personnel.first_name as personnel_first_name',
                 DB::raw('personnel.`m.i.` as personnel_middle_initial'),
@@ -83,12 +103,12 @@ class AttendanceController extends Controller
             $attendanceQuery->where('log.role', $request->query('role'));
         }
 
-        if ($request->filled('date_from')) {
-            $attendanceQuery->whereDate('log.log_date', '>=', $request->query('date_from'));
+        if ($dateFrom) {
+            $attendanceQuery->whereDate('log.log_date', '>=', $dateFrom);
         }
 
-        if ($request->filled('date_to')) {
-            $attendanceQuery->whereDate('log.log_date', '<=', $request->query('date_to'));
+        if ($dateTo) {
+            $attendanceQuery->whereDate('log.log_date', '<=', $dateTo);
         }
 
         $attendanceLogs = $attendanceQuery
@@ -138,10 +158,10 @@ class AttendanceController extends Controller
 
         // Keeps selected filter values available after search, filter, and pagination.
         $filters = [
-            'search' => $request->query('search', ''),
-            'role' => $request->query('role', ''),
-            'date_from' => $request->query('date_from', ''),
-            'date_to' => $request->query('date_to', ''),
+            'search' => $validatedFilters['search'] ?? '',
+            'role' => $validatedFilters['role'] ?? '',
+            'date_from' => $dateFrom ?? '',
+            'date_to' => $dateTo ?? '',
         ];
 
         return view('admin.attendance.index', compact(
@@ -246,13 +266,27 @@ class AttendanceController extends Controller
      */
     public function timeInMember(Request $request)
     {
-        $validated = $request->validate([
-            'reference_number' => ['required', 'string', 'max:50'],
+        $request->merge([
+            'reference_number' => $this->normalizeReferenceNumber(
+                $request->input('reference_number')
+            ),
         ]);
 
-        // Finds the member record connected to the submitted reference number.
+        $validated = $request->validate([
+            'reference_number' => [
+                'required',
+                'string',
+                'min:4',
+                'max:30',
+                'regex:/^[A-Z0-9]+(?:[-_][A-Z0-9]+)*$/',
+            ],
+        ], $this->referenceNumberValidationMessages());
+
+        // Matches normalized input while remaining compatible with older saved records.
         $member = DB::table('library_member')
-            ->where('reference_number', trim($validated['reference_number']))
+            ->whereRaw('UPPER(TRIM(reference_number)) = ?', [
+                $validated['reference_number'],
+            ])
             ->first();
 
         if (!$member) {
@@ -294,13 +328,27 @@ class AttendanceController extends Controller
      */
     public function timeOutMember(Request $request)
     {
-        $validated = $request->validate([
-            'reference_number' => ['required', 'string', 'max:50'],
+        $request->merge([
+            'reference_number' => $this->normalizeReferenceNumber(
+                $request->input('reference_number')
+            ),
         ]);
 
-        // Finds the member record connected to the submitted reference number.
+        $validated = $request->validate([
+            'reference_number' => [
+                'required',
+                'string',
+                'min:4',
+                'max:30',
+                'regex:/^[A-Z0-9]+(?:[-_][A-Z0-9]+)*$/',
+            ],
+        ], $this->referenceNumberValidationMessages());
+
+        // Matches normalized input while remaining compatible with older saved records.
         $member = DB::table('library_member')
-            ->where('reference_number', trim($validated['reference_number']))
+            ->whereRaw('UPPER(TRIM(reference_number)) = ?', [
+                $validated['reference_number'],
+            ])
             ->first();
 
         if (!$member) {
@@ -338,7 +386,7 @@ class AttendanceController extends Controller
      */
     public function timeInVisitor(Request $request)
     {
-        // Added strict regex filtering to last_name and first_name
+        // Validate visitor names before creating the visitor attendance record.
         $validated = $request->validate([
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
@@ -383,7 +431,7 @@ class AttendanceController extends Controller
      */
     public function timeOutVisitor(Request $request)
     {
-        // Added strict regex filtering to last_name and first_name
+        // Validate visitor names before searching for an active log.
         $validated = $request->validate([
             'last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
             'first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\s]+$/'],
@@ -395,8 +443,7 @@ class AttendanceController extends Controller
 
         $middleInitial = $this->formatMiddleInitial($validated['middle_initial'] ?? null);
 
-        // Uses raw SQL (whereRaw) to bypass the Laravel column escaping bug caused by periods, 
-        // kasi may napapasang values with periods involved. 
+        // Use raw SQL for the legacy `m.i.` column because its name contains dots.
         $activeLog = DB::table('attendance_log as log')
             ->join('library_visitor as visitor', 'log.visitor_id', '=', 'visitor.visitor_id')
             ->where('visitor.last_name', trim($validated['last_name']))
@@ -428,6 +475,27 @@ class AttendanceController extends Controller
         return redirect()
             ->route('attendance.kiosk')
             ->with('success', 'Visitor time-out recorded successfully.');
+    }
+
+    /**
+     * Stores and compares reference numbers in one consistent format.
+     */
+    private function normalizeReferenceNumber(mixed $referenceNumber): string
+    {
+        return strtoupper(trim((string) $referenceNumber));
+    }
+
+    /**
+     * Provides readable kiosk validation feedback for reference numbers.
+     */
+    private function referenceNumberValidationMessages(): array
+    {
+        return [
+            'reference_number.required' => 'Please enter your registered reference number.',
+            'reference_number.min' => 'The reference number must contain at least 4 characters.',
+            'reference_number.max' => 'The reference number must not exceed 30 characters.',
+            'reference_number.regex' => 'The reference number may only contain letters, numbers, hyphens, and underscores.',
+        ];
     }
 
     /**

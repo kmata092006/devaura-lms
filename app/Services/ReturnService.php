@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -9,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 class ReturnService
 {
     /**
-     * Prepares active borrow transactions for the return page.
+     * Prepares active transactions and queue summary data for the return page.
      */
     public function getReturnPageData(?string $search = null): array
     {
@@ -17,6 +18,7 @@ class ReturnService
 
         return [
             'activeTransactions' => $this->getActiveTransactions($search),
+            'returnSummary' => $this->getReturnSummary(),
         ];
     }
 
@@ -27,11 +29,12 @@ class ReturnService
     {
         DB::transaction(function () use ($transactionId) {
             $transaction = $this->getLockedActiveTransaction($transactionId);
+            $automaticReturnDate = $this->getAutomaticProcessingDate($transaction);
 
             DB::table('borrow_transaction')
                 ->where('transaction_id', $transactionId)
                 ->update([
-                    'return_date' => now()->toDateString(),
+                    'return_date' => $automaticReturnDate,
                     'borrow_status' => 'Returned',
                 ]);
 
@@ -50,11 +53,12 @@ class ReturnService
     {
         DB::transaction(function () use ($transactionId) {
             $transaction = $this->getLockedActiveTransaction($transactionId);
+            $automaticReturnDate = $this->getAutomaticProcessingDate($transaction);
 
             DB::table('borrow_transaction')
                 ->where('transaction_id', $transactionId)
                 ->update([
-                    'return_date' => now()->toDateString(),
+                    'return_date' => $automaticReturnDate,
                     'borrow_status' => 'Lost',
                 ]);
 
@@ -73,11 +77,12 @@ class ReturnService
     {
         DB::transaction(function () use ($transactionId) {
             $transaction = $this->getLockedActiveTransaction($transactionId);
+            $automaticReturnDate = $this->getAutomaticProcessingDate($transaction);
 
             DB::table('borrow_transaction')
                 ->where('transaction_id', $transactionId)
                 ->update([
-                    'return_date' => now()->toDateString(),
+                    'return_date' => $automaticReturnDate,
                     'borrow_status' => 'Returned',
                 ]);
 
@@ -90,7 +95,7 @@ class ReturnService
     }
 
     /**
-     * Locks an active borrow transaction before return-state updates.
+     * Locks an active transaction before changing its state.
      */
     private function getLockedActiveTransaction(int $transactionId): object
     {
@@ -102,7 +107,7 @@ class ReturnService
 
         if (!$transaction) {
             throw ValidationException::withMessages([
-                'transaction' => 'This transaction is not active or has already been processed.',
+                'transaction' => 'This transaction is no longer active or has already been processed.',
             ]);
         }
 
@@ -110,7 +115,27 @@ class ReturnService
     }
 
     /**
-     * Returns active borrow transactions with member, book, and genre details.
+     * Generates the date recorded when an active transaction is processed.
+     *
+     * The application timezone is Asia/Manila, so the stored date matches the
+     * library user's local date at the moment the action is confirmed.
+     */
+    private function getAutomaticProcessingDate(object $transaction): string
+    {
+        $borrowDate = Carbon::parse($transaction->borrow_date)->startOfDay();
+        $processingDate = now()->startOfDay();
+
+        if ($processingDate->lt($borrowDate)) {
+            throw ValidationException::withMessages([
+                'transaction' => 'This transaction cannot be processed because its borrow date is later than the current date.',
+            ]);
+        }
+
+        return $processingDate->toDateString();
+    }
+
+    /**
+     * Returns active borrow transactions with readable member and book details.
      */
     private function getActiveTransactions(?string $search = null): LengthAwarePaginator
     {
@@ -125,12 +150,10 @@ class ReturnService
                 'borrow_transaction.due_date',
                 'borrow_transaction.return_date',
                 'borrow_transaction.borrow_status',
-                'library_member.member_id',
                 'library_member.member_role',
                 'library_member.first_name as member_first_name',
                 'library_member.last_name as member_last_name',
                 DB::raw('library_member.`m.i.` as member_middle_initial'),
-                'book.book_id',
                 'book.isbn',
                 'book.book_title',
                 'book.book_status',
@@ -143,14 +166,15 @@ class ReturnService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('borrow_transaction.transaction_id', 'like', "%{$search}%")
-                    ->orWhere('library_member.member_id', 'like', "%{$search}%")
-                    ->orWhere('library_member.first_name', 'like', "%{$search}%")
+                $q->where('library_member.first_name', 'like', "%{$search}%")
                     ->orWhere('library_member.last_name', 'like', "%{$search}%")
                     ->orWhereRaw('library_member.`m.i.` LIKE ?', ["%{$search}%"])
-                    ->orWhere('book.book_id', 'like', "%{$search}%")
+                    ->orWhere('library_member.member_role', 'like', "%{$search}%")
                     ->orWhere('book.isbn', 'like', "%{$search}%")
                     ->orWhere('book.book_title', 'like', "%{$search}%")
+                    ->orWhere('book_author.first_name', 'like', "%{$search}%")
+                    ->orWhere('book_author.last_name', 'like', "%{$search}%")
+                    ->orWhereRaw('book_author.`m.i.` LIKE ?', ["%{$search}%"])
                     ->orWhere('book.book_status', 'like', "%{$search}%")
                     ->orWhere('borrow_transaction.borrow_status', 'like', "%{$search}%")
                     ->orWhere('book_genre.genre_name', 'like', "%{$search}%");
@@ -158,9 +182,30 @@ class ReturnService
         }
 
         return $query
+            ->orderByRaw("CASE WHEN borrow_transaction.borrow_status = 'Overdue' THEN 0 ELSE 1 END")
+            ->orderBy('borrow_transaction.due_date')
             ->orderByDesc('borrow_transaction.transaction_id')
-            ->paginate(10)
+            ->paginate(8)
             ->withQueryString();
+    }
+
+    /**
+     * Builds compact queue totals for the module header.
+     */
+    private function getReturnSummary(): array
+    {
+        $activeQuery = DB::table('borrow_transaction')
+            ->whereIn('borrow_status', ['Borrowed', 'Overdue']);
+
+        return [
+            'active' => (clone $activeQuery)->count(),
+            'overdue' => (clone $activeQuery)
+                ->where('borrow_status', 'Overdue')
+                ->count(),
+            'due_today' => (clone $activeQuery)
+                ->whereDate('due_date', now()->toDateString())
+                ->count(),
+        ];
     }
 
     /**

@@ -4,6 +4,7 @@
 @section('page-title', 'Reports')
 
 @section('content')
+    {{-- Identifies the selected report and exposes print output. --}}
     <div class="report-hero">
         <div>
             <span class="report-eyebrow">Admin Reports</span>
@@ -16,6 +17,16 @@
         </button>
     </div>
 
+    @if ($errors->any())
+        <div class="alert error report-filter-alert" role="alert">
+            <strong>Unable to apply the selected date range.</strong>
+            @foreach ($errors->all() as $error)
+                <p>{{ $error }}</p>
+            @endforeach
+        </div>
+    @endif
+
+    {{-- Filters report data; visible fields change with the selected report type. --}}
     <form method="GET" action="{{ route('admin.reports.index') }}" class="report-filter-card">
         <div class="report-filter-group">
             <label for="report_type">Report Type</label>
@@ -94,24 +105,42 @@
             </select>
         </div>
 
-        <div class="report-filter-group" data-filter="date">
-            <label for="date_from">Date From</label>
+        <div class="report-filter-group report-date-filter" data-filter="date">
+            <label for="date_from" id="date-from-label">Date From</label>
             <input
                 type="date"
                 name="date_from"
                 id="date_from"
-                value="{{ $filters['date_from'] }}"
+                value="{{ old('date_from', $filters['date_from']) }}"
+                max="{{ old('date_to', $filters['date_to']) ?: now()->toDateString() }}"
+                aria-describedby="date-range-help date-from-error"
+                class="{{ $errors->has('date_from') ? 'is-invalid' : '' }}"
             >
+            @error('date_from')
+                <small id="date-from-error" class="report-filter-error">{{ $message }}</small>
+            @enderror
         </div>
 
-        <div class="report-filter-group" data-filter="date">
-            <label for="date_to">Date To</label>
+        <div class="report-filter-group report-date-filter" data-filter="date">
+            <label for="date_to" id="date-to-label">Date To</label>
             <input
                 type="date"
                 name="date_to"
                 id="date_to"
-                value="{{ $filters['date_to'] }}"
+                value="{{ old('date_to', $filters['date_to']) }}"
+                min="{{ old('date_from', $filters['date_from']) }}"
+                max="{{ now()->toDateString() }}"
+                aria-describedby="date-range-help date-to-error"
+                class="{{ $errors->has('date_to') ? 'is-invalid' : '' }}"
             >
+            @error('date_to')
+                <small id="date-to-error" class="report-filter-error">{{ $message }}</small>
+            @enderror
+        </div>
+
+        <div class="report-date-help" data-filter="date" id="date-range-help">
+            <strong>Date range</strong>
+            <span>Choose any historical period up to today. Leave both fields blank to include all dates.</span>
         </div>
 
         <div class="report-filter-actions">
@@ -126,44 +155,64 @@
             <p>Generated on {{ now()->format('F d, Y h:i A') }}</p>
         </div>
 
-        <div class="table-card report-table-card">
-            <table class="data-table report-table">
-                <thead>
-                    <tr>
-                        @foreach ($columns as $label)
-                            <th>{{ $label }}</th>
-                        @endforeach
-                    </tr>
-                </thead>
+        <div class="system-records-shell report-records-shell">
+            <div class="system-records-meta">
+                <div>
+                    <h3>{{ $reportTitle }}</h3>
+                    <p>{{ $rows->total() }} {{ \Illuminate\Support\Str::plural('record', $rows->total()) }} generated</p>
+                </div>
+            </div>
 
-                <tbody>
-                    @forelse ($rows as $row)
-                        <tr>
+            <div class="system-record-list">
+                @forelse ($rows as $row)
+                    @php
+                        // Use the first configured column as the report card title.
+                        $firstColumnKey = array_key_first($columns);
+                        $firstColumnLabel = $columns[$firstColumnKey] ?? 'Record';
+                        $firstColumnValue = $row->{$firstColumnKey} ?? '-';
+                    @endphp
+
+                    <article class="system-record-card">
+                        <header class="system-record-header">
+                            <div class="system-record-identity">
+                                <div class="system-record-avatar is-violet" aria-hidden="true">RP</div>
+                                <div class="system-record-copy">
+                                    <span class="system-record-eyebrow">{{ $firstColumnLabel }}</span>
+                                    <h3>{{ $firstColumnValue }}</h3>
+                                    <p>{{ $reportTitle }}</p>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div class="system-record-body report-record-grid">
                             @foreach ($columns as $key => $label)
+                                @continue($key === $firstColumnKey)
+
                                 @php
                                     $value = $row->{$key} ?? '-';
                                 @endphp
 
-                                <td>
+                                <div class="system-record-field {{ str_contains($key, 'status') ? 'is-muted' : '' }}">
+                                    <span>{{ $label }}</span>
+
                                     @if (str_contains($key, 'status'))
-                                        <span class="report-status-badge">
-                                            {{ $value }}
-                                        </span>
+                                        <strong>
+                                            <span class="report-status-badge">{{ $value }}</span>
+                                        </strong>
                                     @else
-                                        {{ $value }}
+                                        <strong>{{ $value }}</strong>
                                     @endif
-                                </td>
+                                </div>
                             @endforeach
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ count($columns) }}" class="empty-table">
-                                No report records found.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                        </div>
+                    </article>
+                @empty
+                    <div class="system-record-empty">
+                        <strong>No report records found</strong>
+                        Adjust the selected report filters and generate again.
+                    </div>
+                @endforelse
+            </div>
         </div>
 
         <div class="pagination-wrapper report-pagination">
@@ -174,6 +223,31 @@
     <script>
         const reportTypeSelect = document.getElementById('report_type');
         const roleSelect = document.getElementById('role');
+        const dateFromInput = document.getElementById('date_from');
+        const dateToInput = document.getElementById('date_to');
+        const dateFromLabel = document.getElementById('date-from-label');
+        const dateToLabel = document.getElementById('date-to-label');
+        const dateRangeHelp = document.getElementById('date-range-help');
+        const today = @json(now()->toDateString());
+
+        const dateFilterContext = {
+            attendance_logs: {
+                label: 'Attendance Date',
+                help: 'Filter attendance records by their log date.',
+            },
+            book_status: {
+                label: 'Borrow Date',
+                help: 'Filter book status records by the latest transaction borrow date.',
+            },
+            library_visitors: {
+                label: 'Last Visit Date',
+                help: 'Filter visitors by the date of their latest recorded visit.',
+            },
+            book_publisher: {
+                label: 'Publication Date',
+                help: 'Filter publishers by the recorded publication date.',
+            },
+        };
 
         const visibleFilters = {
             attendance_logs: ['search', 'role', 'status', 'date'],
@@ -236,22 +310,59 @@
 
             document.querySelectorAll('[data-filter]').forEach((filter) => {
                 const filterName = filter.getAttribute('data-filter');
+                const isVisible = allowedFilters.includes(filterName);
 
-                if (allowedFilters.includes(filterName)) {
-                    filter.style.display = '';
-                } else {
-                    filter.style.display = 'none';
-                }
+                filter.style.display = isVisible ? '' : 'none';
+
+                filter.querySelectorAll('input, select').forEach((control) => {
+                    control.disabled = !isVisible;
+                });
             });
+
+            const dateContext = dateFilterContext[selectedReport] || {
+                label: 'Date',
+                help: 'Choose any historical period up to today.',
+            };
+
+            dateFromLabel.textContent = `${dateContext.label} From`;
+            dateToLabel.textContent = `${dateContext.label} To`;
+            dateRangeHelp.innerHTML = `<strong>Date range</strong><span>${dateContext.help} Leave both fields blank to include all dates.</span>`;
 
             updateRoleOptions(resetRole);
         }
+
+        // Keeps both date fields within a valid historical range.
+        function syncDateRange(changedField = null) {
+            dateFromInput.max = dateToInput.value || today;
+            dateToInput.min = dateFromInput.value || '';
+            dateToInput.max = today;
+
+            if (
+                changedField
+                && dateFromInput.value
+                && dateToInput.value
+                && dateFromInput.value > dateToInput.value
+            ) {
+                if (changedField === 'from') {
+                    dateToInput.value = dateFromInput.value;
+                } else {
+                    dateFromInput.value = dateToInput.value;
+                }
+
+                dateFromInput.max = dateToInput.value || today;
+                dateToInput.min = dateFromInput.value || '';
+            }
+        }
+
+        dateFromInput.addEventListener('change', () => syncDateRange('from'));
+        dateToInput.addEventListener('change', () => syncDateRange('to'));
 
         reportTypeSelect.addEventListener('change', () => {
             roleSelect.setAttribute('data-selected-role', '');
             updateVisibleReportFilters(true);
         });
 
+        syncDateRange();
         updateVisibleReportFilters(false);
     </script>
 @endsection

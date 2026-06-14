@@ -146,14 +146,14 @@ class BorrowService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('borrow_transaction.transaction_id', 'like', "%{$search}%")
-                    ->orWhere('library_member.member_id', 'like', "%{$search}%")
-                    ->orWhere('library_member.first_name', 'like', "%{$search}%")
+                $q->where('library_member.first_name', 'like', "%{$search}%")
                     ->orWhere('library_member.last_name', 'like', "%{$search}%")
                     ->orWhereRaw('library_member.`m.i.` LIKE ?', ["%{$search}%"])
-                    ->orWhere('book.book_id', 'like', "%{$search}%")
                     ->orWhere('book.isbn', 'like', "%{$search}%")
                     ->orWhere('book.book_title', 'like', "%{$search}%")
+                    ->orWhere('book_author.first_name', 'like', "%{$search}%")
+                    ->orWhere('book_author.last_name', 'like', "%{$search}%")
+                    ->orWhereRaw('book_author.`m.i.` LIKE ?', ["%{$search}%"])
                     ->orWhere('borrow_transaction.borrow_status', 'like', "%{$search}%");
             });
         }

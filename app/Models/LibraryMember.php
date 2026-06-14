@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class LibraryMember extends Model
 {
+    /**
+     * Maps member records to the legacy library_member table.
+     */
     protected $table = 'library_member';
 
     protected $primaryKey = 'member_id';

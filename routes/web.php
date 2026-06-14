@@ -11,12 +11,12 @@ use App\Http\Controllers\Admin\LibraryMemberController;
 use App\Http\Controllers\Admin\LibraryPersonnelController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReturnController;
-use App\Http\Controllers\Admin\RoleController; // Added for Role Permissions
+use App\Http\Controllers\Admin\RoleController; 
 use App\Http\Middleware\AdminOnly;
 use App\Http\Middleware\AuditTrailLogger;
 use Illuminate\Support\Facades\Route;
 
-// Sends the root URL to the LMS login page.
+// Direct the base URL to the personnel login screen.
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -52,13 +52,11 @@ Route::post('/attendance/visitor/time-out', [AttendanceController::class, 'timeO
     ->middleware(AuditTrailLogger::class)
     ->name('attendance.visitor.time-out');
 
-// ========================================================================
-// ADMIN ROUTE GROUPS (All URLs here start with /admin and name 'admin.')
-// ========================================================================
+// Group all administrative module routes under /admin with admin. route names.
 Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
-        /* #region ALL ROLES - Dashboard, Attendance, Borrow, Return, Book List */
+        /* Modules available to admin, staff, and student staff accounts. */
         Route::middleware(['role:admin,staff,student staff', AuditTrailLogger::class])->group(function () {
             Route::get('/dashboard', function () {
                 return view('admin.dashboard');
@@ -94,12 +92,10 @@ Route::prefix('admin')
             Route::post('/attendance/personnel/time-out', [AttendanceController::class, 'timeOutPersonnel'])
                 ->name('attendance.personnel.time-out');
         });
-        /* #endregion */
 
-        /* #region ADMIN & STAFF ONLY - Library Members, Reports, Audit Trail */
+        /* Modules available to admin and staff accounts only. */
         Route::middleware(['role:admin,staff', AuditTrailLogger::class])->group(function () {
-            
-            // Moved Library Members here to restrict student staff
+            // Keep member records restricted to roles that manage library users.
             Route::get('/members', [LibraryMemberController::class, 'index'])
                 ->name('members.index');
 
@@ -118,27 +114,25 @@ Route::prefix('admin')
             Route::delete('/members/{memberId}', [LibraryMemberController::class, 'destroy'])
                 ->name('members.destroy');
 
-            // Moved Reports here to grant staff access
+            // Let staff review operational reports and audit activity.
             Route::get('/reports', [ReportController::class, 'index'])
                 ->name('reports.index');
 
             Route::get('/audit-trail', [AuditTrailController::class, 'index'])
                 ->name('audit-trail.index');
         });
-        /* #endregion */
 
-        /* #region STRICTLY ADMIN ONLY - Departments, Book Management, Personnel, Role Permissions */
+        /* Modules reserved for admin accounts because they change system setup. */
         Route::middleware(['role:admin', AuditTrailLogger::class])->group(function () {
-            
-            // New Role Permissions Route
+            // Manage the role permission matrix used by protected modules.
             Route::get('/roles', [RoleController::class, 'index'])
                 ->name('roles.index');
 
             Route::put('/roles', [RoleController::class, 'update'])
                 ->name('roles.update');
                 
-            Route::get('/books/google-books/search', [BookController::class, 'searchGoogleBooks'])
-                ->name('books.google-books.search');
+            Route::get('/books/book-lookup/search', [BookController::class, 'searchBookLookup'])
+                ->name('books.book-lookup.search');
                 
             Route::get('/books', [BookController::class, 'index'])
                 ->name('books.index');
@@ -176,7 +170,7 @@ Route::prefix('admin')
             Route::delete('/personnel/{personnelId}', [LibraryPersonnelController::class, 'destroy'])
                 ->name('personnel.destroy');
 
-            // Consolidated all Departments routes here to strictly restrict staff
+            // Restrict department setup to admins because personnel depend on it.
             Route::get('/departments', [DepartmentController::class, 'index'])
                 ->name('departments.index');
 
@@ -195,5 +189,4 @@ Route::prefix('admin')
             Route::delete('/departments/{departmentId}', [DepartmentController::class, 'destroy'])
                 ->name('departments.destroy');
         });
-        /* #endregion */
     });

@@ -9,15 +9,15 @@ use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
-    private RoleService $roleService;
-
-    public function __construct(RoleService $roleService)
+    /**
+     * Receives the service that reads and writes role permissions.
+     */
+    public function __construct(private RoleService $roleService)
     {
-        $this->roleService = $roleService;
     }
 
     /**
-     * Displays the dynamic Role Access Matrix for the admin.
+     * Displays the role and permission matrix for the administrator.
      */
     public function index()
     {
@@ -28,58 +28,99 @@ class RoleController extends Controller
     }
 
     /**
-     * Processes the form submission to grant/revoke role permissions.
+     * Grants or revokes Staff and Student Staff module permissions.
      */
     public function update(Request $request)
     {
-        // Expecting an array where Key = Role ID, Value = Array of Permission IDs
-        $permissionsData = $request->input('permissions', []);
+        $validated = $request->validate([
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['nullable', 'array'],
+            'permissions.*.*' => [
+                'integer',
+                'distinct',
+                'exists:permission,permission_id',
+            ],
+        ]);
+
+        $permissionsData = $validated['permissions'] ?? [];
         $roles = $this->roleService->getRoles();
 
-        DB::beginTransaction();
+        $permissionIdsByName = DB::table('permission')
+            ->pluck('permission_id', 'permission_name');
 
-        try {
+        $dashboardPermissionId = $permissionIdsByName->get('Dashboard');
+        $rolePermissionId = $permissionIdsByName->get('Role Permission');
+        $validPermissionIds = $permissionIdsByName
+            ->values()
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+
+        // Replace each non-admin role's module permissions in one transaction.
+        DB::transaction(function () use (
+            $roles,
+            $permissionsData,
+            $dashboardPermissionId,
+            $rolePermissionId,
+            $validPermissionIds
+        ): void {
             foreach ($roles as $role) {
-                // Security Check: The Admin role's permissions cannot be modified via UI
-                if ($role->personnel_role_name === 'admin') {
+                $roleName = strtolower(trim($role->personnel_role_name));
+
+                if ($roleName === 'admin') {
                     continue;
                 }
 
-                $roleId = $role->personnel_role_id;
-                $assignedPermissions = $permissionsData[$roleId] ?? [];
+                $roleId = (int) $role->personnel_role_id;
+                $assignedPermissions = array_map(
+                    'intval',
+                    $permissionsData[$roleId] ?? []
+                );
 
-                // 1. Wipe current permissions for this specific role
+                $assignedPermissions = array_values(array_unique(array_filter(
+                    $assignedPermissions,
+                    static fn (int $permissionId): bool => in_array(
+                        $permissionId,
+                        $validPermissionIds,
+                        true
+                    )
+                )));
+
+                if ($dashboardPermissionId) {
+                    $assignedPermissions[] = (int) $dashboardPermissionId;
+                }
+
+                // Keep Role Permission available only to admin accounts.
+                if ($rolePermissionId) {
+                    $assignedPermissions = array_values(array_filter(
+                        $assignedPermissions,
+                        static fn (int $permissionId): bool => $permissionId !== (int) $rolePermissionId
+                    ));
+                }
+
+                $assignedPermissions = array_values(array_unique($assignedPermissions));
+
                 DB::table('role_permission')
                     ->where('personnel_role_id', $roleId)
                     ->delete();
 
-                // 2. Prepare the new permission bindings
-                $insertData = [];
-                foreach ($assignedPermissions as $permissionId) {
-                    $insertData[] = [
+                if ($assignedPermissions === []) {
+                    continue;
+                }
+
+                $rows = array_map(
+                    static fn (int $permissionId): array => [
                         'personnel_role_id' => $roleId,
-                        'permission_id' => $permissionId
-                    ];
-                }
+                        'permission_id' => $permissionId,
+                    ],
+                    $assignedPermissions
+                );
 
-                // 3. Insert the new bindings if any boxes were checked
-                if (!empty($insertData)) {
-                    DB::table('role_permission')->insert($insertData);
-                }
+                DB::table('role_permission')->insert($rows);
             }
+        });
 
-            DB::commit();
-
-            return redirect()
-                ->route('admin.roles.index')
-                ->with('success', 'System role permissions updated successfully.');
-                
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return redirect()
-                ->route('admin.roles.index')
-                ->withErrors(['error' => 'Failed to update permissions: ' . $e->getMessage()]);
-        }
+        return redirect()
+            ->route('admin.roles.index')
+            ->with('success', 'System role permissions updated successfully.');
     }
 }

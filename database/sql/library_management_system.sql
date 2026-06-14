@@ -80,7 +80,7 @@ CREATE TABLE library_personnel (
     password_hash VARCHAR(255) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     first_name VARCHAR(50) NOT NULL,
-    `m.i.` VARCHAR(2),
+    `m.i.` VARCHAR(3),
     shift_day ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'),
     shift_period ENUM('Morning', 'Afternoon'),
     FOREIGN KEY (personnel_role_id) REFERENCES personnel_role(personnel_role_id) ON DELETE RESTRICT,
@@ -136,14 +136,11 @@ CREATE TABLE audit_trail (
 );
 
 -- DEFAULT LIBRARY PERSONNEL ACCOUNTS
--- Password for all default users: devaura
--- 1. Seed Roles
 INSERT INTO personnel_role (personnel_role_id, personnel_role_name) VALUES 
 (1, 'admin'), 
 (2, 'staff'), 
 (3, 'student staff');
 
--- 2. Seed Default Accounts
 INSERT INTO library_personnel (username, password_hash, personnel_role_id, first_name, last_name) 
 VALUES
 ('admin', '$2y$10$p52bg0H4GBDR2Z.ve6jb/umrcgLhkWAl/coNYM7Eyl6H37vP/AoU2', 1, 'System', 'Admin'),

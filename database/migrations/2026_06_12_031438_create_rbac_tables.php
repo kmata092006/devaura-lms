@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Personnel Role Table
+        // Store role names used by personnel accounts.
         if (!Schema::hasTable('personnel_role')) {
             Schema::create('personnel_role', function (Blueprint $table) {
                 $table->id('personnel_role_id');
@@ -19,7 +19,7 @@ return new class extends Migration
             });
         }
 
-        // 2. Permission Table
+        // Store module permission names shown in the role matrix.
         if (!Schema::hasTable('permission')) {
             Schema::create('permission', function (Blueprint $table) {
                 $table->id('permission_id');
@@ -27,7 +27,7 @@ return new class extends Migration
             });
         }
 
-        // 3. Role Permission Junction Table (Composite PK)
+        // Link roles to permissions using a composite primary key.
         if (!Schema::hasTable('role_permission')) {
             Schema::create('role_permission', function (Blueprint $table) {
                 $table->unsignedBigInteger('personnel_role_id');
@@ -41,6 +41,9 @@ return new class extends Migration
         }
     }
 
+    /**
+     * Drops the RBAC tables in dependency order.
+     */
     public function down(): void
     {
         Schema::dropIfExists('role_permission');

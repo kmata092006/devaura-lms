@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class BorrowTransaction extends Model
 {
+    /**
+     * Maps borrowing records to the legacy borrow_transaction table.
+     */
     protected $table = 'borrow_transaction';
 
     protected $primaryKey = 'transaction_id';

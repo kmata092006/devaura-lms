@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class LibraryVisitor extends Model
 {
+    /**
+     * Maps walk-in visitor records to the legacy library_visitor table.
+     */
     protected $table = 'library_visitor';
 
     protected $primaryKey = 'visitor_id';

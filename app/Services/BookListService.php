@@ -42,8 +42,7 @@ class BookListService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('book.book_id', 'like', "%{$search}%")
-                    ->orWhere('book.isbn', 'like', "%{$search}%")
+                $q->where('book.isbn', 'like', "%{$search}%")
                     ->orWhere('book.book_title', 'like', "%{$search}%")
                     ->orWhere('book.book_status', 'like', "%{$search}%")
                     ->orWhere('book_author.first_name', 'like', "%{$search}%")

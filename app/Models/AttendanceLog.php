@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class AttendanceLog extends Model
 {
+    /**
+     * Maps attendance records to the legacy attendance_log table.
+     */
     protected $table = 'attendance_log';
 
     protected $primaryKey = 'log_id';

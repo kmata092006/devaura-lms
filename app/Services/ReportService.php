@@ -207,7 +207,6 @@ class ReportService
         $visitorName = $this->fullNameSql('visitor', '-');
 
         $columns = [
-            'log_id' => 'Log ID',
             'person_type' => 'Person Type',
             'role' => 'Role',
             'name' => 'Name',
@@ -223,7 +222,6 @@ class ReportService
             ->leftJoin('library_member as member', 'attendance_log.member_id', '=', 'member.member_id')
             ->leftJoin('library_visitor as visitor', 'attendance_log.visitor_id', '=', 'visitor.visitor_id')
             ->select(
-                'attendance_log.log_id',
                 DB::raw("
                     CASE
                         WHEN attendance_log.personnel_id IS NOT NULL THEN 'Personnel'
@@ -255,8 +253,7 @@ class ReportService
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search, $personnelName, $memberName, $visitorName) {
-                $q->where('attendance_log.log_id', 'like', "%{$search}%")
-                    ->orWhere('attendance_log.role', 'like', "%{$search}%")
+                $q->where('attendance_log.role', 'like', "%{$search}%")
                     ->orWhere('attendance_log.log_date', 'like', "%{$search}%")
                     ->orWhere('attendance_log.time_in', 'like', "%{$search}%")
                     ->orWhere('attendance_log.time_out', 'like', "%{$search}%")
@@ -301,7 +298,6 @@ class ReportService
         $memberName = $this->fullNameSql('member', '-');
 
         $columns = [
-            'book_id' => 'Book ID',
             'book_title' => 'Title',
             'isbn' => 'ISBN',
             'genre_name' => 'Genre',
@@ -329,7 +325,6 @@ class ReportService
             ->leftJoin('borrow_transaction as transaction', 'transaction.transaction_id', '=', 'latest.latest_transaction_id')
             ->leftJoin('library_member as member', 'transaction.member_id', '=', 'member.member_id')
             ->select(
-                'book.book_id',
                 'book.book_title',
                 DB::raw("COALESCE(book.isbn, '-') as isbn"),
                 DB::raw("COALESCE(genre.genre_name, '-') as genre_name"),
@@ -347,8 +342,7 @@ class ReportService
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search, $authorName, $publisherName, $memberName) {
-                $q->where('book.book_id', 'like', "%{$search}%")
-                    ->orWhere('book.book_title', 'like', "%{$search}%")
+                $q->where('book.book_title', 'like', "%{$search}%")
                     ->orWhere('book.isbn', 'like', "%{$search}%")
                     ->orWhere('book.book_status', 'like', "%{$search}%")
                     ->orWhere('transaction.borrow_status', 'like', "%{$search}%")
@@ -397,7 +391,6 @@ class ReportService
         $personnelName = $this->fullNameSql('personnel', '-');
 
         $columns = [
-            'personnel_id' => 'Personnel ID',
             'username' => 'Username',
             'personnel_role' => 'Role',
             'name' => 'Name',
@@ -407,11 +400,21 @@ class ReportService
         ];
 
         $query = DB::table('library_personnel as personnel')
-            ->leftJoin('department', 'personnel.department_id', '=', 'department.department_id')
+            ->join(
+                'personnel_role as role',
+                'personnel.personnel_role_id',
+                '=',
+                'role.personnel_role_id'
+            )
+            ->leftJoin(
+                'department',
+                'personnel.department_id',
+                '=',
+                'department.department_id'
+            )
             ->select(
-                'personnel.personnel_id',
                 'personnel.username',
-                'personnel.personnel_role',
+                'role.personnel_role_name as personnel_role',
                 DB::raw("{$personnelName} as name"),
                 DB::raw("COALESCE(department.department_name, '-') as department_name"),
                 DB::raw("COALESCE(personnel.shift_day, '-') as shift_day"),
@@ -422,22 +425,21 @@ class ReportService
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search, $personnelName) {
-                $q->where('personnel.personnel_id', 'like', "%{$search}%")
-                    ->orWhere('personnel.username', 'like', "%{$search}%")
-                    ->orWhere('personnel.personnel_role', 'like', "%{$search}%")
+                $q->where('personnel.username', 'like', "%{$search}%")
+                    ->orWhere('role.personnel_role_name', 'like', "%{$search}%")
                     ->orWhereRaw("{$personnelName} LIKE ?", ["%{$search}%"])
                     ->orWhere('department.department_name', 'like', "%{$search}%");
             });
         }
 
         if ($filters['role']) {
-            $query->where('personnel.personnel_role', $filters['role']);
+            $query->where('role.personnel_role_name', $filters['role']);
         }
 
         return [
             $columns,
             $query
-                ->orderBy('personnel.personnel_role')
+                ->orderBy('role.personnel_role_name')
                 ->orderBy('personnel.last_name')
                 ->paginate(10)
                 ->withQueryString(),
@@ -452,7 +454,6 @@ class ReportService
         $memberName = $this->fullNameSql('member', '-');
 
         $columns = [
-            'member_id' => 'Member ID',
             'reference_number' => 'Reference Number',
             'member_role' => 'Role',
             'name' => 'Name',
@@ -460,7 +461,6 @@ class ReportService
 
         $query = DB::table('library_member as member')
             ->select(
-                'member.member_id',
                 'member.reference_number',
                 'member.member_role',
                 DB::raw("{$memberName} as name")
@@ -470,8 +470,7 @@ class ReportService
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search, $memberName) {
-                $q->where('member.member_id', 'like', "%{$search}%")
-                    ->orWhere('member.reference_number', 'like', "%{$search}%")
+                $q->where('member.reference_number', 'like', "%{$search}%")
                     ->orWhere('member.member_role', 'like', "%{$search}%")
                     ->orWhereRaw("{$memberName} LIKE ?", ["%{$search}%"]);
             });
@@ -499,7 +498,6 @@ class ReportService
         $visitorName = $this->fullNameSql('visitor', '-');
 
         $columns = [
-            'visitor_id' => 'Visitor ID',
             'name' => 'Name',
             'total_visits' => 'Total Visits',
             'last_visit_date' => 'Last Visit Date',
@@ -519,7 +517,6 @@ class ReportService
                 $join->on('visitor.visitor_id', '=', 'stats.visitor_id');
             })
             ->select(
-                'visitor.visitor_id',
                 DB::raw("{$visitorName} as name"),
                 DB::raw("COALESCE(stats.total_visits, 0) as total_visits"),
                 DB::raw("COALESCE(CAST(stats.last_visit_date AS CHAR), '-') as last_visit_date")
@@ -529,8 +526,7 @@ class ReportService
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search, $visitorName) {
-                $q->where('visitor.visitor_id', 'like', "%{$search}%")
-                    ->orWhereRaw("{$visitorName} LIKE ?", ["%{$search}%"]);
+                $q->whereRaw("{$visitorName} LIKE ?", ["%{$search}%"]);
             });
         }
 
@@ -551,7 +547,6 @@ class ReportService
     private function bookGenreReport(array $filters): array
     {
         $columns = [
-            'genre_id' => 'Genre ID',
             'genre_name' => 'Genre',
             'total_books' => 'Total Books',
         ];
@@ -559,7 +554,6 @@ class ReportService
         $query = DB::table('book_genre as genre')
             ->leftJoin('book', 'genre.genre_id', '=', 'book.genre_id')
             ->select(
-                'genre.genre_id',
                 'genre.genre_name',
                 DB::raw('COUNT(book.book_id) as total_books')
             )
@@ -586,7 +580,6 @@ class ReportService
         $authorName = $this->fullNameSql('author', 'Unnamed Author');
 
         $columns = [
-            'author_id' => 'Author ID',
             'author_name' => 'Author',
             'total_books' => 'Total Books',
         ];
@@ -594,16 +587,15 @@ class ReportService
         $query = DB::table('book_author as author')
             ->leftJoin('book', 'author.author_id', '=', 'book.author_id')
             ->select(
-                'author.author_id',
                 DB::raw("{$authorName} as author_name"),
                 DB::raw('COUNT(book.book_id) as total_books')
             )
             ->groupBy(
                 'author.author_id',
                 'author.first_name',
-                'author.last_name',
-                'author.m.i.'
-            );
+                'author.last_name'
+            )
+            ->groupByRaw('author.`m.i.`');
 
         if ($filters['search']) {
             $query->whereRaw("{$authorName} LIKE ?", ["%{$filters['search']}%"]);
@@ -626,7 +618,6 @@ class ReportService
         $publisherName = $this->fullNameSql('publisher', 'Unnamed Publisher');
 
         $columns = [
-            'publisher_id' => 'Publisher ID',
             'publisher_name' => 'Publisher',
             'date_published' => 'Date Published',
             'total_books' => 'Total Books',
@@ -635,7 +626,6 @@ class ReportService
         $query = DB::table('book_publisher as publisher')
             ->leftJoin('book', 'publisher.publisher_id', '=', 'book.publisher_id')
             ->select(
-                'publisher.publisher_id',
                 DB::raw("{$publisherName} as publisher_name"),
                 DB::raw("COALESCE(CAST(publisher.date_published AS CHAR), '-') as date_published"),
                 DB::raw('COUNT(book.book_id) as total_books')
@@ -644,9 +634,9 @@ class ReportService
                 'publisher.publisher_id',
                 'publisher.first_name',
                 'publisher.last_name',
-                'publisher.m.i.',
                 'publisher.date_published'
-            );
+            )
+            ->groupByRaw('publisher.`m.i.`');
 
         if ($filters['search']) {
             $query->whereRaw("{$publisherName} LIKE ?", ["%{$filters['search']}%"]);
@@ -672,7 +662,6 @@ class ReportService
         $publisherName = $this->fullNameSql('publisher', '-');
 
         $columns = [
-            'book_id' => 'Book ID',
             'book_title' => 'Title',
             'isbn' => 'ISBN',
             'genre_name' => 'Genre',
@@ -687,7 +676,6 @@ class ReportService
             ->leftJoin('book_author as author', 'book.author_id', '=', 'author.author_id')
             ->leftJoin('book_publisher as publisher', 'book.publisher_id', '=', 'publisher.publisher_id')
             ->select(
-                'book.book_id',
                 'book.book_title',
                 DB::raw("COALESCE(book.isbn, '-') as isbn"),
                 DB::raw("COALESCE(genre.genre_name, '-') as genre_name"),
@@ -701,8 +689,7 @@ class ReportService
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search, $authorName, $publisherName) {
-                $q->where('book.book_id', 'like', "%{$search}%")
-                    ->orWhere('book.book_title', 'like', "%{$search}%")
+                $q->where('book.book_title', 'like', "%{$search}%")
                     ->orWhere('book.isbn', 'like', "%{$search}%")
                     ->orWhere('book.book_status', 'like', "%{$search}%")
                     ->orWhere('genre.genre_name', 'like', "%{$search}%")
@@ -741,12 +728,21 @@ class ReportService
      */
     private function applyDateRange($query, string $column, array $filters): void
     {
-        if ($filters['date_from']) {
-            $query->whereDate($column, '>=', $filters['date_from']);
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
+
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween($column, [$dateFrom, $dateTo]);
+
+            return;
         }
 
-        if ($filters['date_to']) {
-            $query->whereDate($column, '<=', $filters['date_to']);
+        if ($dateFrom) {
+            $query->whereDate($column, '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate($column, '<=', $dateTo);
         }
     }
 

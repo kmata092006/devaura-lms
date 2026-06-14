@@ -11,7 +11,7 @@ class BookListController extends Controller
     private BookListService $bookListService;
 
     /**
-     * Injects the book list service used by the catalog page.
+     * Receives the service that prepares catalog records and filters.
      */
     public function __construct(BookListService $bookListService)
     {
@@ -19,10 +19,11 @@ class BookListController extends Controller
     }
 
     /**
-     * Displays the searchable book catalog with its filter options.
+     * Shows the catalog using the current search and filter query values.
      */
     public function index(Request $request)
     {
+        // Apply the active search and filters before rendering the catalog.
         $books = $this->bookListService->getBookList(
             $request->query('search'),
             $request->query('status'),
@@ -31,6 +32,7 @@ class BookListController extends Controller
             $request->query('publisher')
         );
 
+        // Provide option lists for each catalog filter dropdown.
         return view('admin.book-list.index', [
             'books' => $books,
             'statuses' => $this->bookListService->getStatuses(),

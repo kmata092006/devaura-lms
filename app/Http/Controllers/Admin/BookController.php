@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\GoogleBooksService;
+use App\Services\BookLookupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class BookController extends Controller
 {
@@ -20,6 +21,32 @@ class BookController extends Controller
         'Lost',
         'Damaged',
         'Under Repair',
+    ];
+
+
+    /**
+     * Uses one consistent set of catalog genres instead of reusing arbitrary
+     * values previously entered into the database.
+     */
+    private array $controlledGenres = [
+        'Fiction',
+        'Nonfiction',
+        'Science Fiction',
+        'Fantasy',
+        'Mystery & Thriller',
+        'Romance',
+        'Biography & Autobiography',
+        'History',
+        'Science',
+        'Technology & Computing',
+        'Reference',
+        'Young Adult',
+        "Children's Literature",
+        'Poetry',
+        'Drama',
+        'Religion',
+        'Self-Help',
+        'Education',
     ];
 
     /**
@@ -48,15 +75,27 @@ class BookController extends Controller
                 'publisher.last_name as publisher_last_name',
                 'publisher.first_name as publisher_first_name',
                 DB::raw('publisher.`m.i.` as publisher_middle_initial')
-            );
+            )
+            ->selectSub(function ($subquery) {
+                $subquery
+                    ->from('borrow_transaction')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('borrow_transaction.book_id', 'book.book_id');
+            }, 'borrow_transaction_count')
+            ->selectSub(function ($subquery) {
+                $subquery
+                    ->from('borrow_transaction')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('borrow_transaction.book_id', 'book.book_id')
+                    ->whereIn('borrow_transaction.borrow_status', ['Borrowed', 'Overdue']);
+            }, 'active_borrow_transaction_count');
 
         // Applies keyword search across book, author, publisher, genre, and status fields.
         if ($request->filled('search')) {
             $search = trim($request->query('search'));
 
             $query->where(function ($q) use ($search) {
-                $q->where('book.book_id', 'like', "%{$search}%")
-                    ->orWhere('book.book_title', 'like', "%{$search}%")
+                $q->where('book.book_title', 'like', "%{$search}%")
                     ->orWhere('book.isbn', 'like', "%{$search}%")
                     ->orWhere('book.book_status', 'like', "%{$search}%")
                     ->orWhere('genre.genre_name', 'like', "%{$search}%")
@@ -125,102 +164,49 @@ class BookController extends Controller
     }
 
     /**
-     * Shows the add book form with authors, publishers, genres, and status options.
+     * Shows the Add Book form. New books always begin as Available, while the
+     * genre field uses only the approved controlled list plus Other.
      */
     public function create()
     {
-        $authors = $this->getAuthors();
-        $publishers = $this->getPublishers();
-        $genres = $this->getGenres();
-        $statuses = $this->bookStatuses;
+        $controlledGenres = $this->controlledGenres;
 
-        return view('admin.books.create', compact(
-            'authors',
-            'publishers',
-            'genres',
-            'statuses'
-        ));
+        return view('admin.books.create', compact('controlledGenres'));
     }
 
     /**
-     * Validates and stores a new book record, including optional new author, publisher, or genre entries.
+     * Validates and stores a new book record. ISBN, author, publisher, and
+     * publication date may be omitted when the information is unavailable.
+     * Genre remains required for consistent catalog classification.
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'book_title' => ['required', 'string', 'max:255'],
-            'isbn' => ['nullable', 'string', 'max:13'],
-            'book_status' => ['required', Rule::in($this->bookStatuses)],
+        // A new catalog record cannot begin in a transaction-based status.
+        $request->merge(['book_status' => 'Available']);
+        $this->normalizeBookRequest($request);
 
-            // Require author text input only if no existing selection is made
-            'author_id' => ['nullable', 'integer', 'exists:book_author,author_id'],
-            'author_name' => [
-                Rule::requiredIf(fn() => !$request->filled('author_id')),
-                'nullable', 'string', 'max:150'
-            ],
+        $validated = $request->validate(
+            $this->bookValidationRules(isCreate: true),
+            $this->bookValidationMessages()
+        );
 
-            // Require publisher text input only if no existing selection is made
-            'publisher_id' => ['nullable', 'integer', 'exists:book_publisher,publisher_id'],
-            'publisher_name' => [
-                Rule::requiredIf(fn() => !$request->filled('publisher_id')),
-                'nullable', 'string', 'max:150'
-            ],
-            'date_published' => ['required', 'date'], // Strictly required globally
-
-            // Require genre text input only if no existing selection is made
-            'genre_id' => ['nullable', 'integer', 'exists:book_genre,genre_id'],
-            'genre_name' => [
-                Rule::requiredIf(fn() => !$request->filled('genre_id')),
-                'nullable', 'string', 'max:100'
-            ],
-        ], [
-            'author_name.required_if' => 'Please select an existing author or enter a new author name.',
-            'author_name.regex' => 'The author name can only contain letters, spaces, periods, commas, and hyphens.',
-            'publisher_name.required_if' => 'Please select an existing publisher or enter a new publisher name.',
-            'publisher_name.regex' => 'The publisher name can only contain letters, spaces, periods, commas, and hyphens.',
-            'genre_name.required_if' => 'Please select an existing genre or enter a new genre name.',
-            'genre_name.regex' => 'The genre name can only contain letters and spaces.',
-            'date_published.required' => 'The date published field is required.'
-        ]);
-
-        $isbn = $this->cleanIsbn($validated['isbn'] ?? null);
-        $authorId = $validated['author_id'] ?? null;
-        $publisherId = $validated['publisher_id'] ?? null;
-        $genreId = $validated['genre_id'] ?? null;
-
-        // Creates related records only when the user enters a new value instead of selecting an existing one.
-        if (!$authorId && !empty($validated['author_name'])) {
-            $authorId = $this->findOrCreateAuthor($validated['author_name']);
-        }
-
-        if (!$publisherId && !empty($validated['publisher_name'])) {
+        DB::transaction(function () use ($validated) {
+            $authorId = $this->findOrCreateAuthor($validated['author_name'] ?? null);
             $publisherId = $this->findOrCreatePublisher(
-                $validated['publisher_name'],
-                $validated['date_published']
+                $validated['publisher_name'] ?? null,
+                $validated['date_published'] ?? null
             );
-        }
-
-        // Updates publisher publication date only if it was previously empty.
-        if ($publisherId && !empty($validated['date_published'])) {
-            DB::table('book_publisher')
-                ->where('publisher_id', $publisherId)
-                ->update([
-                    'date_published' => $validated['date_published'],
-                ]);
-        }
-
-        if (!$genreId && !empty($validated['genre_name'])) {
             $genreId = $this->findOrCreateGenre($validated['genre_name']);
-        }
 
-        DB::table('book')->insert([
-            'author_id' => $authorId,
-            'publisher_id' => $publisherId,
-            'genre_id' => $genreId,
-            'isbn' => $isbn,
-            'book_title' => trim($validated['book_title']),
-            'book_status' => $validated['book_status'],
-        ]);
+            DB::table('book')->insert([
+                'author_id' => $authorId,
+                'publisher_id' => $publisherId,
+                'genre_id' => $genreId,
+                'isbn' => $this->cleanIsbn($validated['isbn'] ?? null),
+                'book_title' => $validated['book_title'],
+                'book_status' => $validated['book_status'],
+            ]);
+        });
 
         return redirect()
             ->route('admin.books.index')
@@ -259,164 +245,194 @@ class BookController extends Controller
                 ->withErrors(['book' => 'Book record not found.']);
         }
 
-        $authors = $this->getAuthors();
-        $publishers = $this->getPublishers();
-        $genres = $this->getGenres();
+        $formattedAuthorName = $this->formatPersonName(
+            $book->author_last_name,
+            $book->author_first_name,
+            $book->author_middle_initial
+        );
+
+        $formattedPublisherName = $this->formatPersonName(
+            $book->publisher_last_name,
+            $book->publisher_first_name,
+            $book->publisher_middle_initial
+        );
+
+        $book->author_name = $formattedAuthorName === '-' ? '' : $formattedAuthorName;
+        $book->publisher_name = $formattedPublisherName === '-' ? '' : $formattedPublisherName;
+
+        $activeTransaction = DB::table('borrow_transaction')
+            ->where('book_id', $bookId)
+            ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
+            ->orderByDesc('transaction_id')
+            ->first();
+
+        $book->has_active_transaction = $activeTransaction !== null;
+        $book->active_transaction_id = $activeTransaction?->transaction_id;
+        $book->active_transaction_status = $activeTransaction?->borrow_status;
+
         $statuses = $this->bookStatuses;
+        $controlledGenres = $this->controlledGenres;
 
         return view('admin.books.edit', compact(
             'book',
-            'authors',
-            'publishers',
-            'genres',
-            'statuses'
+            'statuses',
+            'controlledGenres'
         ));
     }
 
     /**
-     * Validates and updates an existing book record and its selected related records.
+     * Validates and updates an existing book record without mutating shared
+     * catalog records used by other books. Optional metadata may be cleared.
      */
     public function update(Request $request, $bookId)
     {
-        $book = DB::table('book')->where('book_id', $bookId)->first();
+        $this->normalizeBookRequest($request);
 
-        if (!$book) {
-            return redirect()
-                ->route('admin.books.index')
-                ->withErrors(['book' => 'Book record not found.']);
-        }
+        $validated = $request->validate(
+            $this->bookValidationRules(isCreate: false, bookId: (int) $bookId),
+            $this->bookValidationMessages()
+        );
 
-        $validated = $request->validate([
-            'book_title' => ['required', 'string', 'max:255'],
-            'isbn' => ['nullable', 'string', 'max:13'],
-            'book_status' => ['required', Rule::in($this->bookStatuses)],
-            'genre_name' => ['required', 'string', 'max:100'],
-            
-            'author_last_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
-            'author_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
-            'author_middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
-            
-            'publisher_last_name' => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
-            'publisher_first_name' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z\.\s]+$/'],
-            'publisher_middle_initial' => ['nullable', 'string', 'max:3', 'regex:/^[a-zA-Z\.]+$/'],
-            'date_published' => ['required', 'date'],
-        ], [
-            'genre_name.regex' => 'The genre name can only contain letters and spaces.',
-            'author_last_name.regex' => 'The author last name can only contain letters and spaces.',
-            'author_first_name.regex' => 'The author first name can only contain letters and spaces.',
-            'author_middle_initial.regex' => 'The author middle initial can only contain letters and periods.',
-            'publisher_last_name.regex' => 'The publisher last name can only contain letters and spaces.',
-            'publisher_first_name.regex' => 'The publisher first name can only contain letters and spaces.',
-            'publisher_middle_initial.regex' => 'The publisher middle initial can only contain letters and periods.',
-            'date_published.required' => 'The date published field is required.'
-        ]);
+        DB::transaction(function () use ($bookId, $validated) {
+            $book = DB::table('book')
+                ->where('book_id', $bookId)
+                ->lockForUpdate()
+                ->first();
 
-        $isbn = $this->cleanIsbn($validated['isbn'] ?? null);
+            if (!$book) {
+                throw ValidationException::withMessages([
+                    'book' => 'Book record not found.',
+                ]);
+            }
 
-        // Standardize dynamic lookups for Author, Publisher, and Genre components
-        $authorFullName = $validated['author_last_name'] . ', ' . $validated['author_first_name'];
-        $authorId = $this->findOrCreateAuthor($authorFullName);
-        
-        // Reuses existing related records or creates new ones based on user input.
-        if ($authorId && isset($validated['author_middle_initial'])) {
-            $cleanMI = strtoupper(trim(rtrim($validated['author_middle_initial'], '.')));
-            DB::table('book_author')
-                ->where('author_id', $authorId)
-                ->update(['m.i.' => $cleanMI ?: null]);
-        }
+            $activeTransaction = DB::table('borrow_transaction')
+                ->where('book_id', $bookId)
+                ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
+                ->orderByDesc('transaction_id')
+                ->lockForUpdate()
+                ->first();
 
-        // FIX: We now correctly format the name string using a comma so splitPersonName() 
-        // can accurately separate the first and last name inside findOrCreatePublisher.
-        $pubName = !empty($validated['publisher_last_name']) 
-            ? trim($validated['publisher_last_name']) . ', ' . trim($validated['publisher_first_name']) 
-            : trim($validated['publisher_first_name']);
-            
-        $publisherId = $this->findOrCreatePublisher($pubName, $validated['date_published']);
+            $requestedStatus = $validated['book_status'];
 
-        // Preserves existing publisher dates by only filling blank date_published values.
-        if ($publisherId) {
-            $cleanPubMI = strtoupper(trim(rtrim($validated['publisher_middle_initial'] ?? '', '.')));
-            
-            // FIX: We apply the split logic here again so the UPDATE query saves 
-            // the cleanly sliced names instead of trusting the raw form boxes.
-            [$pubFirstName, $pubLastName] = $this->splitPersonName($pubName);
+            if ($activeTransaction && !in_array($requestedStatus, ['Borrowed', 'Available'], true)) {
+                throw ValidationException::withMessages([
+                    'book_status' => 'This book has an active borrowing transaction. Use the Return Book module to mark it as Lost or Damaged, or select Available to complete the return.',
+                ]);
+            }
 
-            DB::update(
-                'UPDATE book_publisher SET last_name = ?, first_name = ?, `m.i.` = ?, date_published = ? WHERE publisher_id = ?',
-                [
-                    $pubLastName,
-                    $pubFirstName,
-                    $cleanPubMI ?: null,
-                    $validated['date_published'],
-                    $publisherId
-                ]
+            if (!$activeTransaction && $requestedStatus === 'Borrowed') {
+                throw ValidationException::withMessages([
+                    'book_status' => 'A book can only become Borrowed through the Borrow Book module so a member and due date are recorded.',
+                ]);
+            }
+
+            if ($activeTransaction && $requestedStatus === 'Available') {
+                DB::table('borrow_transaction')
+                    ->where('transaction_id', $activeTransaction->transaction_id)
+                    ->update([
+                        'return_date' => now()->toDateString(),
+                        'borrow_status' => 'Returned',
+                    ]);
+            }
+
+            $authorId = $this->findOrCreateAuthor($validated['author_name'] ?? null);
+            $publisherId = $this->findOrCreatePublisher(
+                $validated['publisher_name'] ?? null,
+                $validated['date_published'] ?? null
             );
-        }
+            $genreId = $this->findOrCreateGenre($validated['genre_name']);
 
-        $genreId = $this->findOrCreateGenre($validated['genre_name']);
-
-        DB::table('book')
-            ->where('book_id', $bookId)
-            ->update([
-                'author_id' => $authorId,
-                'publisher_id' => $publisherId,
-                'genre_id' => $genreId,
-                'isbn' => $isbn,
-                'book_title' => trim($validated['book_title']),
-                'book_status' => $validated['book_status'],
-            ]);
+            DB::table('book')
+                ->where('book_id', $bookId)
+                ->update([
+                    'author_id' => $authorId,
+                    'publisher_id' => $publisherId,
+                    'genre_id' => $genreId,
+                    'isbn' => $this->cleanIsbn($validated['isbn'] ?? null),
+                    'book_title' => $validated['book_title'],
+                    'book_status' => $requestedStatus,
+                ]);
+        });
 
         return redirect()
             ->route('admin.books.index')
-            ->with('success', 'Book updated successfully.');
+            ->with('success', 'Book updated successfully. Related borrowing and catalog modules were synchronized.');
     }
 
     /**
-     * Deletes a book only when it has no borrowing transaction records.
+     * Deletes a book after all active borrowing transactions have been closed.
+     * Completed transaction rows are removed with the book so the database does
+     * not retain orphaned references to a deleted catalog record.
      */
     public function destroy($bookId)
     {
-        $book = DB::table('book')
-            ->where('book_id', $bookId)
-            ->first();
+        try {
+            $deletedCompletedTransactions = DB::transaction(function () use ($bookId) {
+                $book = DB::table('book')
+                    ->where('book_id', $bookId)
+                    ->lockForUpdate()
+                    ->first();
 
-        if (!$book) {
+                if (!$book) {
+                    throw ValidationException::withMessages([
+                        'book' => 'Book record not found.',
+                    ]);
+                }
+
+                $activeTransaction = DB::table('borrow_transaction')
+                    ->where('book_id', $bookId)
+                    ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($book->book_status === 'Borrowed' || $activeTransaction !== null) {
+                    throw ValidationException::withMessages([
+                        'book' => 'This book cannot be deleted while it has an active borrowing transaction.',
+                    ]);
+                }
+
+                $completedTransactionCount = DB::table('borrow_transaction')
+                    ->where('book_id', $bookId)
+                    ->count();
+
+                if ($completedTransactionCount > 0) {
+                    DB::table('borrow_transaction')
+                        ->where('book_id', $bookId)
+                        ->delete();
+                }
+
+                DB::table('book')
+                    ->where('book_id', $bookId)
+                    ->delete();
+
+                return $completedTransactionCount;
+            });
+        } catch (ValidationException $exception) {
             return redirect()
                 ->route('admin.books.index')
-                ->withErrors(['book' => 'Book record not found.']);
+                ->withErrors($exception->errors());
         }
 
-        // Prevents deletion of books that are already part of borrow history.
-        $hasBorrowTransaction = DB::table('borrow_transaction')
-            ->where('book_id', $bookId)
-            ->exists();
-
-        if ($hasBorrowTransaction) {
-            return redirect()
-                ->route('admin.books.index')
-                ->withErrors(['book' => 'This book cannot be deleted because it already has borrowing records.']);
-        }
-
-        DB::table('book')
-            ->where('book_id', $bookId)
-            ->delete();
+        $message = $deletedCompletedTransactions > 0
+            ? 'Book and completed borrowing history deleted successfully.'
+            : 'Book deleted successfully.';
 
         return redirect()
             ->route('admin.books.index')
-            ->with('success', 'Book deleted successfully.');
+            ->with('success', $message);
     }
 
     /**
-     * Handles AJAX requests for Google Books lookup and returns matched book details as JSON.
+     * Handles AJAX requests for the multi-provider book lookup and returns matched book details as JSON.
      */
-    public function searchGoogleBooks(Request $request, GoogleBooksService $googleBooksService)
+    public function searchBookLookup(Request $request, BookLookupService $bookLookupService)
     {
         $validated = $request->validate([
             'query' => ['required', 'string', 'max:255'],
         ]);
 
         return response()->json(
-            $googleBooksService->search($validated['query'])
+            $bookLookupService->search($validated['query'])
         );
     }
 
@@ -486,9 +502,9 @@ class BookController extends Controller
     /**
      * Finds an existing author by name or creates a new author record.
      */
-    private function findOrCreateAuthor(string $authorName): ?int
+    private function findOrCreateAuthor(?string $authorName): ?int
     {
-        $authorName = trim($authorName);
+        $authorName = $this->normalizeText($authorName);
 
         if ($authorName === '') {
             return null;
@@ -498,8 +514,8 @@ class BookController extends Controller
 
         // Checks for duplicate author records using normalized first and last names.
         $existingAuthor = DB::table('book_author')
-            ->whereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [strtolower($firstName ?? '')])
-            ->whereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [strtolower($lastName ?? '')])
+            ->whereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [mb_strtolower($firstName ?? '')])
+            ->whereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [mb_strtolower($lastName ?? '')])
             ->first();
 
         if ($existingAuthor) {
@@ -519,31 +535,66 @@ class BookController extends Controller
     }
 
     /**
-     * Finds an existing publisher by name or creates a new publisher record.
+     * Finds an existing publisher by its displayed name or creates a new
+     * company-style publisher record without incorrectly splitting the name.
      */
-    private function findOrCreatePublisher(string $publisherName, ?string $datePublished = null): ?int
+    private function findOrCreatePublisher(?string $publisherName, ?string $datePublished = null): ?int
     {
-        $publisherName = trim($publisherName);
+        $publisherName = $this->normalizeText((string) $publisherName);
+        $datePublished = $datePublished !== null && trim($datePublished) !== ''
+            ? trim($datePublished)
+            : null;
 
-        if ($publisherName === '') {
+        if ($publisherName === '' && $datePublished === null) {
             return null;
         }
 
-        // FIX: Applied the same split logic used for authors so names are properly separated.
-        [$firstName, $lastName] = $this->splitPersonName($publisherName);
+        // The current database stores the publication date on the publisher
+        // record. When the publisher name is unknown but a date is known, a
+        // date-only metadata record is reused instead of inventing a name.
+        if ($publisherName === '') {
+            $dateOnlyPublisher = DB::table('book_publisher')
+                ->whereNull('last_name')
+                ->whereNull('first_name')
+                ->whereRaw('`m.i.` IS NULL')
+                ->where('date_published', $datePublished)
+                ->first();
+
+            if ($dateOnlyPublisher) {
+                return (int) $dateOnlyPublisher->publisher_id;
+            }
+
+            DB::insert(
+                'INSERT INTO book_publisher (last_name, first_name, `m.i.`, date_published) VALUES (?, ?, ?, ?)',
+                [null, null, null, $datePublished]
+            );
+
+            return (int) DB::getPdo()->lastInsertId();
+        }
+
+        $normalizedTarget = $this->normalizeComparableText($publisherName);
 
         $existingPublisher = DB::table('book_publisher')
-            ->where(function ($query) use ($firstName, $lastName, $publisherName) {
-                // Check if it exists exactly matching the newly split name structure
-                $query->where(function ($q) use ($firstName, $lastName) {
-                    $q->whereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [strtolower($firstName ?? '')])
-                      ->whereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [strtolower($lastName ?? '')]);
-                })
-                // Fallback: Also check if the publisher was previously saved entirely into a single column
-                ->orWhereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [strtolower($publisherName)])
-                ->orWhereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [strtolower($publisherName)]);
-            })
-            ->first();
+            ->select(
+                'publisher_id',
+                'last_name',
+                'first_name',
+                DB::raw('`m.i.` as middle_initial'),
+                'date_published'
+            )
+            ->get()
+            ->first(function ($publisher) use ($normalizedTarget, $datePublished) {
+                $displayName = $this->formatPersonName(
+                    $publisher->last_name,
+                    $publisher->first_name,
+                    $publisher->middle_initial
+                );
+
+                $sameName = $this->normalizeComparableText($displayName) === $normalizedTarget;
+                $sameDate = (string) ($publisher->date_published ?? '') === (string) ($datePublished ?? '');
+
+                return $sameName && $sameDate;
+            });
 
         if ($existingPublisher) {
             return (int) $existingPublisher->publisher_id;
@@ -551,12 +602,7 @@ class BookController extends Controller
 
         DB::insert(
             'INSERT INTO book_publisher (last_name, first_name, `m.i.`, date_published) VALUES (?, ?, ?, ?)',
-            [
-                $lastName,
-                $firstName,
-                null,
-                $datePublished,
-            ]
+            [null, $publisherName, null, $datePublished]
         );
 
         return (int) DB::getPdo()->lastInsertId();
@@ -567,7 +613,7 @@ class BookController extends Controller
      */
     private function findOrCreateGenre(string $genreName): ?int
     {
-        $genreName = trim($genreName);
+        $genreName = $this->normalizeText($genreName);
 
         if ($genreName === '') {
             return null;
@@ -575,7 +621,7 @@ class BookController extends Controller
 
         // Prevents duplicate genre records by comparing normalized genre names.
         $existingGenre = DB::table('book_genre')
-            ->whereRaw('LOWER(TRIM(genre_name)) = ?', [strtolower($genreName)])
+            ->whereRaw('LOWER(TRIM(genre_name)) = ?', [mb_strtolower($genreName)])
             ->first();
 
         if ($existingGenre) {
@@ -656,20 +702,201 @@ class BookController extends Controller
     }
 
     /**
-     * Cleans ISBN input by removing invalid characters and limiting it to 13 characters.
+     * Normalizes user-entered text before validation so duplicate spaces and
+     * accidental surrounding whitespace do not create inconsistent records.
+     */
+    private function normalizeBookRequest(Request $request): void
+    {
+        $genreChoice = $this->normalizeText((string) $request->input('genre_choice'));
+        $genreOther = $this->normalizeText((string) $request->input('genre_other'));
+        $resolvedGenre = $genreChoice === 'Other' ? $genreOther : $genreChoice;
+
+        $request->merge([
+            'book_title' => $this->normalizeText((string) $request->input('book_title')),
+            'isbn' => $this->normalizeNullableText($request->input('isbn')),
+            'author_name' => $this->normalizeNullableText($request->input('author_name')),
+            'publisher_name' => $this->normalizeNullableText($request->input('publisher_name')),
+            'genre_choice' => $genreChoice,
+            'genre_other' => $genreOther,
+            'genre_name' => $resolvedGenre,
+            'date_published' => $request->filled('date_published')
+                ? trim((string) $request->input('date_published'))
+                : null,
+        ]);
+    }
+
+    /**
+     * Returns the shared Add/Edit validation rules for book metadata.
+     */
+    private function bookValidationRules(bool $isCreate, ?int $bookId = null): array
+    {
+        $statusRules = $isCreate
+            ? ['required', Rule::in(['Available'])]
+            : ['required', Rule::in($this->bookStatuses)];
+
+        $genreChoices = array_merge($this->controlledGenres, ['Other']);
+        $isbnUniqueRule = Rule::unique('book', 'isbn');
+
+        if ($bookId !== null) {
+            $isbnUniqueRule->ignore($bookId, 'book_id');
+        }
+
+        return [
+            'book_title' => [
+                'bail',
+                'required',
+                'string',
+                'max:255',
+                'regex:/^(?=.*[\p{L}\p{N}])[^\x00-\x1F\x7F<>]+$/u',
+            ],
+            'isbn' => [
+                'bail',
+                'nullable',
+                'string',
+                'regex:/^(?:[0-9]{10}|[0-9]{13})$/',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (!$this->isValidIsbn((string) $value)) {
+                        $fail('Enter a valid ISBN-10 or ISBN-13. The ISBN check digit is incorrect.');
+                    }
+                },
+                $isbnUniqueRule,
+            ],
+            'book_status' => $statusRules,
+            'author_name' => [
+                'bail',
+                'nullable',
+                'string',
+                'min:2',
+                'max:150',
+                'regex:/^(?=.*\p{L})[\p{L}\p{M}\s\.\'’,-]+$/u',
+                'not_regex:/^[\s\.\'’,-]+$/u',
+            ],
+            'publisher_name' => [
+                'bail',
+                'nullable',
+                'string',
+                'min:2',
+                'max:150',
+                'regex:/^(?=.*\p{L})[\p{L}\p{M}\p{N}\s\.,\'’&()\-]+$/u',
+                'not_regex:/^[\s\.,\'’&()\-]+$/u',
+            ],
+            'genre_choice' => ['required', Rule::in($genreChoices)],
+            'genre_other' => [
+                'nullable',
+                'required_if:genre_choice,Other',
+                'string',
+                'max:100',
+                'regex:/^(?=.*\p{L})[\p{L}\p{M}\p{N}\s&\/,\'’\-]+$/u',
+            ],
+            'genre_name' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^(?=.*\p{L})[\p{L}\p{M}\p{N}\s&\/,\'’\-]+$/u',
+            ],
+            'date_published' => ['nullable', 'date', 'before_or_equal:today'],
+        ];
+    }
+
+    /**
+     * Returns clear validation messages shared by Add and Edit Book forms.
+     */
+    private function bookValidationMessages(): array
+    {
+        return [
+            'book_title.required' => 'The book title is required.',
+            'book_title.max' => 'The book title may not exceed 255 characters.',
+            'book_title.regex' => 'Enter a valid book title without angle brackets or control characters.',
+            'isbn.regex' => 'When provided, the ISBN must contain exactly 10 or 13 numeric digits. Spaces, hyphens, letters, and symbols are not allowed.',
+            'isbn.unique' => 'This ISBN is already registered to another book.',
+            'book_status.required' => 'The book status is required.',
+            'book_status.in' => 'The selected book status is invalid.',
+            'author_name.min' => 'The author name must contain at least 2 characters.',
+            'author_name.regex' => 'The author may contain letters, spaces, apostrophes, periods, commas, and hyphens only. Numbers and other symbols are not allowed.',
+            'author_name.not_regex' => 'The author name must contain letters.',
+            'author_name.max' => 'The author name may not exceed 150 characters.',
+            'publisher_name.min' => 'The publisher name must contain at least 2 characters.',
+            'publisher_name.regex' => 'The publisher may contain letters, numbers, spaces, periods, commas, apostrophes, ampersands, parentheses, and hyphens only.',
+            'publisher_name.not_regex' => 'The publisher name must contain letters.',
+            'publisher_name.max' => 'The publisher name may not exceed 150 characters.',
+            'genre_choice.required' => 'Please select a genre.',
+            'genre_choice.in' => 'The selected genre is invalid.',
+            'genre_other.required_if' => 'Enter the genre when Other is selected.',
+            'genre_other.regex' => 'The custom genre contains unsupported characters.',
+            'genre_other.max' => 'The custom genre may not exceed 100 characters.',
+            'genre_name.required' => 'The genre is required.',
+            'genre_name.regex' => 'The genre contains unsupported characters.',
+            'date_published.date' => 'Enter a valid publication date.',
+            'date_published.before_or_equal' => 'The publication date cannot be later than today.',
+        ];
+    }
+
+    /**
+     * Normalizes an optional text field and converts a blank value to null.
+     */
+    private function normalizeNullableText(mixed $value): ?string
+    {
+        $normalized = $this->normalizeText((string) $value);
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    /**
+     * Trims text and collapses repeated whitespace to one space.
+     */
+    private function normalizeText(string $value): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $value));
+    }
+
+    /**
+     * Produces a normalized value for case-insensitive duplicate comparison.
+     */
+    private function normalizeComparableText(string $value): string
+    {
+        return mb_strtolower($this->normalizeText(str_replace(',', '', $value)));
+    }
+
+    /**
+     * Validates the ISBN-10 or ISBN-13 check digit after the numeric length rule
+     * has been satisfied. ISBN-10 values ending in X are intentionally rejected
+     * because this system requires numeric-only ISBN input.
+     */
+    private function isValidIsbn(string $isbn): bool
+    {
+        if (!preg_match('/^(?:[0-9]{10}|[0-9]{13})$/', $isbn)) {
+            return false;
+        }
+
+        if (strlen($isbn) === 10) {
+            $sum = 0;
+
+            for ($index = 0; $index < 10; $index++) {
+                $sum += ((int) $isbn[$index]) * (10 - $index);
+            }
+
+            return $sum % 11 === 0;
+        }
+
+        $sum = 0;
+
+        for ($index = 0; $index < 12; $index++) {
+            $weight = $index % 2 === 0 ? 1 : 3;
+            $sum += ((int) $isbn[$index]) * $weight;
+        }
+
+        $expectedCheckDigit = (10 - ($sum % 10)) % 10;
+
+        return $expectedCheckDigit === (int) $isbn[12];
+    }
+
+    /**
+     * Returns a validated numeric ISBN for persistence.
      */
     private function cleanIsbn(?string $isbn): ?string
     {
-        if (!$isbn) {
-            return null;
-        }
+        $isbn = trim((string) $isbn);
 
-        $isbn = strtoupper(preg_replace('/[^0-9Xx]/', '', $isbn));
-
-        if ($isbn === '') {
-            return null;
-        }
-
-        return substr($isbn, 0, 13);
+        return $this->isValidIsbn($isbn) ? $isbn : null;
     }
 }

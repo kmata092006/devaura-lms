@@ -3,10 +3,10 @@
 }
 
 .admin-shell {
-    min-height: 100vh; /* Lock shell height to viewport */
+    min-height: 100vh; /* Keep the admin shell at viewport height. */
     display: grid;
     grid-template-columns: 292px 1fr;
-    overflow: hidden; /* Prevents double scrollbars */
+    overflow: hidden; /* Prevent shell-level double scrollbars. */
 }
 
 .sidebar {
@@ -124,10 +124,11 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden; /* Header stays locked */
+    overflow: hidden; /* Keep the header fixed while content scrolls. */
 }
 
-.admin-header {flex-shrink: 0; /* Header won't get squished */
+.admin-header {
+    flex-shrink: 0; /* Preserve header height in the admin column. */
     background: rgba(255, 255, 255, 0.92);
     border-bottom: 1px solid var(--line);
     display: flex;
@@ -197,11 +198,11 @@
 
 .admin-content {
     flex: 1;
-    overflow-y: auto; /* Only this section scrolls */
+    overflow-y: auto; /* Keep scrolling inside the content area. */
     padding: 34px 38px 48px;
 }
 
-/* COMMON UI */
+/* Shared admin cards and controls. */
 
 .page-actions,
 .dashboard-welcome-card,
@@ -447,7 +448,7 @@
     font-weight: 700;
 }
 
-/* DASHBOARD */
+/* Dashboard summary and module shortcut cards. */
 
 .dashboard-welcome-card {
     padding: 30px 34px;
@@ -563,7 +564,7 @@
     color: #166534;
 }
 
-/* RESPONSIVE */
+/* Admin shell responsive behavior. */
 
 @media (max-width: 1200px) {
     .admin-shell {
@@ -679,7 +680,7 @@
     overflow-wrap: anywhere;
 }
 
-/* Keep horizontal scroll only on small screens where it is actually useful */
+/* Limit horizontal table scrolling to small screens. */
 @media (max-width: 900px) {
     .table-card,
     .department-table-card,
@@ -695,4 +696,3 @@
         min-width: 900px !important;
     }
 }
-

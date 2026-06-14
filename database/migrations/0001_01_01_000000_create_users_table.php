@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create framework user, password reset, and session tables.
      */
     public function up(): void
     {
@@ -38,7 +38,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Remove framework user, password reset, and session tables.
      */
     public function down(): void
     {

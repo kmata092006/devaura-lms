@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Book extends Model
 {
+    /**
+     * Maps catalog records to the legacy book table.
+     */
     protected $table = 'book';
 
     protected $primaryKey = 'book_id';

@@ -339,8 +339,7 @@ class AttendanceService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('attendance_log.log_id', 'like', "%{$search}%")
-                    ->orWhere('attendance_log.role', 'like', "%{$search}%")
+                $q->where('attendance_log.role', 'like', "%{$search}%")
                     ->orWhere('attendance_log.log_date', 'like', "%{$search}%")
                     ->orWhere('attendance_log.time_in', 'like', "%{$search}%")
                     ->orWhere('attendance_log.time_out', 'like', "%{$search}%")

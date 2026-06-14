@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class BookPublisher extends Model
 {
+    /**
+     * Maps publisher records to the legacy book_publisher table.
+     */
     protected $table = 'book_publisher';
 
     protected $primaryKey = 'publisher_id';

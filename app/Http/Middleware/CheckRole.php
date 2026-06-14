@@ -2,90 +2,112 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\RoleService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Services\RoleService;
 
 class CheckRole
 {
-    private RoleService $roleService;
-
     /**
-     * Maps route prefixes to exact Database Module Names.
-     * This allows us to secure routes without changing web.php.
+     * Maps route prefixes to the permission names stored in the database.
      */
     private array $moduleMap = [
-        'admin.dashboard'   => 'Dashboard',
-        'admin.attendance'  => 'Attendance Logs',
+        'admin.dashboard' => 'Dashboard',
+        'admin.attendance' => 'Attendance Logs',
         'admin.departments' => 'Departments',
-        'admin.personnel'   => 'Library Personnel',
-        'admin.members'     => 'Library Members',
-        'admin.books'       => 'Book Management',
-        'admin.borrow'      => 'Borrow Book',
-        'admin.return'      => 'Return Book',
-        'admin.book-list'   => 'Book List / Search',
-        'admin.reports'     => 'Report',
+        'admin.personnel' => 'Library Personnel',
+        'admin.members' => 'Library Members',
+        'admin.books' => 'Book Management',
+        'admin.borrow' => 'Borrow Book',
+        'admin.return' => 'Return Book',
+        'admin.book-list' => 'Book List / Search',
+        'admin.reports' => 'Report',
         'admin.audit-trail' => 'Audit Trail',
-        'admin.roles'       => 'Role Permission',
+        'admin.roles' => 'Role Permission',
     ];
 
     /**
-     * Injects the RoleService to query the database.
+     * Receives the service used for module permission lookups.
      */
-    public function __construct(RoleService $roleService)
+    public function __construct(private RoleService $roleService)
     {
-        $this->roleService = $roleService;
     }
 
     /**
-     * Checks if the logged-in user has the required role to access the page.
-     * Now upgraded to check the database matrix directly based on the route name.
+     * Requires an authenticated session and checks database-backed access.
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        // Check if user is logged in at all
-        if (!session()->has('personnel_id')) {
+        if (!$request->session()->has('personnel_id')) {
             return redirect()->route('login')->withErrors([
                 'login' => 'Please log in first.',
             ]);
         }
 
-        // Get the current user's role from the session
-        $currentRole = session('personnel_role');
+        $currentRole = strtolower(trim((string) $request->session()->get('personnel_role')));
+        $routeName = $request->route()?->getName();
+        $requestedModule = $this->resolveModule($routeName);
 
-        // Determine which module is being accessed based on the route name
-        $routeName = $request->route()->getName();
-        $requestedModule = null;
-
-        if ($routeName) {
-            foreach ($this->moduleMap as $routePrefix => $moduleName) {
-                // Matches exact module regardless of specific action (index, store, update, etc.)
-                if (str_starts_with($routeName, $routePrefix)) {
-                    $requestedModule = $moduleName;
-                    break;
-                }
-            }
+        if ($requestedModule === 'Role Permission' && $currentRole !== 'admin') {
+            return $this->deny($request);
         }
 
-        // Determine a safe fallback route to prevent redirect loops
-        $fallbackUrl = url()->previous() !== url()->current() ? url()->previous() : route('login');
-        $errorMessage = 'Unauthorized access. You do not have permission to view this module.';
-
-        if ($requestedModule) {
-            // Check the dynamic database matrix
+        if ($requestedModule !== null) {
             if (!$this->roleService->hasPermission($currentRole, $requestedModule)) {
-                // Bounce back with an error message instead of 403
-                return redirect($fallbackUrl)->withErrors(['access' => $errorMessage]);
+                return $this->deny($request);
             }
-        } else {
-            // Fallback to hardcoded roles
-            if (!in_array($currentRole, $roles)) {
-                // Bounce back with an error message instead of 403
-                return redirect($fallbackUrl)->withErrors(['access' => $errorMessage]);
-            }
+
+            return $next($request);
+        }
+
+        $allowedRoles = array_map(
+            static fn (string $role): string => strtolower(trim($role)),
+            $roles
+        );
+
+        if ($allowedRoles !== [] && !in_array($currentRole, $allowedRoles, true)) {
+            return $this->deny($request);
         }
 
         return $next($request);
+    }
+
+    /**
+     * Matches a route name to the module permission it requires.
+     */
+    private function resolveModule(?string $routeName): ?string
+    {
+        if (!$routeName) {
+            return null;
+        }
+
+        foreach ($this->moduleMap as $routePrefix => $moduleName) {
+            if (str_starts_with($routeName, $routePrefix)) {
+                return $moduleName;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Sends unauthorized users back with a readable access message.
+     */
+    private function deny(Request $request): Response
+    {
+        $message = 'Unauthorized access. You do not have permission to view this module.';
+        $currentUrl = $request->fullUrl();
+        $previousUrl = url()->previous();
+
+        if ($previousUrl !== $currentUrl) {
+            return redirect($previousUrl)->withErrors([
+                'access' => $message,
+            ]);
+        }
+
+        return redirect()->route('admin.dashboard')->withErrors([
+            'access' => $message,
+        ]);
     }
 }

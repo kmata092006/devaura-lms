@@ -4,6 +4,7 @@
 @section('page-title', 'Audit Trail')
 
 @section('content')
+    {{-- Introduces audit review and exposes print output for the current filters. --}}
     <div class="audit-hero">
         <div>
             <span class="audit-eyebrow">System Monitoring</span>
@@ -16,6 +17,7 @@
         </button>
     </div>
 
+    {{-- Filters audit entries by search text, actor role, action, module, and date. --}}
     <form method="GET" action="{{ route('admin.audit-trail.index') }}" class="audit-filter-card">
         <div class="audit-filter-group">
             <label for="search">Search</label>
@@ -96,41 +98,96 @@
             <p>Generated on {{ now()->format('F d, Y h:i A') }}</p>
         </div>
 
-        <div class="audit-table-card">
-            <table class="audit-table">
-                <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>User</th>
-                        <th>Role</th>
-                        <th>Action</th>
-                        <th>Module</th>
-                        <th>Details</th>
-                        <th>IP Address</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($auditLogs as $log)
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($log->created_at)->format('M d, Y h:i A') }}</td>
-                            <td>{{ $log->username ?? 'Unknown' }}</td>
-                            <td><span class="audit-role-pill">{{ $log->personnel_role ? ucwords($log->personnel_role) : 'Unknown' }}</span></td>
-                            <td><span class="audit-action-pill">{{ $log->action_type }}</span></td>
-                            <td>{{ $log->module_name }}</td>
-                            <td class="audit-details-cell">{{ $log->action_details ?? '-' }}</td>
-                            <td>{{ $log->ip_address ?? '-' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="audit-empty-cell">No audit trail records found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        <div class="system-records-shell audit-records-shell">
+            <div class="system-records-meta">
+                <div>
+                    <h3>Audit Trail Records</h3>
+                    <p>{{ $auditLogs->count() }} {{ \Illuminate\Support\Str::plural('activity', $auditLogs->count()) }} found</p>
+                </div>
+            </div>
 
-        <div class="pagination-wrapper audit-pagination">
-            {{ $auditLogs->links() }}
+            <div class="system-record-list">
+                @forelse ($auditLogs as $log)
+                    @php
+                        // Build compact identity details for each audit activity card.
+                        $auditUsername = $log->username ?: 'Unknown user';
+                        $auditInitials = strtoupper(substr($auditUsername, 0, 2));
+                    @endphp
+
+                    <article class="system-record-card">
+                        <header class="system-record-header">
+                            <div class="system-record-identity">
+                                <div class="system-record-avatar is-violet" aria-hidden="true">
+                                    {{ $auditInitials ?: 'AU' }}
+                                </div>
+                                <div class="system-record-copy">
+                                    <span class="system-record-eyebrow">System Activity</span>
+                                    <h3>{{ $auditUsername }}</h3>
+                                    @php
+                                        // Reuse one parsed timestamp for header and detail display.
+                                        $activityDateTime = \Carbon\Carbon::parse($log->created_at);
+                                    @endphp
+                                    <p class="audit-header-datetime">
+                                        <span>{{ $activityDateTime->format('M d, Y') }}</span>
+                                        <span aria-hidden="true">&bull;</span>
+                                        <span>{{ $activityDateTime->format('h:i A') }}</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="system-record-badges">
+                                <span class="system-record-badge">{{ $log->action_type }}</span>
+                                <span class="system-record-badge is-neutral">
+                                    {{ $log->personnel_role ? ucwords($log->personnel_role) : 'Unknown role' }}
+                                </span>
+                            </div>
+                        </header>
+
+                        <div class="system-record-body audit-record-grid">
+                            <div class="system-record-field audit-datetime-field">
+                                <span>Date and Time</span>
+                                <div class="audit-datetime-split">
+                                    <div>
+                                        <small>Date</small>
+                                        <strong>{{ $activityDateTime->format('M d, Y') }}</strong>
+                                    </div>
+                                    <div>
+                                        <small>Time</small>
+                                        <strong>{{ $activityDateTime->format('h:i A') }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="system-record-field">
+                                <span>Module</span>
+                                <strong>{{ $log->module_name }}</strong>
+                            </div>
+
+                            <div class="system-record-field">
+                                <span>Action</span>
+                                <strong>{{ $log->action_type }}</strong>
+                            </div>
+
+                            <div class="system-record-field is-primary">
+                                <span>Activity Details</span>
+                                <strong>{{ $log->display_details ?: 'No additional details' }}</strong>
+                            </div>
+
+                            <div class="system-record-field is-muted">
+                                <span>IP Address</span>
+                                <strong>{{ $log->ip_address ?: 'Not available' }}</strong>
+                            </div>
+                        </div>
+                    </article>
+                @empty
+                    <div class="system-record-empty">
+                        <strong>No audit trail records found</strong>
+                        Adjust the filters to review other system activities.
+                    </div>
+                @endforelse
+            </div>
+
+
         </div>
     </div>
 @endsection

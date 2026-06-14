@@ -11,7 +11,7 @@ class RoleService
      */
     public function getRolePermissionsMatrix(): array
     {
-        // Safety net: Auto-populate permissions if the table is completely empty
+        // Create the default permission catalog if the matrix has not been seeded.
         $this->ensurePermissionsExist();
 
         $permissions = DB::table('permission')->orderBy('permission_id')->get();
@@ -20,7 +20,7 @@ class RoleService
 
         $matrix = [];
 
-        // Build the skeleton matrix
+        // Start each module with an empty set of granted role IDs.
         foreach ($permissions as $permission) {
             $matrix[$permission->permission_name] = [
                 'permission_id' => $permission->permission_id,
@@ -28,7 +28,7 @@ class RoleService
             ];
         }
 
-        // Fill the matrix with granted access records
+        // Attach each saved role permission to its module row.
         foreach ($rolePermissions as $rp) {
             $permissionName = $permissions->firstWhere('permission_id', $rp->permission_id)->permission_name;
             $matrix[$permissionName]['allowed_role_ids'][] = $rp->personnel_role_id;
@@ -37,6 +37,9 @@ class RoleService
         return $matrix;
     }
 
+    /**
+     * Checks whether a role has access to the requested module.
+     */
     public function hasPermission(string $roleName, string $permissionName): bool
     {
         $role = DB::table('personnel_role')->where('personnel_role_name', $roleName)->first();
@@ -58,8 +61,7 @@ class RoleService
     }
 
     /**
-     * Helper function to seed the initial permissions safely
-     * so we don't end up with a blank matrix table.
+     * Seeds the default permission catalog when the matrix is empty.
      */
     private function ensurePermissionsExist(): void
     {
@@ -73,7 +75,7 @@ class RoleService
             $inserts = array_map(fn($module) => ['permission_name' => $module], $defaultModules);
             DB::table('permission')->insert($inserts);
 
-            // Grant all permissions to the Admin role automatically
+            // Give admins full access to every seeded module.
             $adminId = DB::table('personnel_role')->where('personnel_role_name', 'admin')->value('personnel_role_id');
             
             if ($adminId) {

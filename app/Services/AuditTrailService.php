@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -34,17 +34,14 @@ class AuditTrailService
                 'created_at' => now(),
             ]);
         } catch (Throwable $exception) {
-            /*
-             * Audit logging must never break the main system action.
-             * If audit insertion fails, the original action should still continue.
-             */
+            // Audit failures must not interrupt the original system action.
         }
     }
 
     /**
      * Returns filtered audit trail records for the admin audit page.
      */
-    public function getAuditLogs(array $filters): LengthAwarePaginator
+    public function getAuditLogs(array $filters): Collection
     {
         $query = DB::table('audit_trail')
             ->select(
@@ -63,9 +60,7 @@ class AuditTrailService
             $search = trim($filters['search']);
 
             $query->where(function ($q) use ($search) {
-                $q->where('audit_id', 'like', "%{$search}%")
-                    ->orWhere('personnel_id', 'like', "%{$search}%")
-                    ->orWhere('username', 'like', "%{$search}%")
+                $q->where('username', 'like', "%{$search}%")
                     ->orWhere('personnel_role', 'like', "%{$search}%")
                     ->orWhere('action_type', 'like', "%{$search}%")
                     ->orWhere('module_name', 'like', "%{$search}%")
@@ -97,8 +92,34 @@ class AuditTrailService
         return $query
             ->orderByDesc('created_at')
             ->orderByDesc('audit_id')
-            ->paginate(15)
-            ->withQueryString();
+            ->get()
+            ->map(function ($log) {
+                $log->display_details = $this->buildDisplayDetails(
+                    $log->action_type,
+                    $log->module_name
+                );
+
+                return $log;
+            });
+    }
+
+    /**
+     * Builds safe audit summaries without exposing raw request fields.
+     */
+    private function buildDisplayDetails(string $actionType, string $moduleName): string
+    {
+        return match (strtoupper($actionType)) {
+            'LOGIN' => 'User signed in to the system.',
+            'LOGOUT' => 'User signed out of the system.',
+            'TIME IN' => 'An attendance time-in action was recorded.',
+            'TIME OUT' => 'An attendance time-out action was recorded.',
+            'BORROW' => 'A book borrowing transaction was recorded.',
+            'RETURN' => 'A book return action was processed.',
+            'CREATE' => "A new record was created in {$moduleName}.",
+            'UPDATE' => "A record was updated in {$moduleName}.",
+            'DELETE' => "A record was deleted from {$moduleName}.",
+            default => "A system action was completed in {$moduleName}.",
+        };
     }
 
     /**

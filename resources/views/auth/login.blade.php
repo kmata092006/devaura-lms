@@ -4,30 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | UBNHS Library Management System</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/ubnhs-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/ubnhs-logo.png') }}">
 
     <link rel="stylesheet" href="{{ asset('css/lms.css') }}?v={{ filemtime(public_path('css/lms.css')) }}">
 </head>
 <body class="login-body">
     <main class="login-page">
         <section class="login-brand-panel">
-            <div class="login-school-mark text-only">
-                UBNHS
+            <div class="school-logo-frame school-logo-login-large">
+                <img src="{{ asset('images/ubnhs-logo.png') }}" alt="Upper Bicutan National High School logo">
             </div>
 
             <div>
                 <p class="login-eyebrow">Upper Bicutan National High School</p>
                 <h1>UBNHS Library Management System</h1>
                 <p>
-                    A secure library administration portal for attendance monitoring,
-                    book records, borrowing, returns, reports, and audit tracking.
+                    A secure platform for streamlined library circulation, 
+                    attendance tracking, and administrative reporting.
                 </p>
             </div>
         </section>
 
         <section class="login-card">
             <div class="login-card-header">
-                <div class="login-card-text-logo">
-                    UBNHS
+                <div class="school-logo-frame school-logo-login-small">
+                    <img src="{{ asset('images/ubnhs-logo.png') }}" alt="Upper Bicutan National High School logo">
                 </div>
 
                 <div>
@@ -36,12 +38,14 @@
                 </div>
             </div>
 
+            {{-- Shows one-time login notices, such as kiosk session resets. --}}
             @if (session('info'))
                 <div class="alert success">
                     {{ session('info') }}
                 </div>
             @endif
 
+            {{-- Lists validation and authentication errors above the form. --}}
             @if ($errors->any())
                 <div class="alert error">
                     @foreach ($errors->all() as $error)
@@ -49,19 +53,10 @@
                     @endforeach
                 </div>
             @endif
-            
+
+            {{-- Authenticates personnel; the server resolves the role from the account. --}}
             <form method="POST" action="{{ route('login.submit') }}" class="login-form">
                 @csrf
-
-                <div class="form-group">
-                    <label for="role">Role</label>
-                    <select name="role" id="role" required>
-                        <option value="">Select role</option>
-                        <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Staff</option>
-                        <option value="student staff" {{ old('role') === 'student staff' ? 'selected' : '' }}>Student Staff</option>
-                    </select>
-                </div>
 
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -72,7 +67,9 @@
                         value="{{ old('username') }}"
                         placeholder="Enter username"
                         autocomplete="username"
+                        maxlength="50"
                         required
+                        autofocus
                     >
                 </div>
 
@@ -87,18 +84,10 @@
                         required
                     >
                 </div>
-
                 <button type="submit" class="login-button">
                     Login
                 </button>
             </form>
-
-            <div class="login-help-box">
-                <p><strong>Default Accounts</strong></p>
-                <p>Admin: admin / devaura</p>
-                <p>Staff: staff / devaura</p>
-                <p>Student Staff: student staff / devaura</p>
-            </div>
         </section>
     </main>
 </body>

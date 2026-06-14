@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. First, ensure the column exists
+        // Add the flag only when it is missing from older imports.
         if (!Schema::hasColumn('library_personnel', 'is_system_account')) {
             Schema::table('library_personnel', function (Blueprint $table) {
                 $table->boolean('is_system_account')
@@ -21,14 +21,13 @@ return new class extends Migration
             });
         }
 
-        // 2. Wrap the update in a try-catch to prevent a crash if table is empty 
-        // or if records don't exist yet
+        // Mark default accounts when they already exist in seeded data.
         try {
             DB::table('library_personnel')
                 ->whereIn('username', ['admin', 'staff', 'student staff'])
                 ->update(['is_system_account' => true]);
         } catch (\Exception $e) {
-            // Silently ignore if update fails (e.g., table empty)
+            // Leave the flag unset if the personnel table has no seed rows yet.
         }
     }
 

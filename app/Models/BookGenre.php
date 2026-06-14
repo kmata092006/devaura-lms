@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class BookGenre extends Model
 {
+    /**
+     * Maps genre records to the legacy book_genre table.
+     */
     protected $table = 'book_genre';
 
     protected $primaryKey = 'genre_id';

@@ -1,5 +1,5 @@
 @php
-    // Resolves named routes safely and uses fallback URLs if the route name is unavailable.
+    // Resolve named routes safely and fall back to direct URLs if needed.
     $routeUrl = function (string $routeName, string $fallbackUrl) {
         return \Illuminate\Support\Facades\Route::has($routeName)
             ? route($routeName)
@@ -12,8 +12,7 @@
     $visitorTimeInAction = $routeUrl('attendance.visitor.time-in', '/attendance/visitor/time-in');
     $visitorTimeOutAction = $routeUrl('attendance.visitor.time-out', '/attendance/visitor/time-out');
 
-    // $adminLoginUrl = $routeUrl('kiosk.admin-login', '/login');
-    // the code below fixes public kiosk direct access to admin account
+    // Send kiosk administrators through the route that clears kiosk session data.
     $adminLoginUrl = $routeUrl('attendance.admin-login', '/attendance/admin-login');
 @endphp
 
@@ -23,6 +22,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Kiosk | UBNHS Library Management System</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/ubnhs-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/ubnhs-logo.png') }}">
 
     <link rel="stylesheet" href="{{ asset('css/lms.css') }}?v={{ time() }}">
 
@@ -433,7 +434,9 @@
     <main class="ubnhs-kiosk-page">
         <header class="ubnhs-kiosk-header">
             <div class="ubnhs-kiosk-brand">
-                <div class="ubnhs-kiosk-mark">UBNHS</div>
+                <div class="school-logo-frame school-logo-kiosk">
+                    <img src="{{ asset('images/ubnhs-logo.png') }}" alt="Upper Bicutan National High School logo">
+                </div>
 
                 <div>
                     <h1>UBNHS Library Management System</h1>
@@ -694,7 +697,7 @@
         const memberPanel = document.getElementById('memberPanel');
         const visitorPanel = document.getElementById('visitorPanel');
 
-        // Handles tab switching between Student/Faculty and Visitor panels.
+        // Switch between member and visitor attendance panels.
         kioskTabs.forEach((tab) => {
             tab.addEventListener('click', () => {
                 kioskTabs.forEach((item) => item.classList.remove('active'));

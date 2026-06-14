@@ -10,6 +10,7 @@
 @section('page-title', $roleTitle . ' Dashboard')
 
 @section('content')
+    {{-- Welcomes the signed-in personnel and introduces the module shortcuts. --}}
     <div class="dashboard-welcome-card">
         <div>
             <span class="dashboard-eyebrow">Library Administration Portal</span>
@@ -17,13 +18,14 @@
             <p>Select a module below to manage daily library operations.</p>
         </div>
 
-        <div class="dashboard-text-logo">
-            UBNHS
+        <div class="school-logo-frame school-logo-dashboard">
+            <img src="{{ asset('images/ubnhs-logo.png') }}" alt="Upper Bicutan National High School logo">
         </div>
     </div>
 
+    {{-- Shows only modules allowed by the current role permission matrix. --}}
     <div class="dashboard-module-grid">
-        {{-- 1. Attendance Logs --}}
+        {{-- Attendance monitoring module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Attendance Logs'))
             <a href="{{ route('admin.attendance.index') }}" class="dashboard-module-card">
                 <span class="module-icon">◷</span>
@@ -33,7 +35,7 @@
             </a>
         @endif
 
-        {{-- 2. Departments --}}
+        {{-- Department setup module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Departments'))
             <a href="{{ route('admin.departments.index') }}" class="dashboard-module-card">
                 <span class="module-icon">▦</span>
@@ -43,7 +45,7 @@
             </a>
         @endif
 
-        {{-- 3. Library Personnel --}}
+        {{-- Personnel account management module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Library Personnel'))
             <a href="{{ route('admin.personnel.index') }}" class="dashboard-module-card">
                 <span class="module-icon">☷</span>
@@ -53,7 +55,7 @@
             </a>
         @endif
 
-        {{-- 4. Library Members --}}
+        {{-- Library member records module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Library Members'))
             <a href="{{ route('admin.members.index') }}" class="dashboard-module-card">
                 <span class="module-icon">◉</span>
@@ -63,7 +65,7 @@
             </a>
         @endif
 
-        {{-- 5. Book Management --}}
+        {{-- Book catalog maintenance module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Book Management'))
             <a href="{{ route('admin.books.index') }}" class="dashboard-module-card">
                 <span class="module-icon">▣</span>
@@ -73,7 +75,7 @@
             </a>
         @endif
 
-        {{-- 6. Borrow Book --}}
+        {{-- Borrow transaction module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Borrow Book'))
             <a href="{{ route('admin.borrow.index') }}" class="dashboard-module-card">
                 <span class="module-icon">⇢</span>
@@ -83,7 +85,7 @@
             </a>
         @endif
 
-        {{-- 7. Return Book --}}
+        {{-- Return transaction module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Return Book'))
             <a href="{{ route('admin.return.index') }}" class="dashboard-module-card">
                 <span class="module-icon">⇠</span>
@@ -93,7 +95,7 @@
             </a>
         @endif
 
-        {{-- 8. Book List / Search --}}
+        {{-- Read-only catalog search module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Book List / Search'))
             <a href="{{ route('admin.book-list.index') }}" class="dashboard-module-card">
                 <span class="module-icon">⌕</span>
@@ -103,7 +105,7 @@
             </a>
         @endif
 
-        {{-- 9. Reports --}}
+        {{-- Reporting module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Report'))
             <a href="{{ route('admin.reports.index') }}" class="dashboard-module-card">
                 <span class="module-icon">▤</span>
@@ -113,7 +115,7 @@
             </a>
         @endif
 
-        {{-- 10. Audit Trail --}}
+        {{-- Audit trail review module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Audit Trail'))
             <a href="{{ route('admin.audit-trail.index') }}" class="dashboard-module-card">
                 <span class="module-icon">◎</span>
@@ -123,7 +125,7 @@
             </a>
         @endif
 
-        {{-- 11. Role Permission --}}
+        {{-- Role permission matrix module shortcut. --}}
         @if ($roleService->hasPermission($roleName, 'Role Permission'))
             <a href="{{ route('admin.roles.index') }}" class="dashboard-module-card">
                 <span class="module-icon">⚙</span>

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'UBNHS Library Management System')</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/ubnhs-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/ubnhs-logo.png') }}">
     <link rel="stylesheet" href="{{ asset('css/lms.css') }}?v={{ filemtime(public_path('css/lms.css')) }}">
 </head>
 <body class="ubnhs-admin-body">
@@ -15,7 +17,9 @@
     <div class="admin-shell">
         <aside class="sidebar">
             <div class="sidebar-brand">
-                <div class="sidebar-text-logo">UBNHS</div>
+                <div class="school-logo-frame school-logo-sidebar">
+                    <img src="{{ asset('images/ubnhs-logo.png') }}" alt="Upper Bicutan National High School logo">
+                </div>
                 <div><h1>UBNHS Library</h1><p>Management System</p></div>
             </div>
 
@@ -81,9 +85,9 @@
                 @endif
             </nav>
 
-            <form method="POST" action="{{ route('logout') }}" class="logout-form">
+            <form method="POST" action="{{ route('logout') }}" class="logout-form" id="logout-form">
                 @csrf
-                <button type="submit">Logout</button>
+                <button type="button" id="logout-open-button">Logout</button>
             </form>
         </aside>
 
@@ -103,17 +107,83 @@
                 </div>
             </header>
             <section class="admin-content">
-                {{-- ADD THIS SAFETY NET BLOCK --}}
+                {{-- Shows access-denied feedback passed back by role middleware. --}}
                 @if ($errors->has('access'))
                     <div class="alert error" style="margin-bottom: 24px;">
                         <p>{{ $errors->first('access') }}</p>
                     </div>
                 @endif
-                {{-- END OF SAFETY NET --}}
 
                 @yield('content')
             </section>
         </main>
     </div>
+
+    <dialog class="logout-confirmation-modal" id="logout-confirmation-modal" aria-labelledby="logout-confirmation-title">
+        <div class="logout-confirmation-card">
+            <div class="logout-confirmation-icon" aria-hidden="true">!</div>
+
+            <div class="logout-confirmation-copy">
+                <span>Confirm Logout</span>
+                <h2 id="logout-confirmation-title">Log out of the system?</h2>
+                <p>Your current session will end, and you will need to sign in again to continue.</p>
+            </div>
+
+            <div class="logout-confirmation-actions">
+                <button type="button" class="logout-cancel-button" id="logout-cancel-button">Stay Logged In</button>
+                <button type="button" class="logout-confirm-button" id="logout-confirm-button">Logout</button>
+            </div>
+        </div>
+    </dialog>
+
+    @stack('scripts')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const logoutForm = document.getElementById('logout-form');
+            const openButton = document.getElementById('logout-open-button');
+            const modal = document.getElementById('logout-confirmation-modal');
+            const cancelButton = document.getElementById('logout-cancel-button');
+            const confirmButton = document.getElementById('logout-confirm-button');
+
+            if (!logoutForm || !openButton || !modal || !cancelButton || !confirmButton) {
+                return;
+            }
+
+            // Open the logout dialog, with a browser confirm fallback when needed.
+            openButton.addEventListener('click', function () {
+                if (typeof modal.showModal === 'function') {
+                    modal.showModal();
+                    cancelButton.focus();
+                    return;
+                }
+
+                if (window.confirm('Are you sure you want to log out of the system?')) {
+                    logoutForm.submit();
+                }
+            });
+
+            // Return focus to the logout button when the user cancels.
+            cancelButton.addEventListener('click', function () {
+                modal.close();
+                openButton.focus();
+            });
+
+            // Disable the confirmation button once logout submission starts.
+            confirmButton.addEventListener('click', function () {
+                confirmButton.disabled = true;
+                confirmButton.textContent = 'Logging out...';
+                logoutForm.submit();
+            });
+
+            // Close the dialog when the backdrop itself is clicked.
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    modal.close();
+                    openButton.focus();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

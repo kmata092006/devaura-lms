@@ -5,9 +5,27 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\DepartmentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
+    private const MANUAL_OPTION = '__manual__';
+
+    /**
+     * Standard school subject departments shown in the department dropdown.
+     */
+    private const PRESET_DEPARTMENTS = [
+        'English Department',
+        'Mathematics Department',
+        'Science Department',
+        'Filipino Department',
+        'TLE Department',
+        'MAPEH Department',
+        'ESP Department',
+        'Araling Panlipunan Department',
+    ];
+
     private DepartmentService $departmentService;
 
     /**
@@ -23,7 +41,9 @@ class DepartmentController extends Controller
      */
     public function index(Request $request)
     {
-        $departments = $this->departmentService->getDepartments($request->query('search'));
+        $departments = $this->departmentService->getDepartments(
+            $request->query('search')
+        );
 
         return view('admin.departments.index', compact('departments'));
     }
@@ -33,7 +53,10 @@ class DepartmentController extends Controller
      */
     public function create()
     {
-        return view('admin.departments.create');
+        return view('admin.departments.create', [
+            'presetDepartments' => self::PRESET_DEPARTMENTS,
+            'manualOption' => self::MANUAL_OPTION,
+        ]);
     }
 
     /**
@@ -57,7 +80,11 @@ class DepartmentController extends Controller
     {
         $department = $this->departmentService->findDepartment($departmentId);
 
-        return view('admin.departments.edit', compact('department'));
+        return view('admin.departments.edit', [
+            'department' => $department,
+            'presetDepartments' => self::PRESET_DEPARTMENTS,
+            'manualOption' => self::MANUAL_OPTION,
+        ]);
     }
 
     /**
@@ -67,7 +94,10 @@ class DepartmentController extends Controller
     {
         $validated = $this->validateDepartment($request, $departmentId);
 
-        $this->departmentService->updateDepartment($departmentId, $validated);
+        $this->departmentService->updateDepartment(
+            $departmentId,
+            $validated
+        );
 
         return redirect()
             ->route('admin.departments.index')
@@ -87,21 +117,92 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Validates department form input and unique names.
+     * Resolves the selected preset or manual department name, normalizes it,
+     * and validates the final value.
      */
-    private function validateDepartment(Request $request, ?int $departmentId = null): array
-    {
-        return $request->validate([
+    private function validateDepartment(
+        Request $request,
+        ?int $departmentId = null
+    ): array {
+        $allowedOptions = array_merge(
+            self::PRESET_DEPARTMENTS,
+            [self::MANUAL_OPTION]
+        );
+
+        $selection = $request->validate([
+            'department_option' => [
+                'required',
+                Rule::in($allowedOptions),
+            ],
+
+            'manual_department_name' => [
+                Rule::requiredIf(
+                    fn (): bool =>
+                        $request->input('department_option')
+                        === self::MANUAL_OPTION
+                ),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+        ], [
+            'department_option.required' =>
+                'Please select a department or choose manual input.',
+
+            'department_option.in' =>
+                'The selected department option is invalid.',
+
+            'manual_department_name.required' =>
+                'Please enter the department name.',
+
+            'manual_department_name.max' =>
+                'The department name must not exceed 100 characters.',
+        ]);
+
+        $departmentName =
+            $selection['department_option'] === self::MANUAL_OPTION
+                ? (string) ($selection['manual_department_name'] ?? '')
+                : (string) $selection['department_option'];
+
+        // Normalize spacing before uniqueness and format validation.
+        $departmentName = preg_replace(
+            '/\s+/u',
+            ' ',
+            trim($departmentName)
+        );
+
+        $validator = Validator::make([
+            'department_name' => $departmentName,
+        ], [
             'department_name' => [
                 'required',
                 'string',
                 'max:100',
-                'regex:/^[a-zA-Z\s]+$/', // Strictly alphabetic characters and spaces only
-                'unique:department,department_name,' . $departmentId . ',department_id',
+
+                // Require one letter and allow safe department-name punctuation.
+                'regex:/^(?=.*\pL)[\pL\pN][\pL\pN\s\-\/._]*$/u',
+
+                Rule::unique('department', 'department_name')
+                    ->ignore($departmentId, 'department_id'),
             ],
         ], [
-            // Custom error message for a better user experience
-            'department_name.regex' => 'The department name may only contain letters and spaces.'
+            'department_name.required' =>
+                'The department name is required.',
+
+            'department_name.max' =>
+                'The department name must not exceed 100 characters.',
+
+            'department_name.regex' =>
+                'The department name must contain at least one letter. Only letters, numbers, spaces, hyphens (-), slashes (/), periods (.), and underscores (_) are allowed.',
+
+            'department_name.unique' =>
+                'This department already exists.',
         ]);
+
+        $validatedDepartment = $validator->validate();
+
+        return [
+            'department_name' => $validatedDepartment['department_name'],
+        ];
     }
 }

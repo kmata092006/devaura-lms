@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class LibraryPersonnel extends Model
 {
+    /**
+     * Maps personnel records to the legacy library_personnel table.
+     */
     protected $table = 'library_personnel';
 
     protected $primaryKey = 'personnel_id';

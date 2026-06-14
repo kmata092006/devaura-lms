@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create queue job, batch, and failed-job tables.
      */
     public function up(): void
     {
@@ -46,7 +46,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Remove queue job, batch, and failed-job tables.
      */
     public function down(): void
     {

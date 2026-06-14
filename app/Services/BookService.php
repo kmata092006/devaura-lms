@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BookService
 {
@@ -138,21 +139,43 @@ class BookService
     }
 
     /**
-     * Deletes a book only when it has no borrowing history.
+     * Deletes a book only after active Borrowed or Overdue transactions have
+     * been closed. Completed transaction rows are removed with the book.
      */
     public function deleteBook(int $bookId): void
     {
-        $hasBorrowTransactions = DB::table('borrow_transaction')
-            ->where('book_id', $bookId)
-            ->exists();
+        DB::transaction(function () use ($bookId) {
+            $book = DB::table('book')
+                ->where('book_id', $bookId)
+                ->lockForUpdate()
+                ->first();
 
-        if ($hasBorrowTransactions) {
-            abort(422, 'This book cannot be deleted because it already has borrow transaction records.');
-        }
+            if (!$book) {
+                throw ValidationException::withMessages([
+                    'book' => 'Book record not found.',
+                ]);
+            }
 
-        DB::table('book')
-            ->where('book_id', $bookId)
-            ->delete();
+            $activeTransaction = DB::table('borrow_transaction')
+                ->where('book_id', $bookId)
+                ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
+                ->lockForUpdate()
+                ->first();
+
+            if ($book->book_status === 'Borrowed' || $activeTransaction !== null) {
+                throw ValidationException::withMessages([
+                    'book' => 'This book cannot be deleted while it has an active borrowing transaction.',
+                ]);
+            }
+
+            DB::table('borrow_transaction')
+                ->where('book_id', $bookId)
+                ->delete();
+
+            DB::table('book')
+                ->where('book_id', $bookId)
+                ->delete();
+        });
     }
 
     /**

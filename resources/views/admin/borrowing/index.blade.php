@@ -4,6 +4,7 @@
 @section('page-title', 'Borrow Book')
 
 @section('content')
+    {{-- Starts a borrowing workflow and links back to book maintenance. --}}
     <div class="page-actions">
         <div>
             <h2>Borrow Book Transaction</h2>
@@ -27,6 +28,7 @@
         </div>
     @endif
 
+    {{-- Creates a borrow transaction from an eligible member and available book. --}}
     <div class="borrow-layout">
         <div class="form-card borrow-form-card">
             <div class="form-card-header">
@@ -43,7 +45,6 @@
                         <option value="">Select library member</option>
                         @foreach ($members as $member)
                             <option value="{{ $member->member_id }}" {{ old('member_id') == $member->member_id ? 'selected' : '' }}>
-                                [ID: {{ $member->member_id }}]
                                 {{ $member->first_name }}
                                 {{ $member->middle_initial ? $member->middle_initial . '.' : '' }}
                                 {{ $member->last_name }}
@@ -58,11 +59,18 @@
                     <select name="book_id" id="book_id" required>
                         <option value="">Select available book</option>
                         @foreach ($availableBooks as $book)
+                            @php
+                                $authorName = trim(implode(' ', array_filter([
+                                    $book->author_first_name ?? null,
+                                    !empty($book->author_middle_initial)
+                                        ? $book->author_middle_initial . '.'
+                                        : null,
+                                    $book->author_last_name ?? null,
+                                ])));
+                            @endphp
+
                             <option value="{{ $book->book_id }}" {{ old('book_id') == $book->book_id ? 'selected' : '' }}>
-                                [ID: {{ $book->book_id }}]
-                                {{ $book->book_title }}
-                                {{ $book->isbn ? '— ISBN: ' . $book->isbn : '' }}
-                                {{ $book->genre_name ? '— ' . $book->genre_name : '' }}
+                                {{ $book->book_title }} — {{ $authorName !== '' ? $authorName : 'Author unknown' }}
                             </option>
                         @endforeach
                     </select>
@@ -120,53 +128,100 @@
         </div>
     </div>
 
+    {{-- Filters active borrowed and overdue transactions. --}}
     <form method="GET" action="{{ route('admin.borrow.index') }}" class="filter-form">
         <input
             type="text"
             name="search"
             value="{{ request('search') }}"
-            placeholder="Search by transaction ID, member, book, ISBN, or status"
+            placeholder="Search by member, book title, author, ISBN, or status"
         >
 
         <button type="submit">Search</button>
         <a href="{{ route('admin.borrow.index') }}" class="secondary-button">Reset</a>
     </form>
 
-    <div class="table-card">
-        <table class="data-table borrow-table">
-            <thead>
-                <tr>
-                    <th>Member</th>
-                    <th>Role</th>
-                    <th>Book</th>
-                    <th>ISBN</th>
-                    <th>Borrow Date</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($activeTransactions as $transaction)
-                    <tr>
-                        <td>{{ $transaction->member_first_name }} {{ $transaction->member_middle_initial ? $transaction->member_middle_initial . '.' : '' }} {{ $transaction->member_last_name }}</td>
-                        <td><span class="role-pill">{{ ucfirst($transaction->member_role) }}</span></td>
-                        <td class="book-title-cell">{{ $transaction->book_title }}</td>
-                        <td>{{ $transaction->isbn ?? '-' }}</td>
-                        <td>{{ $transaction->borrow_date }}</td>
-                        <td>{{ $transaction->due_date }}</td>
-                        <td>
-                            <span class="status-label status-{{ str_replace(' ', '-', strtolower($transaction->borrow_status)) }}">
+    <div class="system-records-shell borrow-records-shell">
+        <div class="system-records-meta">
+            <div>
+                <h3>Active Borrowed Transactions</h3>
+                <p>{{ $activeTransactions->total() }} active {{ \Illuminate\Support\Str::plural('transaction', $activeTransactions->total()) }}</p>
+            </div>
+        </div>
+
+        <div class="system-record-list">
+            @forelse ($activeTransactions as $transaction)
+                @php
+                    // Prepare borrower display details and overdue styling for the card.
+                    $borrowMemberName = trim(implode(' ', array_filter([
+                        $transaction->member_first_name,
+                        $transaction->member_middle_initial
+                            ? rtrim($transaction->member_middle_initial, '.') . '.'
+                            : null,
+                        $transaction->member_last_name,
+                    ])));
+                    $borrowInitials = strtoupper(
+                        substr($transaction->member_first_name ?? 'M', 0, 1)
+                        . substr($transaction->member_last_name ?? '', 0, 1)
+                    );
+                    $borrowDate = \Illuminate\Support\Carbon::parse($transaction->borrow_date);
+                    $dueDate = \Illuminate\Support\Carbon::parse($transaction->due_date);
+                    $isOverdue = $transaction->borrow_status === 'Overdue';
+                @endphp
+
+                <article class="system-record-card {{ $isOverdue ? 'is-overdue' : '' }}">
+                    <header class="system-record-header">
+                        <div class="system-record-identity">
+                            <div class="system-record-avatar {{ $isOverdue ? '' : 'is-green' }}" aria-hidden="true">
+                                {{ $borrowInitials ?: 'MB' }}
+                            </div>
+                            <div class="system-record-copy">
+                                <span class="system-record-eyebrow">Borrower</span>
+                                <h3>{{ $borrowMemberName }}</h3>
+                                <p>{{ ucfirst($transaction->member_role) }} member</p>
+                            </div>
+                        </div>
+
+                        <div class="system-record-badges">
+                            <span class="system-record-badge {{ $isOverdue ? 'is-danger' : '' }}">
                                 {{ $transaction->borrow_status }}
                             </span>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="empty-table">No active borrow transactions found.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                        </div>
+                    </header>
+
+                    <div class="system-record-body borrow-record-grid">
+                        <div class="system-record-field is-primary">
+                            <span>Borrowed Book</span>
+                            <strong>{{ $transaction->book_title }}</strong>
+                            <small>{{ $transaction->isbn ?: 'ISBN not available' }}</small>
+                        </div>
+
+                        <div class="system-record-field">
+                            <span>Member Role</span>
+                            <strong>{{ ucfirst($transaction->member_role) }}</strong>
+                        </div>
+
+                        <div class="system-record-field">
+                            <span>Borrow Date</span>
+                            <strong>{{ $borrowDate->format('M d, Y') }}</strong>
+                        </div>
+
+                        <div class="system-record-field {{ $isOverdue ? 'is-danger' : '' }}">
+                            <span>Due Date</span>
+                            <strong>{{ $dueDate->format('M d, Y') }}</strong>
+                            @if ($isOverdue)
+                                <small>Past the return deadline</small>
+                            @endif
+                        </div>
+                    </div>
+                </article>
+            @empty
+                <div class="system-record-empty">
+                    <strong>No active borrow transactions found</strong>
+                    Borrowed and overdue transactions will appear here.
+                </div>
+            @endforelse
+        </div>
     </div>
 
     <div class="pagination-wrapper">

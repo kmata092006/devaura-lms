@@ -4,6 +4,7 @@
 @section('page-title', 'Book List / Search')
 
 @section('content')
+    {{-- Provides a read-only catalog search entry point. --}}
     <div class="page-actions">
         <div>
             <h2>Complete Book List</h2>
@@ -13,6 +14,7 @@
         <a href="{{ route('admin.books.index') }}" class="action-button">Go to Book Management</a>
     </div>
 
+    {{-- Applies catalog search and dropdown filters through query parameters. --}}
     <form method="GET" action="{{ route('admin.book-list.index') }}" class="book-list-filter-form">
         <div class="form-group">
             <label for="search">Search</label>
@@ -21,7 +23,7 @@
                 name="search"
                 id="search"
                 value="{{ request('search') }}"
-                placeholder="Search by ID, ISBN, title, author, publisher, genre, or status"
+                placeholder="Search by ISBN, title, author, publisher, genre, or status"
             >
         </div>
 
@@ -88,51 +90,86 @@
         book record{{ $books->total() === 1 ? '' : 's' }} found.
     </div>
 
-    <div class="table-card">
-        <table class="data-table book-list-table">
-            <thead>
-                <tr>
-                    <th>ISBN</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Publisher</th>
-                    <th>Date Published</th>
-                    <th>Genre</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($books as $book)
-                    <tr>
-                        <td>{{ $book->isbn ?? '-' }}</td>
-                        <td class="book-title-cell">{{ $book->book_title }}</td>
-                        <td>
-                            {{ $book->author_first_name }}
-                            {{ $book->author_middle_initial ? $book->author_middle_initial . '.' : '' }}
-                            {{ $book->author_last_name }}
-                        </td>
-                        <td>
-                            {{ $book->publisher_first_name }}
-                            {{ $book->publisher_middle_initial ? $book->publisher_middle_initial . '.' : '' }}
-                            {{ $book->publisher_last_name }}
-                        </td>
-                        <td>{{ $book->date_published ?? '-' }}</td>
-                        <td>{{ $book->genre_name }}</td>
-                        <td>
-                            <span class="status-label status-{{ str_replace(' ', '-', strtolower($book->book_status)) }}">
+    <div class="system-records-shell book-list-records-shell">
+        <div class="system-records-meta">
+            <div>
+                <h3>Book Catalog Records</h3>
+                <p>{{ $books->total() }} {{ \Illuminate\Support\Str::plural('book', $books->total()) }} found</p>
+            </div>
+        </div>
+
+        <div class="system-record-list">
+            @forelse ($books as $book)
+                @php
+                    // Format related author and publisher names for the catalog card.
+                    $bookAuthorName = trim(implode(' ', array_filter([
+                        $book->author_first_name,
+                        $book->author_middle_initial
+                            ? rtrim($book->author_middle_initial, '.') . '.'
+                            : null,
+                        $book->author_last_name,
+                    ])));
+                    $bookPublisherName = trim(implode(' ', array_filter([
+                        $book->publisher_first_name,
+                        $book->publisher_middle_initial
+                            ? rtrim($book->publisher_middle_initial, '.') . '.'
+                            : null,
+                        $book->publisher_last_name,
+                    ])));
+                @endphp
+
+                <article class="system-record-card {{ $book->book_status === 'Borrowed' ? 'is-warning' : '' }}">
+                    <header class="system-record-header">
+                        <div class="system-record-identity">
+                            <div class="system-record-avatar" aria-hidden="true">BK</div>
+                            <div class="system-record-copy">
+                                <span class="system-record-eyebrow">Catalog Record</span>
+                                <h3>{{ $book->book_title }}</h3>
+                                <p>{{ $bookAuthorName !== '' ? $bookAuthorName : 'Author not available' }}</p>
+                            </div>
+                        </div>
+
+                        <div class="system-record-badges">
+                            <span class="system-record-badge status-{{ str_replace(' ', '-', strtolower($book->book_status)) }}">
                                 {{ $book->book_status }}
                             </span>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="empty-table">
-                            No books matched your search or filter.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                        </div>
+                    </header>
+
+                    <div class="system-record-body book-list-record-grid">
+                        <div class="system-record-field">
+                            <span>ISBN</span>
+                            <strong>{{ $book->isbn ?: 'Not available' }}</strong>
+                        </div>
+
+                        <div class="system-record-field">
+                            <span>Publisher</span>
+                            <strong>{{ $bookPublisherName !== '' ? $bookPublisherName : 'Not available' }}</strong>
+                        </div>
+
+                        <div class="system-record-field">
+                            <span>Date Published</span>
+                            <strong>{{ $book->date_published ?: 'Not available' }}</strong>
+                        </div>
+
+                        <div class="system-record-field">
+                            <span>Genre</span>
+                            <strong>{{ $book->genre_name ?: 'Not available' }}</strong>
+                        </div>
+
+                        <div class="system-record-field is-muted">
+                            <span>Book Status</span>
+                            <strong>{{ $book->book_status }}</strong>
+                        </div>
+                    </div>
+                </article>
+            @empty
+                <div class="system-record-empty">
+                    <strong>No books matched your search</strong>
+                    Adjust the search term or selected filters.
+                </div>
+            @endforelse
+        </div>
     </div>
 
     <div class="pagination-wrapper">

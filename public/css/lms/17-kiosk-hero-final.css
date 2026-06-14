@@ -1,6 +1,4 @@
-/* =====================================================
-   FINAL KIOSK HERO DATE / TIME SWAP
-===================================================== */
+/* Kiosk hero layout for the live date and time display. */
 
 .kiosk-hero-final {
     width: min(100%, 1060px) !important;
