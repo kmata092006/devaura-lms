@@ -309,3 +309,490 @@
     }
 }
 
+
+/* =========================================================
+   BOOK LIST — STATUS-AWARE RECORD CARDS
+   ========================================================= */
+
+.book-list-page-actions .book-list-eyebrow {
+    display: block;
+    margin-bottom: 7px;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.book-status-guide {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    margin-bottom: 20px;
+    padding: 18px 22px;
+    border: 1px solid #dbe5f1;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.book-status-guide-copy h3 {
+    margin: 0 0 5px;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.book-status-guide-copy p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.book-status-guide-items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.book-status-guide-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 34px;
+    padding: 7px 11px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.book-status-guide-dot,
+.book-list-status-dot {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 9px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.book-status-guide-item.is-available {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.book-status-guide-item.is-borrowed {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.book-status-guide-item.is-lost {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.book-status-guide-item.is-damaged {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.book-list-search-field {
+    min-width: 0;
+}
+
+.book-list-records-shell {
+    overflow: hidden;
+    border: 1px solid #dbe5f1;
+    border-radius: 22px;
+    background: #f4f7fb;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
+}
+
+.book-list-records-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 21px 24px;
+    border-bottom: 1px solid #dbe5f1;
+    background: #ffffff;
+}
+
+.book-list-records-header h3 {
+    margin: 0 0 4px;
+    color: #0f172a;
+    font-size: 21px;
+    font-weight: 900;
+}
+
+.book-list-records-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.book-list-records-header p strong {
+    color: #0f172a;
+}
+
+.book-list-records {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+}
+
+.book-list-record {
+    --book-status-color: #2563eb;
+    --book-status-soft: #eff6ff;
+    --book-status-border: #bfdbfe;
+
+    overflow: hidden;
+    border: 1px solid #dbe5f1;
+    border-left: 5px solid var(--book-status-color);
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.book-list-record.status-card-available {
+    --book-status-color: #16a34a;
+    --book-status-soft: #f0fdf4;
+    --book-status-border: #bbf7d0;
+}
+
+.book-list-record.status-card-borrowed {
+    --book-status-color: #2563eb;
+    --book-status-soft: #eff6ff;
+    --book-status-border: #bfdbfe;
+}
+
+.book-list-record.status-card-lost {
+    --book-status-color: #dc2626;
+    --book-status-soft: #fef2f2;
+    --book-status-border: #fecaca;
+}
+
+.book-list-record.status-card-damaged {
+    --book-status-color: #ea580c;
+    --book-status-soft: #fff7ed;
+    --book-status-border: #fed7aa;
+}
+
+.book-list-record.status-card-reserved {
+    --book-status-color: #7c3aed;
+    --book-status-soft: #f5f3ff;
+    --book-status-border: #ddd6fe;
+}
+
+.book-list-record.status-card-under-repair {
+    --book-status-color: #ca8a04;
+    --book-status-soft: #fefce8;
+    --book-status-border: #fde68a;
+}
+
+.book-list-record-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(90deg, #ffffff 0%, var(--book-status-soft) 170%);
+}
+
+.book-list-record-identity {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 13px;
+}
+
+.book-list-record-avatar {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--book-status-border);
+    border-radius: 15px;
+    background: var(--book-status-soft);
+    color: var(--book-status-color);
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.book-list-record-title {
+    min-width: 0;
+}
+
+.book-list-record-title > span,
+.book-list-detail > span {
+    display: block;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.book-list-record-title h4 {
+    margin: 3px 0 3px;
+    overflow-wrap: anywhere;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+.book-list-record-title p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.book-list-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 32px;
+    padding: 6px 11px;
+    border: 1px solid var(--book-status-border);
+    border-radius: 999px;
+    background: var(--book-status-soft);
+    color: var(--book-status-color);
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.book-list-record-details {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.book-list-detail {
+    min-width: 0;
+    padding: 17px 18px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.book-list-detail:last-child {
+    border-right: none;
+}
+
+.book-list-detail strong {
+    display: block;
+    margin-top: 6px;
+    overflow-wrap: anywhere;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 850;
+    line-height: 1.45;
+}
+
+.book-list-status-detail {
+    background: var(--book-status-soft);
+}
+
+.book-list-status-value {
+    display: flex !important;
+    align-items: center;
+    gap: 7px;
+    color: var(--book-status-color) !important;
+}
+
+.book-list-status-detail small {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.book-list-record-footer {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 10px 18px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.book-list-record-footer.is-available {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.book-list-record-footer.is-unavailable {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.book-list-availability-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: currentColor;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 950;
+}
+
+.book-list-empty-state {
+    padding: 56px 24px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 18px;
+    background: #ffffff;
+    text-align: center;
+}
+
+.book-list-empty-icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 27px;
+    font-weight: 900;
+}
+
+.book-list-empty-state h3 {
+    margin: 0 0 7px;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.book-list-empty-state p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+    .book-list-record-details {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .book-list-detail:nth-child(3) {
+        border-right: none;
+    }
+
+    .book-list-detail:nth-child(n + 4) {
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .book-list-detail:nth-child(4) {
+        border-right: 1px solid #e2e8f0;
+    }
+
+    .book-list-status-detail {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 900px) {
+    .book-status-guide {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .book-status-guide-items {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 720px) {
+    .book-list-record-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .book-list-record-details {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .book-list-detail,
+    .book-list-detail:nth-child(3),
+    .book-list-detail:nth-child(4) {
+        border-right: 1px solid #e2e8f0;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .book-list-detail:nth-child(odd) {
+        border-right: 1px solid #e2e8f0;
+    }
+
+    .book-list-detail:nth-child(even) {
+        border-right: none;
+    }
+
+    .book-list-detail:first-child,
+    .book-list-detail:nth-child(2) {
+        border-top: none;
+    }
+
+    .book-list-status-detail {
+        grid-column: 1 / -1;
+        border-right: none !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .book-status-guide-items {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+    }
+
+    .book-status-guide-item {
+        justify-content: center;
+    }
+
+    .book-list-records {
+        padding: 13px;
+    }
+
+    .book-list-record-header,
+    .book-list-records-header {
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+
+    .book-list-record-details {
+        grid-template-columns: 1fr;
+    }
+
+    .book-list-detail,
+    .book-list-detail:nth-child(odd),
+    .book-list-detail:nth-child(even),
+    .book-list-detail:nth-child(3),
+    .book-list-detail:nth-child(4) {
+        grid-column: auto;
+        border-top: 1px solid #e2e8f0;
+        border-right: none;
+    }
+
+    .book-list-detail:first-child {
+        border-top: none;
+    }
+}
