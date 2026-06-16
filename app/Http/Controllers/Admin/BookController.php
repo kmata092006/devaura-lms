@@ -95,7 +95,8 @@ class BookController extends Controller
             $search = trim($request->query('search'));
 
             $query->where(function ($q) use ($search) {
-                $q->where('book.book_title', 'like', "%{$search}%")
+                $q->where('book.book_id', 'like', "%{$search}%")
+                    ->orWhere('book.book_title', 'like', "%{$search}%")
                     ->orWhere('book.isbn', 'like', "%{$search}%")
                     ->orWhere('book.book_status', 'like', "%{$search}%")
                     ->orWhere('genre.genre_name', 'like', "%{$search}%")
@@ -260,18 +261,15 @@ class BookController extends Controller
         $book->author_name = $formattedAuthorName === '-' ? '' : $formattedAuthorName;
         $book->publisher_name = $formattedPublisherName === '-' ? '' : $formattedPublisherName;
 
-        $transactionSummary = DB::table('borrow_transaction')
+        $activeTransaction = DB::table('borrow_transaction')
             ->where('book_id', $bookId)
-            ->selectRaw('COUNT(*) as total_transactions')
-            ->selectRaw(
-                "SUM(CASE WHEN borrow_status IN ('Borrowed', 'Overdue') THEN 1 ELSE 0 END) as active_transactions"
-            )
+            ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
+            ->orderByDesc('transaction_id')
             ->first();
 
-        $book->borrow_transaction_count = (int) ($transactionSummary->total_transactions ?? 0);
-        $book->active_borrow_transaction_count = (int) ($transactionSummary->active_transactions ?? 0);
-        $book->has_transaction_history = $book->borrow_transaction_count > 0;
-        $book->has_active_transaction = $book->active_borrow_transaction_count > 0;
+        $book->has_active_transaction = $activeTransaction !== null;
+        $book->active_transaction_id = $activeTransaction?->transaction_id;
+        $book->active_transaction_status = $activeTransaction?->borrow_status;
 
         $statuses = $this->bookStatuses;
         $controlledGenres = $this->controlledGenres;
@@ -285,8 +283,7 @@ class BookController extends Controller
 
     /**
      * Validates and updates an existing book record without mutating shared
-     * catalog records used by other books. Once borrowing history exists, the
-     * circulation status is preserved and can only change through transactions.
+     * catalog records used by other books. Optional metadata may be cleared.
      */
     public function update(Request $request, $bookId)
     {
@@ -309,30 +306,35 @@ class BookController extends Controller
                 ]);
             }
 
-            $transactionHistory = DB::table('borrow_transaction')
+            $activeTransaction = DB::table('borrow_transaction')
                 ->where('book_id', $bookId)
-                ->select('transaction_id', 'borrow_status')
+                ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
+                ->orderByDesc('transaction_id')
                 ->lockForUpdate()
-                ->get();
+                ->first();
 
-            $hasTransactionHistory = $transactionHistory->isNotEmpty();
             $requestedStatus = $validated['book_status'];
 
-            if ($hasTransactionHistory && $requestedStatus !== $book->book_status) {
+            if ($activeTransaction && !in_array($requestedStatus, ['Borrowed', 'Available'], true)) {
                 throw ValidationException::withMessages([
-                    'book_status' => 'This book status is managed by borrowing and return transactions. Lost and Damaged books cannot be changed back to Available from the Edit Book page.',
+                    'book_status' => 'This book has an active borrowing transaction. Use the Return Book module to mark it as Lost or Damaged, or select Available to complete the return.',
                 ]);
             }
 
-            if (!$hasTransactionHistory && $requestedStatus === 'Borrowed') {
+            if (!$activeTransaction && $requestedStatus === 'Borrowed') {
                 throw ValidationException::withMessages([
                     'book_status' => 'A book can only become Borrowed through the Borrow Book module so a member and due date are recorded.',
                 ]);
             }
 
-            $statusToSave = $hasTransactionHistory
-                ? $book->book_status
-                : $requestedStatus;
+            if ($activeTransaction && $requestedStatus === 'Available') {
+                DB::table('borrow_transaction')
+                    ->where('transaction_id', $activeTransaction->transaction_id)
+                    ->update([
+                        'return_date' => now()->toDateString(),
+                        'borrow_status' => 'Returned',
+                    ]);
+            }
 
             $authorId = $this->findOrCreateAuthor($validated['author_name'] ?? null);
             $publisherId = $this->findOrCreatePublisher(
@@ -349,76 +351,50 @@ class BookController extends Controller
                     'genre_id' => $genreId,
                     'isbn' => $this->cleanIsbn($validated['isbn'] ?? null),
                     'book_title' => $validated['book_title'],
-                    'book_status' => $statusToSave,
+                    'book_status' => $requestedStatus,
                 ]);
         });
 
         return redirect()
             ->route('admin.books.index')
-            ->with('success', 'Book updated successfully. The transaction-managed status was preserved.');
+            ->with('success', 'Book updated successfully. Related borrowing and catalog modules were synchronized.');
     }
 
     /**
-     * Deletes a book after all active borrowing transactions have been closed.
-     * Completed transaction rows are removed with the book so the database does
-     * not retain orphaned references to a deleted catalog record.
+     * Deletes a book only when it has no borrowing transaction records.
      */
     public function destroy($bookId)
     {
-        try {
-            $deletedCompletedTransactions = DB::transaction(function () use ($bookId) {
-                $book = DB::table('book')
-                    ->where('book_id', $bookId)
-                    ->lockForUpdate()
-                    ->first();
+        $book = DB::table('book')
+            ->where('book_id', $bookId)
+            ->first();
 
-                if (!$book) {
-                    throw ValidationException::withMessages([
-                        'book' => 'Book record not found.',
-                    ]);
-                }
-
-                $activeTransaction = DB::table('borrow_transaction')
-                    ->where('book_id', $bookId)
-                    ->whereIn('borrow_status', ['Borrowed', 'Overdue'])
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($book->book_status === 'Borrowed' || $activeTransaction !== null) {
-                    throw ValidationException::withMessages([
-                        'book' => 'This book cannot be deleted while it has an active borrowing transaction.',
-                    ]);
-                }
-
-                $completedTransactionCount = DB::table('borrow_transaction')
-                    ->where('book_id', $bookId)
-                    ->count();
-
-                if ($completedTransactionCount > 0) {
-                    DB::table('borrow_transaction')
-                        ->where('book_id', $bookId)
-                        ->delete();
-                }
-
-                DB::table('book')
-                    ->where('book_id', $bookId)
-                    ->delete();
-
-                return $completedTransactionCount;
-            });
-        } catch (ValidationException $exception) {
+        if (!$book) {
             return redirect()
                 ->route('admin.books.index')
-                ->withErrors($exception->errors());
+                ->withErrors(['book' => 'Book record not found.']);
         }
 
-        $message = $deletedCompletedTransactions > 0
-            ? 'Book and completed borrowing history deleted successfully.'
-            : 'Book deleted successfully.';
+        // Prevents deletion of books that are already part of borrow history.
+        $hasBorrowTransaction = DB::table('borrow_transaction')
+            ->where('book_id', $bookId)
+            ->exists();
+
+        if ($book->book_status === 'Borrowed' || $hasBorrowTransaction) {
+            return redirect()
+                ->route('admin.books.index')
+                ->withErrors([
+                    'book' => 'This book cannot be deleted because it is borrowed or has linked borrowing records.',
+                ]);
+        }
+
+        DB::table('book')
+            ->where('book_id', $bookId)
+            ->delete();
 
         return redirect()
             ->route('admin.books.index')
-            ->with('success', $message);
+            ->with('success', 'Book deleted successfully.');
     }
 
     /**
@@ -427,11 +403,17 @@ class BookController extends Controller
     public function searchBookLookup(Request $request, BookLookupService $bookLookupService)
     {
         $validated = $request->validate([
-            'query' => ['required', 'string', 'max:255'],
+            'query' => ['required', 'string', 'min:2', 'max:255'],
+        ], [
+            'query.required' => 'Enter an ISBN, book title, or title with author.',
+            'query.min' => 'Enter at least two characters to search for a book.',
+            'query.max' => 'The book lookup search cannot exceed 255 characters.',
         ]);
 
+        $query = trim(preg_replace('/\s+/u', ' ', $validated['query']) ?? '');
+
         return response()->json(
-            $bookLookupService->search($validated['query'])
+            $bookLookupService->search($query)
         );
     }
 

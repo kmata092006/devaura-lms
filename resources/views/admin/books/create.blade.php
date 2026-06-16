@@ -5,12 +5,10 @@
 
 @section('content')
     @php
-        // Restore genre inputs after validation errors.
         $selectedGenreChoice = old('genre_choice', '');
         $otherGenreValue = old('genre_other', '');
     @endphp
 
-    {{-- Introduces the add-book workflow and returns to book management. --}}
     <div class="page-actions">
         <div>
             <h2>Add Book</h2>
@@ -32,15 +30,14 @@
         </div>
     @endif
 
-    {{-- Lets admins search external catalog sources before filling the form manually. --}}
     <div class="book-lookup-card">
         <div class="book-lookup-header">
             <div>
                 <span class="book-lookup-eyebrow">Optional Book Search</span>
                 <h3>Book Lookup</h3>
                 <p>
-                    Search by ISBN or title to retrieve available catalog details.
-                    Results may be incomplete, so verify all information before saving.
+                    Search by ISBN, complete title, or title with author. The lookup checks Google Books
+                    and Open Library, then combines matching edition details when available.
                 </p>
             </div>
         </div>
@@ -50,7 +47,7 @@
                 type="text"
                 id="bookLookupQuery"
                 maxlength="255"
-                placeholder="Enter ISBN or complete book title"
+                placeholder="Enter ISBN, complete title, or title by author"
                 autocomplete="off"
             >
 
@@ -63,7 +60,6 @@
         <div id="bookLookupResults" class="book-lookup-results"></div>
     </div>
 
-    {{-- Stores a new book with controlled genre rules and optional metadata. --}}
     <form
         method="POST"
         action="{{ route('admin.books.store') }}"
@@ -322,7 +318,6 @@
     </form>
 
     <script>
-        // Cache form URLs, server-controlled lists, and DOM elements used by the form.
         const bookLookupSearchUrl = @json(route('admin.books.book-lookup.search'));
         const controlledGenres = @json($controlledGenres);
 
@@ -346,7 +341,6 @@
         const publisherPattern = /^(?=.*\p{L})[\p{L}\p{M}\p{N}\s.,'’&()\-]+$/u;
         const genrePattern = /^(?=.*\p{L})[\p{L}\p{M}\p{N}\s&/,'’\-]+$/u;
 
-        // Initialize the genre field and wire up form validation events.
         toggleOtherGenre();
 
         genreChoiceSelect.addEventListener('change', function () {
@@ -381,7 +375,6 @@
 
         bookLookupSearchButton.addEventListener('click', searchBookLookup);
 
-        // Allow the lookup box to submit on Enter without submitting the book form.
         bookLookupQuery.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
@@ -389,7 +382,6 @@
             }
         });
 
-        // Validate client-side fields before allowing the server save request.
         addBookForm.addEventListener('submit', function (event) {
             validateIsbnField();
             validateCatalogInput(authorNameInput, authorPattern, 'Enter a valid author name.');
@@ -411,7 +403,6 @@
             saveBookButton.textContent = 'Saving...';
         });
 
-        // Shows the custom genre input only when the standard list is not enough.
         function toggleOtherGenre() {
             const useOther = genreChoiceSelect.value === 'Other';
 
@@ -424,7 +415,6 @@
             }
         }
 
-        // Accepts blank ISBNs, but validates length and check digit when provided.
         function validateIsbnField() {
             const isbn = isbnInput.value;
 
@@ -447,7 +437,6 @@
             return true;
         }
 
-        // Validates ISBN-10 and ISBN-13 check digits.
         function isValidIsbn(isbn) {
             if (/^[0-9]{10}$/.test(isbn)) {
                 let sum = 0;
@@ -474,7 +463,6 @@
             return false;
         }
 
-        // Sanitizes and validates catalog text fields as the user edits them.
         function configureCatalogInput(input, disallowedCharacters, validationPattern, validationMessage) {
             input.addEventListener('input', function () {
                 this.value = this.value.replace(disallowedCharacters, '');
@@ -487,7 +475,6 @@
             });
         }
 
-        // Applies the required and pattern rules to one catalog text input.
         function validateCatalogInput(input, validationPattern, validationMessage) {
             const value = normalizeSpaces(input.value);
             input.value = value;
@@ -506,81 +493,127 @@
             return true;
         }
 
-        // Collapses repeated spaces before display, validation, and storage.
         function normalizeSpaces(value) {
             return String(value || '').replace(/\s+/g, ' ').trim();
         }
 
-        // Queries the lookup endpoint and renders available catalog matches.
         async function searchBookLookup() {
-            const query = bookLookupQuery.value.trim();
+            const query = normalizeSpaces(bookLookupQuery.value);
 
-            if (!query) {
-                showBookLookupMessage('Enter an ISBN or complete book title to search.', 'error');
+            if (query.length < 2) {
+                showBookLookupMessage('Enter at least two characters, an ISBN, or a complete book title.', 'error');
+                bookLookupQuery.focus();
                 return;
             }
+
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), 35000);
 
             bookLookupSearchButton.disabled = true;
             bookLookupSearchButton.textContent = 'Searching...';
             bookLookupResults.innerHTML = '';
-            showBookLookupMessage('Searching available catalog sources...', 'info');
+            showBookLookupMessage(
+                'Searching Google Books and Open Library, then checking matching editions...',
+                'info'
+            );
 
             try {
                 const response = await fetch(`${bookLookupSearchUrl}?query=${encodeURIComponent(query)}`, {
                     method: 'GET',
+                    credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                     },
+                    signal: controller.signal,
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
 
-                if (!data.success) {
-                    showBookLookupMessage(data.message || 'No book found. You can still add it manually.', 'error');
+                if (!response.ok) {
+                    const validationMessage = data?.errors?.query?.[0];
+                    throw new Error(validationMessage || data.message || 'The book lookup request could not be completed.');
+                }
+
+                if (!data.success || !Array.isArray(data.books) || data.books.length === 0) {
+                    showBookLookupMessage(
+                        data.message || 'No matching book was found. Try the exact ISBN, complete title, or include the author name.',
+                        'error'
+                    );
                     return;
                 }
 
-                showBookLookupMessage(data.message || 'Select a result to fill the Add Book form.', 'success');
-                renderBookLookupResults(data.books || []);
+                showBookLookupMessage(
+                    data.message || 'Select the best matching edition to fill the Add Book form.',
+                    'success'
+                );
+                renderBookLookupResults(data.books);
             } catch (error) {
-                showBookLookupMessage('Book lookup failed. You can still add the book manually.', 'error');
+                const message = error?.name === 'AbortError'
+                    ? 'The lookup took too long. Check the internet connection and search again.'
+                    : (error?.message || 'Book lookup failed. Check the connection or add the book manually.');
+
+                showBookLookupMessage(message, 'error');
             } finally {
+                window.clearTimeout(timeoutId);
                 bookLookupSearchButton.disabled = false;
                 bookLookupSearchButton.textContent = 'Search Books';
             }
         }
 
-        // Renders lookup results as selectable cards.
         function renderBookLookupResults(books) {
             bookLookupResults.innerHTML = '';
 
             books.forEach((book, index) => {
-                const card = document.createElement('div');
+                const card = document.createElement('article');
                 card.className = 'book-lookup-result-card';
 
                 const thumbnail = book.thumbnail
-                    ? `<img src="${escapeHtml(book.thumbnail)}" alt="Book cover">`
+                    ? `<img src="${escapeHtml(book.thumbnail)}" alt="Cover of ${escapeHtml(book.book_title || 'book')}" loading="lazy">`
                     : '<div class="book-lookup-placeholder">No Cover</div>';
 
                 const publicationLabel = book.date_published
                     ? 'Publication Date'
                     : (book.publication_year ? 'Publication Year' : 'Publication Date');
                 const publicationValue = book.date_published || book.publication_year || 'Not available';
+                const availableCount = Number(book.metadata_available_count ?? 0);
+                const totalCount = Number(book.metadata_total_count ?? 4);
+                const isComplete = Boolean(book.is_complete);
+                const missingFields = Array.isArray(book.missing_fields) ? book.missing_fields : [];
+                const completenessText = isComplete
+                    ? 'Complete key details'
+                    : `${availableCount} of ${totalCount} key details found`;
+                const missingText = missingFields.length > 0
+                    ? `Missing: ${missingFields.join(', ')}`
+                    : 'ISBN, author, publisher, and genre found';
 
                 card.innerHTML = `
                     <div class="book-lookup-cover">${thumbnail}</div>
 
                     <div class="book-lookup-info">
-                        <h4>${escapeHtml(book.book_title || 'Untitled Book')}</h4>
-                        <p><strong>Source:</strong> ${escapeHtml(book.source || 'Book lookup')}</p>
-                        <p><strong>Author:</strong> ${escapeHtml(book.author_name || 'Not available')}</p>
-                        <p><strong>Publisher:</strong> ${escapeHtml(book.publisher_name || 'Not available')}</p>
-                        <p><strong>Genre:</strong> ${escapeHtml(book.genre_name || 'Not available')}</p>
-                        <p><strong>${escapeHtml(publicationLabel)}:</strong> ${escapeHtml(publicationValue)}</p>
-                        <p><strong>ISBN:</strong> ${escapeHtml(book.isbn || 'Not available')}</p>
+                        <div class="book-lookup-title-row">
+                            <h4>${escapeHtml(book.book_title || 'Untitled Book')}</h4>
+                            <span class="book-lookup-completeness ${isComplete ? 'is-complete' : ''}">
+                                ${escapeHtml(completenessText)}
+                            </span>
+                        </div>
+
+                        <p class="book-lookup-source"><strong>Sources:</strong> ${escapeHtml(book.source || 'Book lookup')}</p>
+
+                        <div class="book-lookup-metadata-grid">
+                            ${metadataItem('Author', book.author_name)}
+                            ${metadataItem('Publisher', book.publisher_name)}
+                            ${metadataItem('Genre', book.genre_name)}
+                            ${metadataItem(publicationLabel, publicationValue)}
+                            ${metadataItem('ISBN', book.isbn)}
+                        </div>
+
+                        <p class="book-lookup-missing-note ${isComplete ? 'is-complete' : ''}">
+                            ${escapeHtml(missingText)}
+                        </p>
 
                         <button type="button" class="use-book-result-button" data-index="${index}">
-                            Use Available Details
+                            Use Book Details
                         </button>
                     </div>
                 `;
@@ -588,14 +621,24 @@
                 bookLookupResults.appendChild(card);
             });
 
-            document.querySelectorAll('.use-book-result-button').forEach(button => {
+            bookLookupResults.querySelectorAll('.use-book-result-button').forEach(button => {
                 button.addEventListener('click', function () {
-                    fillBookForm(books[this.dataset.index]);
+                    fillBookForm(books[Number(this.dataset.index)]);
                 });
             });
         }
 
-        // Copies selected lookup metadata into the Add Book form.
+        function metadataItem(label, value) {
+            const hasValue = normalizeSpaces(value || '') !== '';
+
+            return `
+                <div class="book-lookup-metadata-item ${hasValue ? '' : 'is-missing'}">
+                    <span>${escapeHtml(label)}</span>
+                    <strong>${escapeHtml(hasValue ? value : 'Not available')}</strong>
+                </div>
+            `;
+        }
+
         function fillBookForm(book) {
             bookTitleInput.value = normalizeSpaces(book.book_title || '');
             isbnInput.value = isValidIsbn(String(book.isbn || '')) ? book.isbn : '';
@@ -615,10 +658,12 @@
                 ? book.date_published
                 : '';
 
-            showBookLookupMessage(
-                'Available book details were filled. Review all information before saving.',
-                'success'
-            );
+            const missingFields = Array.isArray(book.missing_fields) ? book.missing_fields : [];
+            const reviewText = missingFields.length > 0
+                ? `Book details were filled. Review the form and provide ${missingFields.join(', ')} manually when known.`
+                : 'Complete book details were filled. Review the information before saving.';
+
+            showBookLookupMessage(reviewText, 'success');
 
             bookTitleInput.scrollIntoView({
                 behavior: 'smooth',
@@ -626,7 +671,6 @@
             });
         }
 
-        // Maps provider genre text to the local controlled genre list when possible.
         function applyLookupGenre(rawGenre) {
             const genre = normalizeSpaces(rawGenre);
 
@@ -676,19 +720,16 @@
             );
         }
 
-        // Removes unsupported characters from lookup-provided field values.
         function sanitizeValue(value, disallowedCharacters) {
             return normalizeSpaces(String(value || '').replace(disallowedCharacters, ''));
         }
 
-        // Displays lookup status, success, or error feedback.
         function showBookLookupMessage(message, type) {
             bookLookupMessage.style.display = 'block';
             bookLookupMessage.className = `book-lookup-message ${type}`;
             bookLookupMessage.textContent = message;
         }
 
-        // Escapes provider text before inserting it into result-card HTML.
         function escapeHtml(value) {
             return String(value ?? '')
                 .replaceAll('&', '&amp;')

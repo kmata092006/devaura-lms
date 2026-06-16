@@ -1,4 +1,6 @@
-/* Book lookup helper used by the add and edit book forms. */
+/* =====================================================
+   GOOGLE BOOKS HELPER - ADD BOOK PAGE
+===================================================== */
 
 .book-lookup-card,
 .book-form-card {
@@ -257,7 +259,9 @@
         grid-column: span 1;
     }
 }
-/* Catalog metadata validation and guidance states. */
+/* =====================================================
+   CATALOG METADATA INPUTS
+===================================================== */
 .required-mark {
     color: #dc2626;
     font-weight: 900;
@@ -320,7 +324,9 @@
     }
 }
 
-/* Add and edit book field status styles. */
+/* =====================================================
+   FINAL ADD/EDIT BOOK FIELD STATES
+===================================================== */
 .optional-mark {
     display: inline-flex;
     margin-left: 6px;
@@ -367,4 +373,114 @@
 
 .book-form-group select {
     cursor: pointer;
+}
+
+/* =====================================================
+   ENRICHED BOOK LOOKUP RESULTS
+===================================================== */
+
+.book-lookup-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.book-lookup-title-row h4 {
+    margin-bottom: 0;
+}
+
+.book-lookup-completeness {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid #fed7aa;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.book-lookup-completeness.is-complete {
+    border-color: #86efac;
+    background: #dcfce7;
+    color: #166534;
+}
+
+.book-lookup-source {
+    margin-bottom: 12px !important;
+    color: #64748b !important;
+}
+
+.book-lookup-metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 9px;
+    margin-top: 12px;
+}
+
+.book-lookup-metadata-item {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.book-lookup-metadata-item span {
+    display: block;
+    margin-bottom: 3px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.book-lookup-metadata-item strong {
+    display: block;
+    overflow-wrap: anywhere;
+    color: #0f172a;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.book-lookup-metadata-item.is-missing {
+    border-style: dashed;
+    background: #f8fafc;
+}
+
+.book-lookup-metadata-item.is-missing strong {
+    color: #94a3b8;
+    font-weight: 750;
+}
+
+.book-lookup-missing-note {
+    margin-top: 10px !important;
+    color: #9a3412 !important;
+    font-size: 12px !important;
+    font-weight: 750;
+}
+
+.book-lookup-missing-note.is-complete {
+    color: #166534 !important;
+}
+
+@media (max-width: 700px) {
+    .book-lookup-title-row {
+        display: grid;
+    }
+
+    .book-lookup-completeness {
+        justify-self: start;
+    }
+
+    .book-lookup-metadata-grid {
+        grid-template-columns: 1fr;
+    }
 }
