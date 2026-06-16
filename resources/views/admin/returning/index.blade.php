@@ -4,6 +4,8 @@
 @section('page-title', 'Return Book')
 
 @section('content')
+    @inject('roleService', 'App\Services\RoleService')
+
     {{-- Identifies the return module and links back to borrowing. --}}
     <div class="return-page-header">
         <div class="return-page-heading">
@@ -11,10 +13,12 @@
             <h2>Return Book Transaction</h2>
         </div>
 
-        <a href="{{ route('admin.borrow.index') }}" class="return-borrow-link">
-            <span aria-hidden="true">&larr;</span>
-            Go to Borrow Book
-        </a>
+        @if ($roleService->hasPermission('staff' || 'student staff', 'Borrow Book'))
+            <a href="{{ route('admin.borrow.index') }}" class="return-borrow-link">
+                <span aria-hidden="true">&larr;</span>
+                Go to Borrow Book
+            </a>
+        @endif
     </div>
 
     @if (session('success'))

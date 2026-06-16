@@ -4,6 +4,8 @@
 @section('page-title', 'Borrow Book')
 
 @section('content')
+    @inject('roleService', 'App\Services\RoleService')
+
     <div class="page-actions">
         <div>
             <h2>Borrow Book Transaction</h2>
@@ -13,12 +15,11 @@
             </p>
         </div>
 
-        <a
-            href="{{ route('admin.books.index') }}"
-            class="action-button"
-        >
-            Manage Books
-        </a>
+        @if ($roleService->hasPermission('staff' || 'student staff', 'Book Management'))
+            <a href="{{ route('admin.books.index') }}" class="action-button" >
+                Manage Books
+            </a>
+        @endif
     </div>
 
     {{-- Success message --}}

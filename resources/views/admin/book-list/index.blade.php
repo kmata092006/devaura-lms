@@ -4,6 +4,8 @@
 @section('page-title', 'Book List / Search')
 
 @section('content')
+    @inject('roleService', 'App\Services\RoleService')
+
     <div class="page-actions book-list-page-actions">
         <div>
             <span class="book-list-eyebrow">Library Catalog</span>
@@ -11,7 +13,11 @@
             <p>Search the library collection and quickly identify whether a book is available for borrowing.</p>
         </div>
 
-        <a href="{{ route('admin.books.index') }}" class="action-button">Go to Book Management</a>
+        @if ($roleService->hasPermission('staff' || 'student staff', 'Book Management'))
+            <a href="{{ route('admin.books.index') }}" class="action-button">
+                Go to Book Management
+            </a>
+        @endif
     </div>
 
     <section class="book-status-guide" aria-label="Book status color guide">
