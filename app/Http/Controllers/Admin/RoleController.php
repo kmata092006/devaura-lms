@@ -37,7 +37,7 @@ class RoleController extends Controller
             'permissions.*' => ['nullable', 'array'],
             'permissions.*.*' => [
                 'integer',
-                'distinct',
+             // 'distinct',  <-- causes the duplicate permissions bug
                 'exists:permission,permission_id',
             ],
         ]);
