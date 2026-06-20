@@ -160,6 +160,7 @@
                         <select
                             name="book_status"
                             id="book_status"
+                            {{ $selectedBookStatus === 'Borrowed' ? 'disabled' : '' }}
                             class="{{ $errors->has('book_status') ? 'is-invalid' : '' }}"
                             aria-invalid="{{ $errors->has('book_status') ? 'true' : 'false' }}"
                             required
